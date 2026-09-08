@@ -27,7 +27,7 @@ func TestCompressionSchemaTracksActualJSONFields(t *testing.T) {
 	if e = json.Unmarshal(b, &schema); e != nil {
 		t.Fatal(e)
 	}
-	for name, value := range map[string]any{"dimensions": Dimensions{}, "dimensionChange": DimensionChange{}, "step": Step{}, "target": Target{}, "result": Result{}, "summary": Summary{}, "report": Report{}} {
+	for name, value := range map[string]any{"dimensions": Dimensions{}, "dimensionChange": DimensionChange{}, "step": Step{}, "target": Target{}, "result": Result{}, "summary": Summary{}, "report": Report{}, "remoteUsage": RemoteUsage{}} {
 		t.Run(name, func(t *testing.T) {
 			def, ok := schema.Definitions[name]
 			if !ok {

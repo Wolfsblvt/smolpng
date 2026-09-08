@@ -8,12 +8,14 @@ import (
 	"github.com/Wolfsblvt/smolpng/internal/domain"
 	"github.com/Wolfsblvt/smolpng/internal/pngimage"
 	"github.com/Wolfsblvt/smolpng/internal/process"
+	"github.com/Wolfsblvt/smolpng/internal/tinypng"
 	"github.com/Wolfsblvt/smolpng/internal/toolchain"
 	"os"
 	"path/filepath"
 )
 
 type Engine struct {
+	Remote   tinypng.Optimizer
 	Runner   process.Runner
 	Tools    toolchain.Set
 	Limits   domain.Limits
@@ -21,12 +23,14 @@ type Engine struct {
 	Verbose  bool
 }
 type Outcome struct {
-	Original  domain.ImageInfo
-	Candidate Candidate
-	Warnings  []string
+	Remote     *domain.RemoteUsage
+	RemoteUsed bool
+	Original   domain.ImageInfo
+	Candidate  Candidate
+	Warnings   []string
 }
 
-func (e Engine) Optimize(ctx context.Context, data []byte, r domain.Recipe) (Outcome, error) {
+func (e Engine) optimizePNG(ctx context.Context, data []byte, r domain.Recipe) (Outcome, error) {
 	out := Outcome{Warnings: []string{}}
 	if er := r.Validate(); er != nil {
 		return out, domain.E(2, er.Error(), er)

@@ -241,6 +241,15 @@ type DimensionChange struct {
 	Before Dimensions `json:"before"`
 	After  Dimensions `json:"after"`
 }
+
+// RemoteUsage describes an attempted upload even when a local candidate wins.
+type RemoteUsage struct {
+	Provider         string `json:"provider"`
+	CredentialSource string `json:"credentialSource,omitempty"`
+	Attempted        bool   `json:"attempted"`
+	Selected         bool   `json:"selected"`
+	CompressionCount *int   `json:"compressionCount,omitempty"`
+}
 type Result struct {
 	SchemaVersion int             `json:"schemaVersion"`
 	Status        string          `json:"status"`
@@ -256,6 +265,7 @@ type Result struct {
 	Pipeline      []Step          `json:"pipeline"`
 	Target        *Target         `json:"target,omitempty"`
 	ResizeUsed    bool            `json:"resizeUsed"`
+	Remote        *RemoteUsage    `json:"remote,omitempty"`
 	RemoteUsed    bool            `json:"remoteUsed"`
 	Warnings      []string        `json:"warnings"`
 	Error         string          `json:"error,omitempty"`

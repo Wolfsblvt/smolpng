@@ -15,7 +15,9 @@ import (
 	"github.com/Wolfsblvt/smolpng/internal/paths"
 	"github.com/Wolfsblvt/smolpng/internal/pngimage"
 	"github.com/Wolfsblvt/smolpng/internal/process"
+	"github.com/Wolfsblvt/smolpng/internal/secret"
 	"github.com/Wolfsblvt/smolpng/internal/state"
+	"github.com/Wolfsblvt/smolpng/internal/tinypng"
 	"github.com/Wolfsblvt/smolpng/internal/toolchain"
 	"github.com/Wolfsblvt/smolpng/internal/ui"
 	"github.com/Wolfsblvt/smolpng/internal/workflow"
@@ -34,17 +36,21 @@ var Commit = "unknown"
 var Distribution = "source"
 
 type Environment struct {
-	In             io.Reader
-	Out, Err       io.Writer
-	Runner         process.Runner
-	Clipboard      input.Clipboard
-	Paths          *paths.Paths
-	CWD            string
-	Prompt         ui.Prompter
-	Desktop        desktop.Actions
-	Copy           desktop.ClipboardWriter
-	OpenTerminal   func() (desktop.Console, error)
-	DependencyHTTP *http.Client
+	SecretStore      secret.Store
+	CredentialLookup func(string) (string, bool)
+	RemoteHTTP       *http.Client
+	ReadSecret       func(context.Context) (string, error)
+	In               io.Reader
+	Out, Err         io.Writer
+	Runner           process.Runner
+	Clipboard        input.Clipboard
+	Paths            *paths.Paths
+	CWD              string
+	Prompt           ui.Prompter
+	Desktop          desktop.Actions
+	Copy             desktop.ClipboardWriter
+	OpenTerminal     func() (desktop.Console, error)
+	DependencyHTTP   *http.Client
 }
 
 // Environment has only invocation and external-resource seams, not a second engine.
@@ -190,12 +196,12 @@ func (a *app) root() *cobra.Command {
 	compress := &cobra.Command{Use: "compress INPUT...", Short: "Compress deterministically; never prompt"}
 	cf.bind(compress)
 	compress.RunE = func(c *cobra.Command, args []string) error { return a.compress(c, args, cf) }
-	c.AddCommand(compress, a.inspectCommand(), a.configCommand(), a.presetCommand(), a.skillCommand(), a.setupCommand(), a.settingsCommand(), a.dropCommand(), a.lastCommand())
+	c.AddCommand(compress, a.inspectCommand(), a.configCommand(), a.presetCommand(), a.skillCommand(), a.setupCommand(), a.settingsCommand(), a.dropCommand(), a.lastCommand(), a.providersCommand())
 	c.AddCommand(&cobra.Command{Use: "version", Args: cobra.NoArgs, Short: "Build identity", RunE: func(*cobra.Command, []string) error {
 		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "commit": Commit, "distribution": Distribution, "platform": runtime.GOOS + "/" + runtime.GOARCH})
 	}})
 	c.AddCommand(&cobra.Command{Use: "capabilities", Args: cobra.NoArgs, Short: "Discover implemented features", RunE: func(*cobra.Command, []string) error {
-		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "formats": []string{"png"}, "presets": []string{"auto", "web", "smallest", "lossless"}, "targetSize": true, "explicitResize": true, "remoteDefault": "never", "remoteImplemented": false, "config": true, "namedPresets": true, "presetImport": true, "agentSkill": true, "skillInstallationTracking": true, "interactive": true, "nativeClipboard": true, "managedDependencies": []string{"oxipng"}, "desktopQualification": "adapters implemented; real desktop tests outstanding", "exitCodes": map[string]int{"success": 0, "arguments": 2, "input": 3, "dependency": 4, "optimizer": 5, "target": 6, "network": 7, "batch": 8, "cancelled": 130}})
+		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "formats": []string{"png"}, "presets": []string{"auto", "web", "smallest", "lossless"}, "targetSize": true, "explicitResize": true, "remoteDefault": "never", "remoteImplemented": true, "config": true, "namedPresets": true, "presetImport": true, "agentSkill": true, "skillInstallationTracking": true, "interactive": true, "nativeClipboard": true, "managedDependencies": []string{"oxipng"}, "desktopQualification": "adapters implemented; real desktop tests outstanding", "exitCodes": map[string]int{"success": 0, "arguments": 2, "input": 3, "dependency": 4, "optimizer": 5, "target": 6, "network": 7, "batch": 8, "cancelled": 130}})
 	}})
 	c.AddCommand(&cobra.Command{Use: "doctor", Args: cobra.NoArgs, Short: "Inspect paths and optimizer status", RunE: a.doctor})
 	c.AddCommand(a.depsCommand())
@@ -365,7 +371,7 @@ func (a *app) compression(c *cobra.Command, args []string, f *compressFlags, con
 	if !f.DryRun {
 		tools = a.discover(c.Context(), p)
 	}
-	batch := workflow.Batch{Engine: workflow.Engine{Runner: a.env.Runner, Tools: tools, Limits: limits, CacheDir: p.Cache, Verbose: a.verbose}, Resolver: a.resolver(), Stdout: a.env.Out}
+	batch := workflow.Batch{Engine: workflow.Engine{Remote: tinypng.Client{Credentials: a.credentials(), HTTP: a.env.RemoteHTTP}, Runner: a.env.Runner, Tools: tools, Limits: limits, CacheDir: p.Cache, Verbose: a.verbose}, Resolver: a.resolver(), Stdout: a.env.Out}
 	result := batch.Run(c.Context(), jobs, workflow.Options{Recipe: r, Output: f.Output, Jobs: f.Jobs, FailFast: f.FailFast, DryRun: f.DryRun, Offline: f.Input.Options.Offline})
 	var copied desktop.CopyReceipt
 	if consume == nil && !f.DryRun && f.CopyMode != "" && f.CopyMode != "none" && len(state.Outputs(result)) > 0 {

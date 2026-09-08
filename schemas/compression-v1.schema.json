@@ -170,6 +170,9 @@
             8,
             130
           ]
+        },
+        "remote": {
+          "$ref": "#/$defs/remoteUsage"
         }
       },
       "required": [
@@ -263,6 +266,32 @@
         "summary",
         "exitCode"
       ]
+    },
+    "remoteUsage": {
+      "type": "object",
+      "required": [
+        "provider",
+        "attempted",
+        "selected"
+      ],
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "credentialSource": {
+          "type": "string"
+        },
+        "attempted": {
+          "type": "boolean"
+        },
+        "selected": {
+          "type": "boolean"
+        },
+        "compressionCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
     }
   }
 }

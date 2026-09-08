@@ -17,3 +17,7 @@ TOML layers, field provenance, immutable built-ins, inherited presets, import pr
 ## Agent integration status
 
 The embedded Skill, tracked standard/custom destinations, manual replacement detection, modified-file protection, instruction-only package, and interrupted-update recovery have focused tests. `skill status` and `doctor` report stale/modified/missing state without writes. Native directory behavior is tested on the authoring Linux host; complete graphical desktop behavior and a standalone application updater are not implied. The interactive launcher now invokes the observer and presents changed-bundle synchronization choices; deterministic commands remain prompt-free.
+
+### Remote source increment
+
+TinyPNG HTTPS upload/download, native-keyring login/logout/status, environment precedence, upload-policy dispatch and actual-remote-use reporting now exist. Fake transport/secret-store tests exercise these boundaries without a real key. See REMOTE.md for limitations. Native qualification remains deferred by Wolf; it is not a gate on the next source feature.

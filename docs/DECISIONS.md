@@ -44,3 +44,7 @@ Settings preserve handwritten TOML via byte-range edits from the pinned parser, 
 ## Pinned dependency delivery, not upstream-latest execution
 
 Managed installation currently admits OxiPNG 10.2.1 only, on the five platforms with a selected native upstream archive/digest. Full archive verification precedes any version probe. Immutable retained versions and a small active index avoid overwriting a running Windows executable. Modified/untracked bytes are refused, and old app catalogs cannot downgrade a newer managed version. Explicit saved paths still win; system/managed preference is a user-only setting. Automatic pngquant and native Windows arm64 OxiPNG remain unqualified, not guessed from a nearby asset name. This does not authorize bundling, Store distribution or application self-update.
+
+## Explicit TinyPNG implementation
+
+The optional HTTP adapter uses no provider SDK or retries. Authorization is obtained only after policy chooses remote use. A single original-derived upload is preferred over a quota-consuming resize search. `keep` and explicit local resize reject remote processing before upload rather than pretending to meet preservation contracts. Unknown output hosts/redirects are rejected. The native secret library is pinned and license-noticed; no service credentials were used during implementation.

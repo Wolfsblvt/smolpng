@@ -82,6 +82,8 @@ func (b Batch) one(ctx context.Context, j output.Job, o Options) domain.Result {
 		return r
 	}
 	out, er := b.Engine.Optimize(ctx, data, o.Recipe)
+	r.Remote = out.Remote
+	r.RemoteUsed = out.RemoteUsed
 	r.OriginalBytes = int64(len(data))
 	r.Format = out.Original.Format
 	r.Dimensions.Before = out.Original.Dimensions

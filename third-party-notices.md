@@ -51,3 +51,7 @@ The licenses in this table permit the selected use with their notices retained. 
 pngquant keeps its upstream GPL/commercial licensing and additional notices: https://pngquant.org/licensing.html . OxiPNG is MIT: https://github.com/oxipng/oxipng . Neither executable is bundled in standard smolpng archives. Managed OxiPNG 10.2.1 downloads use upstream release-metadata SHA-256 pins and retain its exact MIT notice in the separate installation. PNGquant has no automatic download in this build. Containers and Store packaging have separate composition checks; merely launching a separate process is not universal legal clearance.
 
 No font files, commissioned artwork, theme imagery, private profiles, credentials or toolchain caches are included. Header art is a replaceable project-written text placeholder. The selected MIT, CC0 and AGPL texts under `LICENSES/` do not apply a blanket AGPL license to the application.
+
+## Native secret storage
+
+`github.com/zalando/go-keyring v0.2.8`, `github.com/danieljoos/wincred v1.2.3`, and `github.com/godbus/dbus/v5 v5.2.2` are compiled for native credential storage. Exact notices, including go-keyring's Apache-noticed macOS adapter, are retained under `LICENSES/keyring*`, `wincred*`, and `dbus*`. Upstream: https://github.com/zalando/go-keyring . Source was read at adoption; full live advisory qualification is not claimed.
