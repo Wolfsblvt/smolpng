@@ -12,6 +12,7 @@ import (
 	"github.com/Wolfsblvt/smolpng/internal/fsutil"
 	"github.com/Wolfsblvt/smolpng/internal/imagefile"
 	"github.com/Wolfsblvt/smolpng/internal/input"
+	"github.com/Wolfsblvt/smolpng/internal/integration"
 	"github.com/Wolfsblvt/smolpng/internal/output"
 	"github.com/Wolfsblvt/smolpng/internal/paths"
 	"github.com/Wolfsblvt/smolpng/internal/pngimage"
@@ -37,21 +38,24 @@ var Commit = "unknown"
 var Distribution = "source"
 
 type Environment struct {
-	SecretStore      secret.Store
-	CredentialLookup func(string) (string, bool)
-	RemoteHTTP       *http.Client
-	ReadSecret       func(context.Context) (string, error)
-	In               io.Reader
-	Out, Err         io.Writer
-	Runner           process.Runner
-	Clipboard        input.Clipboard
-	Paths            *paths.Paths
-	CWD              string
-	Prompt           ui.Prompter
-	Desktop          desktop.Actions
-	Copy             desktop.ClipboardWriter
-	OpenTerminal     func() (desktop.Console, error)
-	DependencyHTTP   *http.Client
+	Executable           func() (string, error)
+	IntegrationLocations *integration.Locations
+	IntegrationRenderer  integration.Renderer
+	SecretStore          secret.Store
+	CredentialLookup     func(string) (string, bool)
+	RemoteHTTP           *http.Client
+	ReadSecret           func(context.Context) (string, error)
+	In                   io.Reader
+	Out, Err             io.Writer
+	Runner               process.Runner
+	Clipboard            input.Clipboard
+	Paths                *paths.Paths
+	CWD                  string
+	Prompt               ui.Prompter
+	Desktop              desktop.Actions
+	Copy                 desktop.ClipboardWriter
+	OpenTerminal         func() (desktop.Console, error)
+	DependencyHTTP       *http.Client
 }
 
 // Environment has only invocation and external-resource seams, not a second engine.
@@ -198,7 +202,7 @@ func (a *app) root() *cobra.Command {
 	compress := &cobra.Command{Use: "compress INPUT...", Short: "Compress deterministically; never prompt"}
 	cf.bind(compress)
 	compress.RunE = func(c *cobra.Command, args []string) error { return a.compress(c, args, cf) }
-	c.AddCommand(compress, a.inspectCommand(), a.configCommand(), a.presetCommand(), a.skillCommand(), a.setupCommand(), a.settingsCommand(), a.dropCommand(), a.lastCommand(), a.providersCommand())
+	c.AddCommand(compress, a.inspectCommand(), a.configCommand(), a.presetCommand(), a.skillCommand(), a.setupCommand(), a.settingsCommand(), a.dropCommand(), a.lastCommand(), a.providersCommand(), a.integrationCommand())
 	c.AddCommand(&cobra.Command{Use: "version", Args: cobra.NoArgs, Short: "Build identity", RunE: func(*cobra.Command, []string) error {
 		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "commit": Commit, "distribution": Distribution, "platform": runtime.GOOS + "/" + runtime.GOARCH})
 	}})

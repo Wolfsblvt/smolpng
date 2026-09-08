@@ -103,7 +103,7 @@ func (a *app) onboard(ctx context.Context, p ui.Prompter) error {
 		if artifactErr == nil {
 			options = append(options, ui.Option{Label: "Install/update a managed OxiPNG copy…", Value: "managed-oxipng"})
 		}
-		options = append(options, ui.Option{Label: "Configure optimizer executable paths", Value: "paths"}, ui.Option{Label: "Install the shared personal Agent Skill", Value: "skill"}, ui.Option{Label: "Open pngquant source/download page", Value: "pngquant"}, ui.Option{Label: "Open OxiPNG source/download page", Value: "oxipng"}, ui.Option{Label: "Cancel", Value: "quit", Key: "q"})
+		options = append(options, ui.Option{Label: "Configure optimizer executable paths", Value: "paths"}, ui.Option{Label: "Install the shared personal Agent Skill", Value: "skill"}, ui.Option{Label: "Install menu and drop shortcuts…", Value: "integrate"}, ui.Option{Label: "Open pngquant source/download page", Value: "pngquant"}, ui.Option{Label: "Open OxiPNG source/download page", Value: "oxipng"}, ui.Option{Label: "Cancel", Value: "quit", Key: "q"})
 		initial := "continue"
 		if !tools.OxiPNG.Available && artifactErr == nil {
 			initial = "managed-oxipng"
@@ -140,8 +140,12 @@ func (a *app) onboard(ctx context.Context, p ui.Prompter) error {
 					return er
 				}
 			}
+		case "integrate":
+			if e = a.installIntegrationsUI(ctx, p); e != nil && !errors.Is(e, ui.ErrBack) {
+				return e
+			}
 		case "paths":
-			fields := []ui.Field{{Key: "tools.pngquant", Label: "pngquant executable (empty uses discovery)", Value: w.User.Document.Tools.PNGQuant}, {Key: "tools.oxipng", Label: "OxiPNG executable (empty uses discovery)", Value: w.User.Document.Tools.OxiPNG}}
+			fields := []ui.Field{{Key: "tools.pngquant", Label: "pngquant executable (empty uses discovery)", Value: w.User.Document.Tools.PNGQuant}, {Key: "tools.oxipng", Label: "OxiPNG executable (empty uses discovery)", Value: w.User.Document.Tools.OxiPNG}, {Key: "tools.jpegoptim", Label: "jpegoptim executable (empty uses discovery)", Value: w.User.Document.Tools.JPEGOptim}}
 			values, er := p.Edit(ctx, "Local executable paths; these run as your user", fields)
 			if errors.Is(er, ui.ErrBack) {
 				continue

@@ -25,3 +25,7 @@ TinyPNG HTTPS upload/download, native-keyring login/logout/status, environment p
 ### JPEG source frontier
 
 JPEG file/directory/URL/stdin inspection and compression now join the shared engine. jpegoptim discovery, same-size lossless/lossy candidates, strict targets, original-derived resize, orientation/ICC handling, legal JPEG fixtures and regression tests are implemented. Final quality calibration and real JPEG optimizer/native desktop evidence remain unobserved.
+
+### Desktop installer source frontier
+
+Windows Start menu, optional Desktop and Send To, and Linux user launchers now have preview/apply/status/remove/repair commands, preset-specific shortcuts and setup-menu access. Ownership and argument semantics are tested through native-boundary doubles; actual Windows Script Host and graphical file-manager behavior remain separately qualified.

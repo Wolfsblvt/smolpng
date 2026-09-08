@@ -52,3 +52,7 @@ The optional HTTP adapter uses no provider SDK or retries. Authorization is obta
 ## JPEG first implementation
 
 Use separately installed jpegoptim for ordinary local JPEG optimization, with a pure Go original-derived path for explicit resizing. Do not add a native codec-linking dependency to the CLI for this candidate. Final codec/quality selection remains subject to corpus evidence. Safe strips private metadata by reconstructing minimal orientation EXIF, not by preserving the whole camera record or re-encoding pixels merely to remove GPS.
+
+## Desktop installer boundary
+
+Use per-user native `.lnk`/`.desktop` launchers with exact recorded file hashes. Do not install context-menu registry handlers, MIME defaults, machine PATH entries or privileged integration implicitly. Keep the no-console launcher distinct from interactive execution. Journal each file installation so interrupted operations cannot silently claim unowned artifacts.
