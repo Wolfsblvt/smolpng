@@ -21,3 +21,5 @@ This map locates the current executable, image contracts, tests and documentatio
 Start with Development for commands, Architecture for invariants, and Vision for the complete destination. Generated output belongs under ignored `artifacts/`.
 
 `internal/config/` owns TOML and preset resolution/import state, `docs/presets.md` owns its user contract, and `presets/examples/` contains tested CC0 copyable recipes.
+
+`skills/smolpng/` is the embedded user-facing guidance; `internal/skill/` owns its tracked installation, synchronization and recovery. `docs/agent-skill.md` owns the lifecycle and client/runtime distinction.

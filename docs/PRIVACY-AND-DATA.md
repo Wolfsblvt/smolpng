@@ -13,3 +13,7 @@ No persistent last-result state or native clipboard writes exist in this cut. Th
 ## Configuration and installed presets
 
 User/project TOML files are read locally. App imports persist in the user-data `presets.toml`, with no network calls and no global environment changes. Export is explicit. `config show`/provenance can reveal local paths and user-supplied descriptive text. Shareable presets do not admit secrets or executable paths; a project/preset cannot upgrade a personal remote prohibition. Pinning and removal update only app-owned presets.
+
+## Agent Skill state
+
+Explicit Skill management persists local destinations, app/bundle versions and exact resource hashes under the state directory. It stores no credentials and makes no network request. `skill status` and `doctor` inspect without creating state. Directory transactions can retain a journal or verified backup after an interrupted write; changed backup bytes are preserved rather than deleted. A future human-startup observer records last-seen version/bundle and ignored-bundle preference; no deterministic command displays a synchronization prompt. The exported instruction ZIP contains guidance and a license, not a local binary or private state.

@@ -159,12 +159,12 @@ func (a *app) root() *cobra.Command {
 	compress := &cobra.Command{Use: "compress INPUT...", Short: "Compress deterministically; never prompt"}
 	cf.bind(compress)
 	compress.RunE = func(c *cobra.Command, args []string) error { return a.compress(c, args, cf) }
-	c.AddCommand(compress, a.inspectCommand(), a.configCommand(), a.presetCommand())
+	c.AddCommand(compress, a.inspectCommand(), a.configCommand(), a.presetCommand(), a.skillCommand())
 	c.AddCommand(&cobra.Command{Use: "version", Args: cobra.NoArgs, Short: "Build identity", RunE: func(*cobra.Command, []string) error {
 		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "commit": Commit, "distribution": Distribution, "platform": runtime.GOOS + "/" + runtime.GOARCH})
 	}})
 	c.AddCommand(&cobra.Command{Use: "capabilities", Args: cobra.NoArgs, Short: "Discover implemented features", RunE: func(*cobra.Command, []string) error {
-		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "formats": []string{"png"}, "presets": []string{"auto", "web", "smallest", "lossless"}, "targetSize": true, "explicitResize": true, "remoteDefault": "never", "remoteImplemented": false, "config": true, "namedPresets": true, "presetImport": true, "interactive": false, "nativeClipboard": false, "exitCodes": map[string]int{"success": 0, "arguments": 2, "input": 3, "dependency": 4, "optimizer": 5, "target": 6, "network": 7, "batch": 8, "cancelled": 130}})
+		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "formats": []string{"png"}, "presets": []string{"auto", "web", "smallest", "lossless"}, "targetSize": true, "explicitResize": true, "remoteDefault": "never", "remoteImplemented": false, "config": true, "namedPresets": true, "presetImport": true, "agentSkill": true, "skillInstallationTracking": true, "interactive": false, "nativeClipboard": false, "exitCodes": map[string]int{"success": 0, "arguments": 2, "input": 3, "dependency": 4, "optimizer": 5, "target": 6, "network": 7, "batch": 8, "cancelled": 130}})
 	}})
 	c.AddCommand(&cobra.Command{Use: "doctor", Args: cobra.NoArgs, Short: "Inspect paths and optimizer status", RunE: a.doctor})
 	deps := &cobra.Command{Use: "deps", Short: "Separately installed optimizer dependencies"}
@@ -399,7 +399,15 @@ func (a *app) doctor(c *cobra.Command, _ []string) error {
 		return e
 	}
 	ts := a.discover(c.Context(), p)
-	return a.emit(map[string]any{"schemaVersion": 1, "paths": p, "tools": ts, "networkCheckPerformed": false, "localAvailable": ts.PNGQuant.Available || ts.OxiPNG.Available})
+	var skillState any
+	manager, skillErr := a.skillManager()
+	if skillErr == nil {
+		skillState, skillErr = manager.Inspect()
+	}
+	if skillErr != nil {
+		skillState = map[string]any{"state": "unknown", "error": skillErr.Error()}
+	}
+	return a.emit(map[string]any{"schemaVersion": 1, "paths": p, "tools": ts, "skills": skillState, "networkCheckPerformed": false, "localAvailable": ts.PNGQuant.Available || ts.OxiPNG.Available})
 }
 func (a *app) inspectCommand() *cobra.Command {
 	f := &inputFlags{}

@@ -71,6 +71,17 @@ Tests exercise real filesystem/process boundaries and fake optimizer/HTTP bounda
 
 An open-source project from Wolfsblvt Works.
 
+## Local agent integration
+
+```sh
+smolpng skill install --target agents       # preview only
+smolpng skill install --target agents --apply
+smolpng skill status --json
+smolpng skill package --target chatgpt --output smolpng-skill.zip
+```
+
+The embedded instructions follow the installed CLI. Destinations and exact hashes are tracked; synchronization never silently overwrites local edits. Custom paths and instruction-only ChatGPT packaging are supported. See the [Agent Skill guide](docs/agent-skill.md) for version replacement, safe updates and the local-runtime boundary.
+
 ## License
 
 Application and ordinary docs: [MIT](LICENSE). Generated corpus: CC0. Dependencies and future website/brand terms remain separate in the [license map](license-map.md).

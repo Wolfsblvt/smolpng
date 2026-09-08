@@ -17,3 +17,5 @@ Future copyable presets use CC0. Future `site/src/` uses AGPL-3.0-or-later; prot
 The standard distribution includes neither pngquant nor OxiPNG executables. The software license does not grant rights to nonexistent or later excluded official artwork. Plain product references are not an invented registered trademark claim.
 
 `presets/examples/**` is now present and dedicated to CC0-1.0 by its local `LICENSE`. The user-facing configuration reference remains MIT.
+
+`skills/smolpng/**` and its embedded/package representation are MIT; the package includes its own MIT `LICENSE`. The binary contains guidance, not optimizer executables.
