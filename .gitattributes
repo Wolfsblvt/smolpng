@@ -1,7 +1,4 @@
 * text=auto eol=lf
 *.png binary
-*.jpg binary
-*.jpeg binary
 *.zip binary
-*.gz binary
-*.ico binary
+*.bundle binary

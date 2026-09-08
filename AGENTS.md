@@ -2,7 +2,7 @@
 
 ## Meaning
 
-This repository owns smolpng, the local-first image compressor for humans, scripts, and agents. Wolf authorized this private implementation and its ordinary Git delivery. The application is PNG-first; PNG and JPEG, desktop convenience, shareable presets, Agent Skills, and distribution remain the accepted 1.0 destination. This initial instruction file establishes the repository boundary; it does not claim an application or test suite exists yet.
+This repository owns smolpng, the local-first image compressor for humans, scripts, and agents. Wolf authorized this private implementation and its ordinary Git delivery. The application is PNG-first; PNG and JPEG, desktop convenience, shareable presets, Agent Skills, and distribution remain the accepted 1.0 destination. The current source implements the deterministic PNG CLI and focused tests; desktop and broader 1.0 behavior remain separately qualified.
 
 ## Source and boundaries
 
@@ -28,4 +28,4 @@ Bootstrap may commit directly. Later coherent work uses contribution-named branc
 
 ## Commands
 
-No executable source exists in this initial instruction commit. Add exact bootstrap, build, verification, and smoke commands here and in `docs/DEVELOPMENT.md` with the first runnable cut; never call this instruction-only state a candidate release.
+Bootstrap: `go mod download`. Build: `go build -o artifacts/bin/ ./cmd/smolpng`. Root verification: `go test ./...`; static check: `go vet ./...`. Smoke: `go run ./cmd/smolpng capabilities --json`. `docs/DEVELOPMENT.md` owns platform, fixture and real-host details.

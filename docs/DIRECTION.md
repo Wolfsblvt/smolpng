@@ -2,14 +2,14 @@
 
 ## Meaning
 
-The current outcome is the first useful private smolpng implementation: deterministic PNG compression, then configuration/presets and human workflow, then managed dependencies and update-aware Agent Skills. This document carries the current implementation boundary while repository Work is being established; it does not shrink the complete destination in Vision.
+The first useful source cut is a deterministic static-PNG CLI. Configuration, shareable presets, the keyboard workflow and installed Agent Skills are the next selected product work. This is sequencing of the full Vision, not a reduced product destination.
 
-## Current source
+## Current behavior
 
-Repository instructions, licensing map, and maintained product orientation are present. There is not yet a runnable application or a passing product test suite. A temporary CI transport is being qualified because the authoring sandbox cannot resolve the public Go module proxy.
+Files, directories, globs, URLs, stdin and an injectable clipboard resolve to planned jobs. Four built-ins, original-derived pngquant/OxiPNG candidates, strict target search, explicit resizing, metadata/pixel validation, collision-safe atomic writes, JSON/JSONL and capability/inspection commands are implemented. Ten original CC0 specimens and focused domain, filesystem, process, workflow and CLI tests accompany the source.
 
-## Coherent delivery line
+Normal tests use fake optimizer and HTTP boundaries. Real optimizer output quality, actual Windows/Linux/macOS clipboard and desktop behavior, signing, publication and external credentials remain separate qualification surfaces. The next source work can continue without pretending those surfaces have been observed.
 
-Implement a format-neutral request/result domain, original-derived PNG candidates, strict targets, safe input/output, local tool discovery, deterministic reports, and focused tests. Next add OS-standard TOML, declarative presets, keyboard workflow, clipboard/platform seams, and recoverable results. Next carry dependency installation, embedded Skill lifecycle and modified-file protection, update/channel foundations, completions, and a bounded real-host qualification packet.
+## Next coherent boundary
 
-Continue accepted 1.0 work while useful progress is possible. Final visual identity, website experience, and hosted-product decisions have separate parallel owners. Public effects, signing/credentials, legal brand approval, and real desktop qualification remain exact external boundaries—not excuses to abandon source work.
+Implement user/project TOML and field provenance, immutable built-ins and inherited named presets, import preview, safe collision handling, normal/resolved export and pinned placement. Then reuse that path for TUI/onboarding, native clipboard and recoverable results, followed by version-bound Skill installation/synchronization. Current Work stays in the implementation conversation; durable documents own behavior, not an accumulating task queue.

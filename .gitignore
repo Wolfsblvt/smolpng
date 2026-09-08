@@ -1,16 +1,6 @@
-# Product build and test output
 /artifacts/
-# Go tool-owned output
+/smolpng
+/smolpng.exe
 *.test
-*.prof
-coverage.out
-# Local settings and secrets
 .env
-.env.*
-!.env.example
-.smolpng.local.toml
-# Editor state
-.idea/
-.vscode/
-.DS_Store
-Thumbs.db
+/testdata/corpus/*.smol*.png

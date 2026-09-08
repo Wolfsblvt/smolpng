@@ -1,0 +1,153 @@
+package workflow
+
+import (
+	"bytes"
+	"context"
+	"github.com/Wolfsblvt/smolpng/internal/domain"
+	"github.com/Wolfsblvt/smolpng/internal/input"
+	"github.com/Wolfsblvt/smolpng/internal/output"
+	"github.com/Wolfsblvt/smolpng/internal/pngimage"
+	"github.com/Wolfsblvt/smolpng/internal/process"
+	"github.com/Wolfsblvt/smolpng/internal/testutil"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+)
+
+func TestAutoUsesOriginalForEveryQuantization(t *testing.T) {
+	r, _ := domain.Builtin("auto")
+	data := testutil.Corpus()["flat-icon.png"]
+	runner := &testutil.Runner{}
+	cache := t.TempDir()
+	e := Engine{Runner: runner, Tools: testutil.Tools(), Limits: domain.DefaultLimits(), CacheDir: cache}
+	out, er := e.Optimize(context.Background(), data, r)
+	if er != nil || len(out.Candidate.Data) >= len(data) {
+		t.Fatal(out, er)
+	}
+	calls := 0
+	for _, c := range runner.Calls() {
+		if c.Invocation.Executable == "pngquant" {
+			calls++
+			if !bytes.Equal(data, c.Input) {
+				t.Fatal("lossy generation chaining")
+			}
+		}
+	}
+	if calls < 2 {
+		t.Fatal("Auto alternatives not exercised")
+	}
+	files, _ := os.ReadDir(cache)
+	if len(files) > 0 {
+		t.Fatal("temporary output leak")
+	}
+}
+func TestStrictLosslessAcrossCorpus(t *testing.T) {
+	r, _ := domain.Builtin("lossless")
+	e := Engine{Runner: &testutil.Runner{}, Tools: testutil.Tools(), Limits: domain.DefaultLimits()}
+	for name, b := range testutil.Corpus() {
+		t.Run(name, func(t *testing.T) {
+			out, err := e.Optimize(context.Background(), b, r)
+			if err != nil {
+				t.Fatal(err)
+			}
+			a, _ := pngimage.Decode(b, 1000000)
+			c, err := pngimage.Decode(out.Candidate.Data, 1000000)
+			if err != nil || !pngimage.PixelEqual(a.Image, c.Image) {
+				t.Fatal("lost pixels", err)
+			}
+		})
+	}
+}
+func TestTargetMetMissAndNearestOutput(t *testing.T) {
+	d := t.TempDir()
+	p := filepath.Join(d, "a.png")
+	data := testutil.Corpus()["flat-icon.png"]
+	_ = os.WriteFile(p, data, 0600)
+	src := input.Source{Kind: "file", Path: p, Display: p, Name: "a.png"}
+	r, _ := domain.Builtin("auto")
+	e := Engine{Runner: &testutil.Runner{}, Tools: testutil.Tools(), Limits: domain.DefaultLimits()}
+	r.TargetBytes = 512
+	out, err := e.Optimize(context.Background(), data, r)
+	if err != nil || len(out.Candidate.Data) > 512 {
+		t.Fatal(err)
+	}
+	r.TargetBytes = 1
+	js, _ := output.Plan([]input.Source{src}, output.Options{}, time.Now())
+	b := Batch{Engine: e}
+	report := b.Run(context.Background(), js, Options{Recipe: r})
+	if report.ExitCode != 6 || report.Results[0].Output != "" {
+		t.Fatal(report)
+	}
+	r.AcceptNearest = true
+	report = b.Run(context.Background(), js, Options{Recipe: r})
+	if report.ExitCode != 6 || report.Results[0].Output == "" {
+		t.Fatal(report)
+	}
+}
+func TestQualityRejectionNotHardFailure(t *testing.T) {
+	runner := &testutil.Runner{Handler: func(context.Context, process.Invocation) (process.Result, error, bool) {
+		return process.Result{ExitCode: 99}, nil, true
+	}}
+	ts := testutil.Tools()
+	ts.OxiPNG.Available = false
+	r, _ := domain.Builtin("auto")
+	data := testutil.Corpus()["flat-icon.png"]
+	out, e := (Engine{Runner: runner, Tools: ts, Limits: domain.DefaultLimits()}).Optimize(context.Background(), data, r)
+	if e != nil || !bytes.Equal(out.Candidate.Data, data) {
+		t.Fatal(e)
+	}
+}
+func TestCorruptOptimizerAndCancellationDoNotCommit(t *testing.T) {
+	runner := &testutil.Runner{Handler: func(ctx context.Context, i process.Invocation) (process.Result, error, bool) {
+		dest := ""
+		for n, a := range i.Args {
+			if a == "--out" {
+				dest = i.Args[n+1]
+			}
+		}
+		_ = os.WriteFile(dest, []byte("not PNG"), 0600)
+		return process.Result{}, nil, true
+	}}
+	r, _ := domain.Builtin("lossless")
+	e := Engine{Runner: runner, Tools: testutil.Tools(), Limits: domain.DefaultLimits()}
+	if _, er := e.Optimize(context.Background(), testutil.Corpus()["flat-icon.png"], r); domain.Code(er) != 5 {
+		t.Fatal(er)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, er := e.Optimize(ctx, nil, r); domain.Code(er) != 130 {
+		t.Fatal(er)
+	}
+}
+func TestTargetResizeNeedsPermission(t *testing.T) {
+	r, _ := domain.Builtin("auto")
+	r.TargetBytes = 300
+	r.MinDimensions = domain.Dimensions{Width: 4, Height: 4}
+	ts := testutil.Tools()
+	ts.PNGQuant.Available = false
+	e := Engine{Runner: &testutil.Runner{}, Tools: ts, Limits: domain.DefaultLimits()}
+	data := testutil.Corpus()["synthetic-noise.png"]
+	if _, err := e.Optimize(context.Background(), data, r); domain.Code(err) != 6 {
+		t.Fatal(err)
+	}
+	r.AllowResize = true
+	out, err := e.Optimize(context.Background(), data, r)
+	if err != nil || out.Candidate.Info.Dimensions.Width < 4 || len(out.Candidate.Data) > 300 {
+		t.Fatal(out.Candidate.Info, err)
+	}
+}
+func TestRemotePermissionAndSafeArgumentBoundary(t *testing.T) {
+	r, _ := domain.Builtin("auto")
+	r.Engine = "tinypng"
+	if _, e := (Engine{Limits: domain.DefaultLimits()}).Optimize(context.Background(), nil, r); domain.Code(e) != 2 {
+		t.Fatal(e)
+	}
+	r, _ = domain.Builtin("auto")
+	for _, s := range []string{"--output=evil", "--force", "--quality=0-1", "file.png"} {
+		r.PNGQuantArgs = []string{s}
+		if ValidateExtras(r) == nil {
+			t.Fatal(s)
+		}
+	}
+}

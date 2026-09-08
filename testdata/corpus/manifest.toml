@@ -1,0 +1,132 @@
+# SPDX-License-Identifier: CC0-1.0
+schema = 1
+
+[[image]]
+path = "alpha-gradient.png"
+creator = "Wolfsblvt Works contributors"
+source = "project-generated"
+method = "internal/testutil/testutil.go"
+license = "CC0-1.0"
+redistributable = true
+purpose = "alpha-gradient"
+width = 64
+height = 64
+alpha = true
+sha256 = "330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b"
+
+[[image]]
+path = "flat-icon.png"
+creator = "Wolfsblvt Works contributors"
+source = "project-generated"
+method = "internal/testutil/testutil.go"
+license = "CC0-1.0"
+redistributable = true
+purpose = "flat-icon"
+width = 64
+height = 64
+alpha = false
+sha256 = "d87229a77e666159c877ddaa69decbe236daa0d0cc665f31edee3c286a05e85d"
+
+[[image]]
+path = "gray16.png"
+creator = "Wolfsblvt Works contributors"
+source = "project-generated"
+method = "internal/testutil/testutil.go"
+license = "CC0-1.0"
+redistributable = true
+purpose = "gray16"
+width = 17
+height = 13
+alpha = false
+sha256 = "2f547a5429916934c4b4f3e0180788b26391f4d6c065bedba8e111e2d9ec0fc4"
+
+[[image]]
+path = "hidden-rgb.png"
+creator = "Wolfsblvt Works contributors"
+source = "project-generated"
+method = "internal/testutil/testutil.go"
+license = "CC0-1.0"
+redistributable = true
+purpose = "hidden-rgb"
+width = 16
+height = 16
+alpha = true
+sha256 = "f399336a1aa62f14e56c26ba58c12be0226bc38971fb188fa991589437af0196"
+
+[[image]]
+path = "indexed.png"
+creator = "Wolfsblvt Works contributors"
+source = "project-generated"
+method = "internal/testutil/testutil.go"
+license = "CC0-1.0"
+redistributable = true
+purpose = "indexed"
+width = 19
+height = 23
+alpha = true
+sha256 = "d5876d50988e75a4ba66ee2ca95857fa5788ef6f7d1ac0a83ff082ac5e314907"
+
+[[image]]
+path = "interlaced.png"
+creator = "Wolfsblvt Works contributors"
+source = "project-generated"
+method = "internal/testutil/testutil.go"
+license = "CC0-1.0"
+redistributable = true
+purpose = "interlaced"
+width = 17
+height = 13
+alpha = true
+sha256 = "8d54afc2f98f04825de5024db2ae9431bee23e58edbf21defd19dfeb2c4ac5ae"
+
+[[image]]
+path = "metadata.png"
+creator = "Wolfsblvt Works contributors"
+source = "project-generated"
+method = "internal/testutil/testutil.go"
+license = "CC0-1.0"
+redistributable = true
+purpose = "metadata"
+width = 32
+height = 32
+alpha = false
+sha256 = "e1dfd47d208d7adcd636d1b3fa3cb839234d9cb013ff0d86b33d143a1380e0cf"
+
+[[image]]
+path = "screenshot.png"
+creator = "Wolfsblvt Works contributors"
+source = "project-generated"
+method = "internal/testutil/testutil.go"
+license = "CC0-1.0"
+redistributable = true
+purpose = "screenshot"
+width = 96
+height = 48
+alpha = false
+sha256 = "3fb6c9e79a8cc98617c9896b455af9e199de895078c344cd67997e147d4e9550"
+
+[[image]]
+path = "synthetic-noise.png"
+creator = "Wolfsblvt Works contributors"
+source = "project-generated"
+method = "internal/testutil/testutil.go"
+license = "CC0-1.0"
+redistributable = true
+purpose = "synthetic-noise"
+width = 128
+height = 96
+alpha = false
+sha256 = "097da7231c41b3b33e97b7ae535c41c82b2bfdc63e5e55f61615a670009fef5b"
+
+[[image]]
+path = "tiny.png"
+creator = "Wolfsblvt Works contributors"
+source = "project-generated"
+method = "internal/testutil/testutil.go"
+license = "CC0-1.0"
+redistributable = true
+purpose = "tiny"
+width = 1
+height = 1
+alpha = true
+sha256 = "40b27d05a27ae41c2983b2a17aa488bce4e08c39ecf13a00bbc7ea869ee60a34"

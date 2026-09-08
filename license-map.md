@@ -2,19 +2,16 @@
 
 ## Meaning
 
-smolpng is a mixed-license product. This map identifies the selected rights boundaries and distinguishes paths that exist from future material. No commissioned brand assets, website, or custom brand license have been adopted yet. A private repository is not a public release.
+The application, data-only examples, generated test media and future website/brand work have separate rights. This map identifies current material and the already-selected future boundaries; no custom brand policy is presented as reviewed legal text.
 
-## Current material
-
-| Material | License |
+| Path/material | License |
 | --- | --- |
-| Application source, Agent Skill, ordinary documentation, repository tooling | MIT; root `LICENSE` |
-| Third-party libraries and tools | Their own licenses; `third-party-notices.md` |
+| Project Go code, generator, ordinary docs and repository tooling | MIT, root `LICENSE` |
+| `testdata/corpus/**` generated PNGs and manifest | CC0-1.0, local `LICENSE` |
+| `LICENSES/**` and third-party source notices | Their own unchanged terms |
 
-## Boundaries applied as material arrives
+Standard MIT, CC0-1.0 and AGPL-3.0-or-later texts are installed in `LICENSES/`. Compiled dependency notices are in `third-party-notices.md`.
 
-Project-authored copyable examples under `presets/examples/` and generated images under `testdata/corpus/` receive CC0-1.0 with local license files and provenance. Future website implementation under `site/src/` is AGPL-3.0-or-later. Reserved website editorial copy belongs separately under `site/content/`; ordinary factual CLI documentation remains MIT. No website is implemented by this foundation.
+Future copyable presets use CC0. Future `site/src/` uses AGPL-3.0-or-later; protected editorial copy stays separately under `site/content/`. Future sibling smolpng-web is AGPL-3.0-or-later. Brand files require the artist grant and qualified custom policy before they are added. Those future selections do not relicense the current MIT application.
 
-Mascot, icons, marks, and other brand assets require an artist grant and reviewed proprietary brand-assets terms before inclusion. The proposed unchanged-distribution/rebranding policy is not a final legal license. No rights to nonexistent assets are claimed here. Future `smolpng-web` is a separately licensed AGPL-3.0-or-later product.
-
-The standard application distribution does not contain pngquant or OxiPNG executables. A separately installed optimizer retains its own license; external-process use is not a blanket redistribution clearance. Publication requires review of the exact package composition.
+The standard distribution includes neither pngquant nor OxiPNG executables. The software license does not grant rights to nonexistent or later excluded official artwork. Plain product references are not an invented registered trademark claim.

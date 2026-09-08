@@ -2,16 +2,22 @@
 
 ## Meaning
 
-smolpng is a local image-optimization orchestrator with one engine behind human and machine interfaces. This initial record describes the accepted load-bearing seams and distinguishes them from current implementation: application source is not yet present.
+The current static-PNG CLI has one format-neutral recipe/result domain and one compression engine. This document describes actual components and the accepted seams that later TUI, drop and agent consumers must reuse.
 
-## Accepted shape
+## Data flow
 
-Inputs resolve into format-neutral jobs. Configuration and recipes produce explicit requests. The PNG planner creates original-derived candidates through separately discovered pngquant and OxiPNG processes. Validation and selection enforce pixels/dimensions/target policy. The output boundary atomically writes the artifact; reporting exposes a stable structured result. The TUI and background launcher call this same path.
+`cmd/smolpng` installs cancellation. `internal/cli` maps Cobra flags into recipe/input/output options. `input.Resolver` plans sources without reading images or downloading; `output.Plan` resolves all destinations before optimization. `workflow.Batch` owns per-image deadlines and original preservation. `workflow.Engine` creates original-derived candidates and selects an actual validated result.
 
-External boundaries are the process runner, HTTP transport, clipboard, native credential store, and desktop integration. Pure policy, naming, size parsing, and candidate ranking remain directly testable. No dependency-injection framework, dynamic registry, local MCP service, or second engine is selected.
+`process.Runner` uses direct argument arrays without a shell and removes `TINIFY_API_KEY` from optimizer environments. Discovery resolves invocation, configured, system and managed paths with local version probes. Managed downloads are not yet implemented. The clipboard is an injected boundary, not yet a native desktop claim.
 
-## State and horizon
+## Image invariants
 
-User TOML, project TOML, and named presets are separate from state such as last result and Skill installation hashes. Credentials never enter these files. Installed Skills have a manifest and explicit management state. Updates respect distribution ownership and only synchronize unmodified files.
+PNG chunks and CRCs are validated; dimensions are bounded before decode. Every quantization starts from the original, or a fresh authorized resize of the original. Only the lossless OxiPNG tail receives a quantized candidate. Strict lossless compares unassociated 16-bit channels including invisible RGB. Target preference is satisfaction, area, declared recipe rank and bytes, not a measured perceptual score. Only the incumbent candidate is retained between attempts.
 
-JPEG is accepted but its backend remains subject to corpus and packaging evidence. The future self-hosted sibling consumes a deliberately stable CLI/JSON artifact contract. Neither future consumer earns empty provider packages or hosted infrastructure in this repository.
+Safe metadata removes text/time fields and preserves rendering metadata. Pixel-identical output can recover original ICC/color information. Quantized output must retain the encoder's color interpretation because pngquant may convert to sRGB; blindly restoring the old profile would mislabel transformed pixels. Physical and orientation metadata are recovered separately.
+
+## Files and future consumers
+
+Outputs use a synced temporary sibling and atomic rename/MoveFileEx, or exclusive Unix hard-link publication for no-clobber writes. A race-time collision fails instead of changing a reserved batch plan. In-place checks original bytes again before replacement; it is not a lock against a hostile directory owner.
+
+User/project configuration and presets will produce these same recipe and job options. Native clipboard, TUI, last-result state, installed Skill hashes and updater decisions are separate boundaries, not another compressor. The full JPEG and hosted sibling destination remains in Vision; it does not require an empty registry or local MCP server.
