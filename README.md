@@ -26,7 +26,39 @@ smolpng inspect icon.png --json
 
 Detached clipboard/URL/stdin output uses the operating-system Downloads folder under `smolpng/`. `--in-place` is the explicit destructive exception. `--output -` streams clean PNG bytes; use `--report-file` instead of JSON on that same stream.
 
-Built-ins: `auto`, `web`, `smallest`, `lossless`. Auto never uploads. The native clipboard, TUI, configuration/preset lifecycle, TinyPNG, managed installation and Agent Skill are the next product cuts, not currently claimed here. [CLI reference](docs/cli.md) · [Development](docs/DEVELOPMENT.md) · [Current boundary](docs/DIRECTION.md).
+Built-ins: `auto`, `web`, `smallest`, `lossless`. Auto never uploads. The native clipboard, TUI, TinyPNG, managed installation and Agent Skill are the next product cuts, not currently claimed here. [CLI reference](docs/cli.md) · [Development](docs/DEVELOPMENT.md) · [Current boundary](docs/DIRECTION.md).
+
+## Share a recipe, not a script
+
+Place this in your project's `.smolpng.toml`, or copy it to a file and preview/import it with `smolpng preset import recipe.toml` and then `--apply`:
+
+```toml
+[presets.mcp-icon]
+schema = 1
+label = "MCP icon · ≤10 KiB"
+extends = "auto"
+formats = ["png"]
+target_size = "10KiB"
+min_quality = 55
+allow_resize = true
+min_dimensions = "64x64"
+remote = "never"
+clipboard = "smart"
+
+[presets.mcp-icon.menu]
+pinned = true
+position = 2
+```
+
+```sh
+smolpng compress icon.png --preset mcp-icon --json
+smolpng config show --effective --preset mcp-icon --provenance
+smolpng preset export mcp-icon --resolved
+```
+
+User settings, the nearest project config, inherited presets and explicit flags combine predictably. Imports cannot contain commands, secrets, executable paths or a global upload permission. A preview shows collision renames or replacements before an import is committed. Export preserves parents, or freezes effective recipe values. Clipboard preference and menu placement are stored for the upcoming human workflow, not silently applied by scripts.
+
+[Preset and configuration reference](docs/presets.md) · [Copyable CC0 examples](presets/examples/)
 
 ## Verify
 

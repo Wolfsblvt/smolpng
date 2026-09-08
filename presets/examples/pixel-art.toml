@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: CC0-1.0
+[presets.pixel-art]
+schema = 1
+label = "Pixel art"
+extends = "web"
+formats = ["png"]
+quality = "85-100"
+dither = "none"
+colors = 128
+remote = "never"

@@ -37,3 +37,7 @@ Binary `--stdout`/`--output -` is incompatible with JSON stdout. Use `--report-f
 | 7 | HTTP/remote operation failure |
 | 8 | Partial or failed batch |
 | 130 | Cancellation |
+
+## Configuration and presets
+
+The implemented `config` and `preset` families are documented in [Configuration and presets](presets.md). `--config FILE` selects user configuration, `--no-project` suppresses project discovery, and `compress --preset NAME` now accepts inherited saved recipes. `config path` remains usable when parsing fails. These additions do not change binary stdout, target exit codes, or local-first permission.

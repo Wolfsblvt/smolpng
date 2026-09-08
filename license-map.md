@@ -15,3 +15,5 @@ Standard MIT, CC0-1.0 and AGPL-3.0-or-later texts are installed in `LICENSES/`. 
 Future copyable presets use CC0. Future `site/src/` uses AGPL-3.0-or-later; protected editorial copy stays separately under `site/content/`. Future sibling smolpng-web is AGPL-3.0-or-later. Brand files require the artist grant and qualified custom policy before they are added. Those future selections do not relicense the current MIT application.
 
 The standard distribution includes neither pngquant nor OxiPNG executables. The software license does not grant rights to nonexistent or later excluded official artwork. Plain product references are not an invented registered trademark claim.
+
+`presets/examples/**` is now present and dedicated to CC0-1.0 by its local `LICENSE`. The user-facing configuration reference remains MIT.

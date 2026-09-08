@@ -44,6 +44,7 @@ type app struct {
 	home, configPath                            string
 	noProject                                   bool
 	tools                                       toolchain.Paths
+	configuredTools                             toolchain.Paths
 }
 type reported int
 
@@ -129,7 +130,7 @@ func (a *app) resolver() input.Resolver {
 	return input.Resolver{Stdin: a.env.In, Clipboard: a.env.Clipboard}
 }
 func (a *app) discover(ctx context.Context, p paths.Paths) toolchain.Set {
-	return toolchain.Discover(ctx, a.env.Runner, a.tools, toolchain.Paths{ManagedRoot: filepath.Join(p.Data, "tools")})
+	return toolchain.Discover(ctx, a.env.Runner, a.tools, a.configuredTools)
 }
 func (a *app) root() *cobra.Command {
 	c := &cobra.Command{Use: "smolpng [INPUT...]", Short: "Make images smol.", SilenceUsage: true, SilenceErrors: true}
@@ -140,6 +141,8 @@ func (a *app) root() *cobra.Command {
 	p.BoolVar(&a.verbose, "verbose", false, "Include exact optimizer argument arrays")
 	p.BoolVar(&a.portable, "portable", false, "Use config/state beside the executable")
 	p.StringVar(&a.home, "home", "", "Explicit portable data root")
+	p.StringVar(&a.configPath, "config", "", "Explicit user config file (must exist)")
+	p.BoolVar(&a.noProject, "no-project", false, "Do not load project .smolpng.toml")
 	p.StringVar(&a.tools.PNGQuant, "pngquant-path", "", "Explicit pngquant executable")
 	p.StringVar(&a.tools.OxiPNG, "oxipng-path", "", "Explicit OxiPNG executable")
 	c.MarkFlagsMutuallyExclusive("json", "jsonl")
@@ -156,12 +159,12 @@ func (a *app) root() *cobra.Command {
 	compress := &cobra.Command{Use: "compress INPUT...", Short: "Compress deterministically; never prompt"}
 	cf.bind(compress)
 	compress.RunE = func(c *cobra.Command, args []string) error { return a.compress(c, args, cf) }
-	c.AddCommand(compress, a.inspectCommand())
+	c.AddCommand(compress, a.inspectCommand(), a.configCommand(), a.presetCommand())
 	c.AddCommand(&cobra.Command{Use: "version", Args: cobra.NoArgs, Short: "Build identity", RunE: func(*cobra.Command, []string) error {
 		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "commit": Commit, "distribution": Distribution, "platform": runtime.GOOS + "/" + runtime.GOARCH})
 	}})
 	c.AddCommand(&cobra.Command{Use: "capabilities", Args: cobra.NoArgs, Short: "Discover implemented features", RunE: func(*cobra.Command, []string) error {
-		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "formats": []string{"png"}, "presets": []string{"auto", "web", "smallest", "lossless"}, "targetSize": true, "explicitResize": true, "remoteDefault": "never", "remoteImplemented": false, "config": false, "interactive": false, "nativeClipboard": false, "exitCodes": map[string]int{"success": 0, "arguments": 2, "input": 3, "dependency": 4, "optimizer": 5, "target": 6, "network": 7, "batch": 8, "cancelled": 130}})
+		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "formats": []string{"png"}, "presets": []string{"auto", "web", "smallest", "lossless"}, "targetSize": true, "explicitResize": true, "remoteDefault": "never", "remoteImplemented": false, "config": true, "namedPresets": true, "presetImport": true, "interactive": false, "nativeClipboard": false, "exitCodes": map[string]int{"success": 0, "arguments": 2, "input": 3, "dependency": 4, "optimizer": 5, "target": 6, "network": 7, "batch": 8, "cancelled": 130}})
 	}})
 	c.AddCommand(&cobra.Command{Use: "doctor", Args: cobra.NoArgs, Short: "Inspect paths and optimizer status", RunE: a.doctor})
 	deps := &cobra.Command{Use: "deps", Short: "Separately installed optimizer dependencies"}
@@ -169,6 +172,9 @@ func (a *app) root() *cobra.Command {
 	deps.AddCommand(&cobra.Command{Use: "licenses", Args: cobra.NoArgs, RunE: func(c *cobra.Command, _ []string) error {
 		p, e := a.dirs()
 		if e != nil {
+			return e
+		}
+		if _, e = a.loadConfig(p); e != nil {
 			return e
 		}
 		return a.emit(a.discover(c.Context(), p))
@@ -180,6 +186,9 @@ func (a *app) root() *cobra.Command {
 		}
 		p, e := a.dirs()
 		if e != nil {
+			return e
+		}
+		if _, e = a.loadConfig(p); e != nil {
 			return e
 		}
 		ts := a.discover(c.Context(), p)
@@ -224,11 +233,46 @@ func (a *app) compress(c *cobra.Command, args []string, f *compressFlags) error 
 	if e != nil {
 		return e
 	}
-	r, e := domain.Builtin(f.Preset)
+	w, e := a.loadConfig(p)
+	if e != nil {
+		return e
+	}
+	name := ""
+	if c.Flags().Changed("preset") {
+		name = f.Preset
+	}
+	overrides, e := f.configOverrides(c)
 	if e != nil {
 		return domain.E(2, e.Error(), e)
 	}
-	r, e = f.apply(c, r)
+	effective, e := w.Resolve(name, overrides)
+	if e != nil {
+		return domain.E(2, e.Error(), e)
+	}
+	if e = effective.CheckUsable(); e != nil {
+		return domain.E(2, e.Error(), e)
+	}
+	changed := c.Flags().Changed
+	if !changed("jobs") {
+		f.Jobs = effective.Jobs
+	}
+	if !changed("recursive") && !f.NoRecursive {
+		f.Input.Options.Recursive = effective.Recursive
+	}
+	if !changed("template") {
+		f.Output.Template = effective.Output.Template
+	}
+	if !changed("collision") {
+		f.Output.Collision = effective.Output.Collision
+	}
+	if !changed("overwrite") {
+		f.Output.Overwrite = effective.Output.Overwrite
+	}
+	if !changed("output-dir") && f.Output.Path == "" && !f.Stdout && !f.Output.InPlace {
+		f.Output.Directory = effective.Output.Directory
+	}
+	f.Output.Detached = effective.Output.Detached
+	r, e := f.apply(c, effective.Recipe)
 	if e != nil {
 		return domain.E(2, e.Error(), e)
 	}
@@ -258,7 +302,7 @@ func (a *app) compress(c *cobra.Command, args []string, f *compressFlags) error 
 	f.Output.Path = absolute(f.Output.Path)
 	f.Output.Directory = absolute(f.Output.Directory)
 	f.ReportFile = absolute(f.ReportFile)
-	f.Output.Detached = p.Detached()
+	// Detached output comes from effective configuration, never the working directory.
 	f.Input.Options.CWD = cwd
 	f.Input.Options.OutputDir = f.Output.Directory
 	if f.NoRecursive {
@@ -349,6 +393,9 @@ func human(w io.Writer, report domain.Report) error {
 func (a *app) doctor(c *cobra.Command, _ []string) error {
 	p, e := a.dirs()
 	if e != nil {
+		return e
+	}
+	if _, e = a.loadConfig(p); e != nil {
 		return e
 	}
 	ts := a.discover(c.Context(), p)

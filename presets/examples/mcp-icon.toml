@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: CC0-1.0
+[presets.mcp-icon]
+schema = 1
+label = "MCP icon · ≤10 KiB"
+description = "Makes a PNG suitable for a strict icon upload limit."
+extends = "auto"
+formats = ["png"]
+target_size = "10KiB"
+min_quality = 55
+allow_resize = true
+min_dimensions = "64x64"
+remote = "never"
+clipboard = "smart"
+
+[presets.mcp-icon.menu]
+pinned = true
+position = 2

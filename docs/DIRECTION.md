@@ -2,7 +2,7 @@
 
 ## Meaning
 
-The first useful source cut is a deterministic static-PNG CLI. Configuration, shareable presets, the keyboard workflow and installed Agent Skills are the next selected product work. This is sequencing of the full Vision, not a reduced product destination.
+The first useful source cut is a deterministic static-PNG CLI. User/project configuration and shareable presets are implemented alongside it. The keyboard workflow and installed Agent Skills are the next selected product work. This is sequencing of the full Vision, not a reduced product destination.
 
 ## Current behavior
 
@@ -12,4 +12,4 @@ Normal tests use fake optimizer and HTTP boundaries. Real optimizer output quali
 
 ## Next coherent boundary
 
-Implement user/project TOML and field provenance, immutable built-ins and inherited named presets, import preview, safe collision handling, normal/resolved export and pinned placement. Then reuse that path for TUI/onboarding, native clipboard and recoverable results, followed by version-bound Skill installation/synchronization. Current Work stays in the implementation conversation; durable documents own behavior, not an accumulating task queue.
+TOML layers, field provenance, immutable built-ins, inherited presets, import previews/collision handling, portable normal/resolved export and pinned placement now feed the existing CLI. Reuse that path for TUI/onboarding, native clipboard and recoverable results, followed by version-bound Skill installation/synchronization. Current Work stays in the implementation conversation; durable documents own behavior, not an accumulating task queue.

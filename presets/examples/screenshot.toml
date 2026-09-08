@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: CC0-1.0
+[presets.screenshot]
+schema = 1
+label = "Screenshot text"
+extends = "web"
+quality = "85-100"
+formats = ["png"]
+remote = "never"

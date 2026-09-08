@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: CC0-1.0
+[presets.archive]
+schema = 1
+label = "Archival PNG cleanup"
+extends = "lossless"
+formats = ["png"]
+metadata = "keep"
+remote = "never"
