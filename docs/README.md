@@ -14,6 +14,7 @@ The maintained subjects now span product, automation, human workflows, setup and
 | Stable automation interface | [CLI](cli.md) |
 | Settings, provenance and shared recipes | [Presets](presets.md) |
 | Keyboard, clipboard, drop and last result | [Desktop workflows](desktop.md) |
+| Optimizer discovery, licensed downloads and protected removal | [Dependencies](dependencies.md) |
 | Using and maintaining installed Agent Skills | [Agent Skill](agent-skill.md) |
 | Inputs, process/file safety and limits | [Security](SECURITY.md) |
 | Network use, clipboard and retained state | [Privacy and data](PRIVACY-AND-DATA.md) |

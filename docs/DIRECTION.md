@@ -12,7 +12,7 @@ Normal tests use fake optimizer and HTTP boundaries. Real optimizer output quali
 
 ## Next coherent boundary
 
-TOML layers, field provenance, immutable built-ins, inherited presets, import previews/collision handling, portable normal/resolved export and pinned placement now feed the existing CLI. TUI/onboarding, native clipboard, editable defaults and recoverable results now reuse that path. The next implementation/qualification boundary is managed optimizer delivery, real Windows/Linux desktop behavior and distribution-aware updates. Current Work stays in the implementation conversation; durable documents own behavior, not an accumulating task queue.
+TOML layers, field provenance, immutable built-ins, inherited presets, import previews/collision handling, portable normal/resolved export and pinned placement now feed the existing CLI. TUI/onboarding, native clipboard, editable defaults and recoverable results now reuse that path. Managed OxiPNG delivery, byte-verified selection, explicit system/managed preference and protected removal now accompany setup. The next qualification boundary is real optimizer and Windows/Linux graphical behavior; standalone application updating, desktop shortcut installers, TinyPNG and JPEG remain accepted source work. Current Work stays in the implementation conversation; durable documents own behavior, not an accumulating task queue.
 
 ## Agent integration status
 

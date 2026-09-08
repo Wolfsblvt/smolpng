@@ -90,8 +90,9 @@ type Updates struct {
 	Channel *string `toml:"channel,omitempty" json:"channel,omitempty"`
 }
 type Tools struct {
-	PNGQuant string `toml:"pngquant,omitempty" json:"pngquant,omitempty"`
-	OxiPNG   string `toml:"oxipng,omitempty" json:"oxipng,omitempty"`
+	Preference string `toml:"preference,omitempty" json:"preference,omitempty"`
+	PNGQuant   string `toml:"pngquant,omitempty" json:"pngquant,omitempty"`
+	OxiPNG     string `toml:"oxipng,omitempty" json:"oxipng,omitempty"`
 }
 type PNG struct {
 	Auto Fields `toml:"auto,omitempty" json:"auto,omitempty"`

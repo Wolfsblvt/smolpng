@@ -19,7 +19,7 @@ smolpng deps status --json
 smolpng preset list --json
 ```
 
-Check capabilities rather than assuming a newer feature exists. PNG compression is implemented. JPEG and remote TinyPNG may not be available in the installed version. Missing local tools are a setup problem, not permission to upload images. Inspect image properties with `smolpng inspect INPUT --json`.
+Check capabilities rather than assuming a newer feature exists. PNG compression is implemented. JPEG and remote TinyPNG may not be available in the installed version. Missing local tools are a setup problem, not permission to upload images. `smolpng deps install oxipng --json` previews a pinned native artifact; do not add `--apply` without permission to download and execute that dependency. PNGquant and unsupported native targets still require separate setup. Modified managed installations are preserved, not forcibly replaced. Inspect image properties with `smolpng inspect INPUT --json`.
 
 ## Deterministic workflow
 

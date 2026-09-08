@@ -6,7 +6,7 @@ The keyboard UI, native clipboard adapter, settings, background/drop command and
 
 ## Ordinary path
 
-Run `smolpng icon.png`, or copy an image/file/path and run `smolpng`. The first human launch checks local optimizers and lets you use available tools, configure executable paths, open an upstream download page or explicitly install the personal Agent Skill. Acknowledging setup is not a claim that both tools exist. Missing dependencies continue to produce ordinary engine errors. TinyPNG keys are never requested during local setup.
+Run `smolpng icon.png`, or copy an image/file/path and run `smolpng`. The first human launch checks local optimizers and lets you use available tools, configure executable paths, explicitly download/check a managed OxiPNG copy, open an upstream download page or explicitly install the personal Agent Skill. Acknowledging setup is not a claim that both tools exist. Missing dependencies continue to produce ordinary engine errors. TinyPNG keys are never requested during local setup.
 
 The recipe menu offers Auto, a strict size target, built-ins, pinned presets, saved recipes and a custom form. Arrow keys and Enter select; S changes source, comma opens settings, D opens setup and Q quits. Menus scroll when necessary. The tiny neutral header is replaceable and can be disabled in settings or with `--no-header`; it is not final mascot artwork. `--plain` reduces decoration. `--accessible` or a dumb terminal uses typed option names, blank to keep a value, `/clear` to empty a field and `/back` to return.
 
@@ -42,3 +42,5 @@ A missing notification is recoverable with `smolpng last`. `last --clear` remove
 Unit/integration tests exercise keyboard events, source priority, original preservation through repeat recipes, safe preset imports, exact smart-copy payloads, notification argument quoting, settings patches and state recovery. A real Linux pseudo-terminal has exercised Enter/Done and a target-already-satisfied image without an optimizer. Cross-builds cover the native API compilation paths only.
 
 Katja must still exercise actual PNG/file-list/path clipboard representations, browser file-picker paste, X11/Wayland ownership, Windows/macOS clipboard persistence, native notifications, no-console/console transition, drag/drop, locked outputs, cancellation and visual TUI rendering. Use the exact checkpoint and qualification carrier accompanying the candidate. Do not rebuild the product from scratch merely to run those checks.
+
+Setup offers the app-pinned OxiPNG archive only when a native catalog entry exists. It displays version, source, license, checksum and per-user destination before a separate download confirmation. Healthy current system/configured choices are not replaced. There is no catalog entry for pngquant or native Windows arm64 OxiPNG in this build; use existing installations or explicit paths. Preference changes and protected removal are in [Dependency setup](dependencies.md).

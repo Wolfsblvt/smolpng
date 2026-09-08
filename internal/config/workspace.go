@@ -112,7 +112,7 @@ func Load(o LoadOptions) (*Workspace, error) {
 	if e != nil {
 		return nil, e
 	}
-	if project.Document.Tools.PNGQuant != "" || project.Document.Tools.OxiPNG != "" {
+	if project.Document.Tools.PNGQuant != "" || project.Document.Tools.OxiPNG != "" || project.Document.Tools.Preference != "" {
 		return nil, fmt.Errorf("project configuration cannot choose executables; use user [tools] or explicit CLI paths")
 	}
 	w := &Workspace{User: user, Project: project, StorePath: filepath.Join(o.Paths.Data, "presets.toml"), Store: Bundle{Presets: map[string]Preset{}}, CWD: cwd, Paths: o.Paths}
@@ -501,6 +501,10 @@ func (e *Effective) applyDocument(l Layer, downloads string) error {
 	if d.Updates.Channel != nil {
 		e.UpdateChannel = *d.Updates.Channel
 		mark("updates.channel")
+	}
+	if d.Tools.Preference != "" {
+		e.Tools.Preference = d.Tools.Preference
+		mark("tools.preference")
 	}
 	if d.Tools.PNGQuant != "" {
 		e.Tools.PNGQuant = relativeTo(d.Tools.PNGQuant, filepath.Dir(l.Path))

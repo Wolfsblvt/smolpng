@@ -40,3 +40,7 @@ The keyboard and drop commands consume typed results from the same config/input/
 Huh/Bubble Tea and the cgo-free desktop clipboard package are retained for real keyboard forms and multi-representation copy. Native runtime availability is reported/qualified, not inferred from compilation. A small project-written text header remains replaceable. Plain and typed-name accessibility modes are available without inventing numbered-choice menus.
 
 Settings preserve handwritten TOML via byte-range edits from the pinned parser, validate both the project and standalone-user view, and recheck the file snapshot under a native lock. An unsupported document shape refuses instead of rewriting the whole file. App-owned preset storage remains separate.
+
+## Pinned dependency delivery, not upstream-latest execution
+
+Managed installation currently admits OxiPNG 10.2.1 only, on the five platforms with a selected native upstream archive/digest. Full archive verification precedes any version probe. Immutable retained versions and a small active index avoid overwriting a running Windows executable. Modified/untracked bytes are refused, and old app catalogs cannot downgrade a newer managed version. Explicit saved paths still win; system/managed preference is a user-only setting. Automatic pngquant and native Windows arm64 OxiPNG remain unqualified, not guessed from a nearby asset name. This does not authorize bundling, Store distribution or application self-update.

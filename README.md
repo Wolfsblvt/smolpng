@@ -15,7 +15,7 @@ go run ./cmd/smolpng deps status
 go run ./cmd/smolpng compress icon.png --target-size 10KiB --json
 ```
 
-Install pngquant/OxiPNG separately or use `--pngquant-path` and `--oxipng-path`. The result defaults to `icon.smol.png` beside `icon.png`; existing outputs get a collision number. A target is `outputBytes <= requestedBytes`, so `10KB` is 10,000 bytes and `10KiB` is 10,240. Missing a target exits `6`; `--accept-nearest` may write the best result but does not pretend the target was met.
+Install pngquant separately. For OxiPNG, `smolpng deps install oxipng` previews a pinned upstream archive; add `--apply` to download, verify and install it per-user. Or use existing tools with `--pngquant-path` and `--oxipng-path`. The result defaults to `icon.smol.png` beside `icon.png`; existing outputs get a collision number. A target is `outputBytes <= requestedBytes`, so `10KB` is 10,000 bytes and `10KiB` is 10,240. Missing a target exits `6`; `--accept-nearest` may write the best result but does not pretend the target was met.
 
 ```sh
 smolpng compress icon.png --preset lossless
@@ -26,7 +26,7 @@ smolpng inspect icon.png --json
 
 Detached clipboard/URL/stdin output uses the operating-system Downloads folder under `smolpng/`. `--in-place` is the explicit destructive exception. `--output -` streams clean PNG bytes; use `--report-file` instead of JSON on that same stream.
 
-Built-ins: `auto`, `web`, `smallest`, `lossless`. Auto never uploads. The TUI, native clipboard adapter, background/drop workflow, last-result recovery and tracked Agent Skill are implemented. Actual graphical clipboard/notification behavior still needs real-host qualification; TinyPNG and managed optimizer downloads are not implemented yet. [CLI reference](docs/cli.md) · [Development](docs/DEVELOPMENT.md) · [Current boundary](docs/DIRECTION.md).
+Built-ins: `auto`, `web`, `smallest`, `lossless`. Auto never uploads. The TUI, native clipboard adapter, background/drop workflow, last-result recovery and tracked Agent Skill are implemented. Actual graphical clipboard/notification behavior still needs real-host qualification; TinyPNG is not implemented yet. Managed OxiPNG uses pinned 10.2.1 archives on Linux/macOS x64/arm64 and Windows x64; pngquant and native Windows arm64 OxiPNG remain manual. [Dependency setup](docs/dependencies.md). [CLI reference](docs/cli.md) · [Development](docs/DEVELOPMENT.md) · [Current boundary](docs/DIRECTION.md).
 
 ## One action for a human
 
@@ -38,7 +38,7 @@ smolpng last --json                # Recover a dismissed notification's result
 smolpng settings                   # Edit user defaults without erasing comments
 ```
 
-Use arrows/Enter, `S` for source, `,` for settings, `D` for setup, and result shortcuts for copying or opening the folder. First use checks local tools and offers explicit paths or the optional Agent Skill; it does not download anything or require an API key. Copy a valid preset block before launch to preview/import it. The header is a two-line replaceable placeholder, not final commissioned art.
+Use arrows/Enter, `S` for source, `,` for settings, `D` for setup, and result shortcuts for copying or opening the folder. First use checks local tools and offers explicit paths, a separately confirmed managed OxiPNG download, or the optional Agent Skill. It neither downloads before that confirmation nor requires an API key. Copy a valid preset block before launch to preview/import it. The header is a two-line replaceable placeholder, not final commissioned art.
 
 `--plain` removes decorative styling; `--accessible` uses typed choice names rather than arrow keys or numbered menus. `--no-header` removes the header. Scripts should use `compress`; a redirected interactive invocation refuses rather than hanging for input.
 

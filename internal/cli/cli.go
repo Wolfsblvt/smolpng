@@ -21,6 +21,7 @@ import (
 	"github.com/Wolfsblvt/smolpng/internal/workflow"
 	"github.com/spf13/cobra"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -33,16 +34,17 @@ var Commit = "unknown"
 var Distribution = "source"
 
 type Environment struct {
-	In           io.Reader
-	Out, Err     io.Writer
-	Runner       process.Runner
-	Clipboard    input.Clipboard
-	Paths        *paths.Paths
-	CWD          string
-	Prompt       ui.Prompter
-	Desktop      desktop.Actions
-	Copy         desktop.ClipboardWriter
-	OpenTerminal func() (desktop.Console, error)
+	In             io.Reader
+	Out, Err       io.Writer
+	Runner         process.Runner
+	Clipboard      input.Clipboard
+	Paths          *paths.Paths
+	CWD            string
+	Prompt         ui.Prompter
+	Desktop        desktop.Actions
+	Copy           desktop.ClipboardWriter
+	OpenTerminal   func() (desktop.Console, error)
+	DependencyHTTP *http.Client
 }
 
 // Environment has only invocation and external-resource seams, not a second engine.
@@ -193,22 +195,10 @@ func (a *app) root() *cobra.Command {
 		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "commit": Commit, "distribution": Distribution, "platform": runtime.GOOS + "/" + runtime.GOARCH})
 	}})
 	c.AddCommand(&cobra.Command{Use: "capabilities", Args: cobra.NoArgs, Short: "Discover implemented features", RunE: func(*cobra.Command, []string) error {
-		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "formats": []string{"png"}, "presets": []string{"auto", "web", "smallest", "lossless"}, "targetSize": true, "explicitResize": true, "remoteDefault": "never", "remoteImplemented": false, "config": true, "namedPresets": true, "presetImport": true, "agentSkill": true, "skillInstallationTracking": true, "interactive": true, "nativeClipboard": true, "desktopQualification": "adapters implemented; real desktop tests outstanding", "exitCodes": map[string]int{"success": 0, "arguments": 2, "input": 3, "dependency": 4, "optimizer": 5, "target": 6, "network": 7, "batch": 8, "cancelled": 130}})
+		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "formats": []string{"png"}, "presets": []string{"auto", "web", "smallest", "lossless"}, "targetSize": true, "explicitResize": true, "remoteDefault": "never", "remoteImplemented": false, "config": true, "namedPresets": true, "presetImport": true, "agentSkill": true, "skillInstallationTracking": true, "interactive": true, "nativeClipboard": true, "managedDependencies": []string{"oxipng"}, "desktopQualification": "adapters implemented; real desktop tests outstanding", "exitCodes": map[string]int{"success": 0, "arguments": 2, "input": 3, "dependency": 4, "optimizer": 5, "target": 6, "network": 7, "batch": 8, "cancelled": 130}})
 	}})
 	c.AddCommand(&cobra.Command{Use: "doctor", Args: cobra.NoArgs, Short: "Inspect paths and optimizer status", RunE: a.doctor})
-	deps := &cobra.Command{Use: "deps", Short: "Separately installed optimizer dependencies"}
-	deps.AddCommand(&cobra.Command{Use: "status", Aliases: []string{"doctor"}, Args: cobra.NoArgs, RunE: a.doctor})
-	deps.AddCommand(&cobra.Command{Use: "licenses", Args: cobra.NoArgs, RunE: func(c *cobra.Command, _ []string) error {
-		p, e := a.dirs()
-		if e != nil {
-			return e
-		}
-		if _, e = a.loadConfig(p); e != nil {
-			return e
-		}
-		return a.emit(a.discover(c.Context(), p))
-	}})
-	c.AddCommand(deps)
+	c.AddCommand(a.depsCommand())
 	c.AddCommand(&cobra.Command{Use: "exec TOOL -- [ARG...]", Short: "Run a tool directly, relinquishing managed-output guarantees", DisableFlagParsing: true, RunE: func(c *cobra.Command, args []string) error {
 		if len(args) == 0 || (args[0] != "pngquant" && args[0] != "oxipng") {
 			return domain.E(2, "exec needs pngquant or oxipng", nil)
@@ -472,7 +462,7 @@ func (a *app) doctor(c *cobra.Command, _ []string) error {
 	if skillErr != nil {
 		skillState = map[string]any{"state": "unknown", "error": skillErr.Error()}
 	}
-	return a.emit(map[string]any{"schemaVersion": 1, "paths": p, "tools": ts, "skills": skillState, "networkCheckPerformed": false, "localAvailable": ts.PNGQuant.Available || ts.OxiPNG.Available})
+	return a.emit(map[string]any{"schemaVersion": 1, "paths": p, "tools": ts, "skills": skillState, "managedDependencies": (toolchain.Managed{Root: filepath.Join(p.Data, "tools")}).All(), "networkCheckPerformed": false, "localAvailable": ts.PNGQuant.Available || ts.OxiPNG.Available})
 }
 func (a *app) inspectCommand() *cobra.Command {
 	f := &inputFlags{}

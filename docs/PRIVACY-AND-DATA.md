@@ -8,7 +8,7 @@ Local files and stdin are processed locally. Explicit HTTP(S) inputs are downloa
 
 Original-derived candidates live in a private temporary directory under the application cache and are removed on ordinary completion/cancellation. A forced crash may leave a directory. Outputs persist until removed by their owner. Reports go to stdout unless a report path is explicitly selected, and may disclose local paths and optimizer versions/arguments. Safe PNG metadata removes textual/time annotations while retaining color/physical/orientation data; it is not a complete EXIF scrubber.
 
-No persistent last-result state or native clipboard writes exist in this cut. Those features must update retention and deletion guidance when implemented. Secrets never belong in presets, reports or config files.
+Human/drop mode retains the bounded last-result record and writes the clipboard as described below. Neither effect happens implicitly in deterministic compression. Secrets never belong in presets, reports or config files.
 
 ## Configuration and installed presets
 
@@ -16,7 +16,7 @@ User/project TOML files are read locally. App imports persist in the user-data `
 
 ## Agent Skill state
 
-Explicit Skill management persists local destinations, app/bundle versions and exact resource hashes under the state directory. It stores no credentials and makes no network request. `skill status` and `doctor` inspect without creating state. Directory transactions can retain a journal or verified backup after an interrupted write; changed backup bytes are preserved rather than deleted. A future human-startup observer records last-seen version/bundle and ignored-bundle preference; no deterministic command displays a synchronization prompt. The exported instruction ZIP contains guidance and a license, not a local binary or private state.
+Explicit Skill management persists local destinations, app/bundle versions and exact resource hashes under the state directory. It stores no credentials and makes no network request. `skill status` and `doctor` inspect without creating state. Directory transactions can retain a journal or verified backup after an interrupted write; changed backup bytes are preserved rather than deleted. The human-startup observer records last-seen version/bundle and ignored-bundle preference; no deterministic command displays a synchronization prompt. The exported instruction ZIP contains guidance and a license, not a local binary or private state.
 
 
 ## Human and desktop state
@@ -26,3 +26,7 @@ Interactive startup explicitly reads the desktop clipboard to detect a useful so
 `state/setup.json` (or the platform's corresponding state directory) records only schema and first-use acknowledgement. `last-result.json` retains one human/drop operation's report, timestamp and warnings, bounded to 4MiB; it includes file paths and size/recipe information but no image bytes. A later human/drop operation replaces it. `smolpng last --clear` removes the record, never the image artifacts. Source images and outputs have their own independent filesystem lifetimes. Last-result copy verifies file availability again.
 
 Deterministic compression does not copy by default or retain human history. Explicit `--copy` is available; Linux owners may need `--clipboard-hold` to remain alive until paste. Background `drop` defaults to at most five minutes of ownership on Linux, ending earlier if replaced or cancelled; JSON mode does not wait unless the duration was explicitly supplied. Notifications contain only a generic result count/exit status, not source paths. Output-copy failures do not delete successfully produced image files.
+
+## Explicit dependency downloads
+
+`deps install/update --apply`, or the separate setup confirmation, contacts GitHub for the fixed OxiPNG release artifact and permitted GitHub asset redirects. It sends no image, config contents or credential. Status, licenses and preview commands perform no download. The complete archive checksum is pinned in the app; only after it matches can a version probe execute. The per-user tool index records source URL, version, archive and installed-file hashes, platform, timestamp and active selection. Retired versions remain until a protected `deps remove`; this never deletes system installations. Forced termination may leave `.prepare-*`, `.install-*`, or `.remove-*` residue. Those paths must be inspected, not assumed disposable if subsequently modified. PNGquant is not downloaded by this build.

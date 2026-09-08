@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strconv"
 	"time"
 )
@@ -28,14 +27,63 @@ type Set struct {
 	PNGQuant Tool `json:"pngquant"`
 	OxiPNG   Tool `json:"oxipng"`
 }
-type Paths struct{ PNGQuant, OxiPNG, ManagedRoot string }
+type Paths struct{ PNGQuant, OxiPNG, ManagedRoot, Preference string }
 
 var version = regexp.MustCompile(`\b([0-9]+)\.([0-9]+)(?:\.([0-9]+))?\b`)
 
 func Discover(ctx context.Context, r process.Runner, explicit, config Paths) Set {
-	return Set{probe(ctx, r, "pngquant", explicit.PNGQuant, config.PNGQuant, config.ManagedRoot), probe(ctx, r, "oxipng", explicit.OxiPNG, config.OxiPNG, config.ManagedRoot)}
+	if r == nil {
+		r = process.OSRunner{}
+	}
+	selectTool := func(name, override, saved string) Tool {
+		if override != "" || saved != "" {
+			return probe(ctx, r, name, override, saved)
+		}
+		managed := Tool{}
+		managedResult := func() Tool {
+			state := (Managed{Root: config.ManagedRoot}).Inspect(name)
+			if state.State == "current" {
+				t := probe(ctx, r, name, state.Path, "")
+				t.Source = "managed"
+				return t
+			}
+			t := Tool{Name: name, Source: "managed", License: "MIT", Upstream: "https://github.com/oxipng/oxipng"}
+			if name == "pngquant" {
+				t.License = "GPL-3.0-or-later with upstream notices OR commercial"
+				t.Upstream = "https://pngquant.org/"
+			}
+			t.Error = "managed dependency " + state.State
+			if state.Reason != "" {
+				t.Error += ": " + state.Reason
+			}
+			return t
+		}
+		if config.Preference == "managed" && config.ManagedRoot != "" {
+			managed = managedResult()
+			if managed.Available {
+				return managed
+			}
+		}
+		system := probe(ctx, r, name, "", "")
+		if system.Available {
+			return system
+		}
+		if config.ManagedRoot != "" {
+			if managed.Name == "" {
+				managed = managedResult()
+			}
+			if managed.Available {
+				return managed
+			}
+			if system.Source == "none" && managed.Error != "managed dependency missing" {
+				return managed
+			}
+		}
+		return system
+	}
+	return Set{selectTool("pngquant", explicit.PNGQuant, config.PNGQuant), selectTool("oxipng", explicit.OxiPNG, config.OxiPNG)}
 }
-func probe(ctx context.Context, r process.Runner, name, explicit, configured, managed string) Tool {
+func probe(ctx context.Context, r process.Runner, name, explicit, configured string) Tool {
 	t := Tool{Name: name, Source: "none", License: "MIT", Upstream: "https://github.com/oxipng/oxipng"}
 	if name == "pngquant" {
 		t.License = "GPL-3.0-or-later with upstream notices OR commercial"
@@ -52,16 +100,6 @@ func probe(ctx context.Context, r process.Runner, name, explicit, configured, ma
 		if p, e := exec.LookPath(name); e == nil {
 			t.Path = p
 			t.Source = "system"
-		} else if managed != "" {
-			exe := name
-			if runtime.GOOS == "windows" {
-				exe += ".exe"
-			}
-			p := filepath.Join(managed, name, exe)
-			if s, e := os.Stat(p); e == nil && s.Mode().IsRegular() {
-				t.Path = p
-				t.Source = "managed"
-			}
 		}
 	}
 	if t.Path == "" {

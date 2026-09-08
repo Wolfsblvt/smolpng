@@ -8,7 +8,7 @@ The current static-PNG CLI has one format-neutral recipe/result domain and one c
 
 `cmd/smolpng` installs cancellation. `internal/cli` maps Cobra flags into recipe/input/output options. `input.Resolver` plans sources without reading images or downloading; `output.Plan` resolves all destinations before optimization. `workflow.Batch` owns per-image deadlines and original preservation. `workflow.Engine` creates original-derived candidates and selects an actual validated result.
 
-`process.Runner` uses direct argument arrays without a shell and removes `TINIFY_API_KEY` from optimizer environments. Discovery resolves invocation, configured, system and managed paths with local version probes. Managed downloads are not yet implemented. The clipboard is an injected boundary, not yet a native desktop claim.
+`process.Runner` uses direct argument arrays without a shell and removes `TINIFY_API_KEY` from optimizer environments. Discovery resolves invocation and configured paths first, then compatible system or recorded managed executables, with an explicit user preference. The managed index and binary/license hashes must agree before a probe. Native clipboard adapters remain behind an injected boundary with separate graphical qualification.
 
 ## Image invariants
 
@@ -34,3 +34,7 @@ Outputs use a synced temporary sibling and atomic rename/MoveFileEx, or exclusiv
 `internal/desktop` owns native clipboard formats and browser/folder/notification commands. Smart output makes one multi-representation clipboard write. Native actions use fixed argument arrays; the Windows notification helper is fixed code with escaped data. The no-console Windows entry point selects drop explicitly and requests a console only for the configured interactive variant. No generic daemon or local MCP server exists.
 
 `internal/state` bounds human-result retention. Ordinary `compress`, `doctor` and `skill status` neither create a first-run wizard nor silently write human history. User setting edits use the pinned TOML AST's value ranges under an advisory lock with a byte-snapshot recheck, preserving comments and unrelated fields. Preset storage remains a separate owned file.
+
+## Managed optimizer delivery
+
+`internal/toolchain` carries a fixed archive catalog, bounded ZIP/TAR reader, per-user installer and management index. The installer verifies the entire archive SHA-256 before extracting an executable, retains its license, probes its exact version, stages a new immutable version and atomically changes the active index. Existing system tools and PATH are never altered. Upgrades retain old versions; downgrade through an older app catalog is refused. Modified/untracked bytes are never adopted, overwritten or deleted silently. [Dependency setup](dependencies.md) owns the commands and native qualification boundary.

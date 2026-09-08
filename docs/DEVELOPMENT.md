@@ -69,3 +69,7 @@ A Linux pseudo-terminal smoke has exercised actual menu rendering, Enter/Done, o
 ## Hosted verification source
 
 `Verify` replaces the one-time build-cache transport workflow. It runs root tests/vet/corpus checks on Windows, macOS and Linux, plus six CGO-free cross-builds and Windows GUI-launcher builds. Its three Actions are pinned to exact official upstream commits, checked on 2026-09-08. It uses read-only repository permission, persists no checkout credential, consumes no paid provider quota and publishes no release. A workflow file is not a hosted green run; do not inherit the bootstrap run's status.
+
+## Managed optimizer qualification
+
+Normal tests use an in-memory HTTP transport and staged fake executable/version boundary, not upstream downloads. They cover catalog digests, malformed archives, verified-before-execute behavior, failed-probe cleanup, modified installations, retained versions, downgrade refusal, concurrent writers and protected removal. Actual artifact bytes and native OxiPNG corpus behavior still require an explicit install on the target host. Run `deps licenses`, `deps install oxipng`, then `deps install oxipng --apply` only after reviewing the source. Record the resulting `deps status --json` and exact tool versions alongside corpus reports. On Windows arm64, configure a separately qualified native program; do not claim the x64 archive was a native build.

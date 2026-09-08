@@ -33,6 +33,9 @@ func Parse(data []byte) (Document, error) {
 	if e := decode(data, &d); e != nil {
 		return d, e
 	}
+	if !slices.Contains([]string{"", "system", "managed"}, d.Tools.Preference) {
+		return d, fmt.Errorf("tools.preference must be system or managed")
+	}
 	if d.Version != 0 && d.Version != 1 {
 		return d, fmt.Errorf("unsupported config_version %d", d.Version)
 	}

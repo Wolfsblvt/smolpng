@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -96,8 +97,18 @@ func (a *app) onboard(ctx context.Context, p ui.Prompter) error {
 			return e
 		}
 		tools := a.discover(ctx, dirs)
-		desc := toolDescription(tools) + "\nExternal optimizer executables are not bundled.\nManaged downloads are not yet implemented; use existing tools or configure paths."
-		action, e := p.Choose(ctx, "smolpng setup", desc, []ui.Option{{Label: "Continue with available local capabilities", Value: "continue"}, {Label: "Configure optimizer executable paths", Value: "paths"}, {Label: "Install the shared personal Agent Skill", Value: "skill"}, {Label: "Open pngquant source/download page", Value: "pngquant"}, {Label: "Open OxiPNG source/download page", Value: "oxipng"}, {Label: "Cancel", Value: "quit", Key: "q"}}, "continue")
+		desc := toolDescription(tools) + "\nExternal optimizer executables are not bundled.\npngquant remains a separate manual installation. OxiPNG can be installed from the pinned upstream archive on supported hosts."
+		options := []ui.Option{{Label: "Continue with available local capabilities", Value: "continue"}}
+		artifact, artifactErr := toolchain.ArtifactFor("oxipng", runtime.GOOS, runtime.GOARCH)
+		if artifactErr == nil {
+			options = append(options, ui.Option{Label: "Install/update a managed OxiPNG copy…", Value: "managed-oxipng"})
+		}
+		options = append(options, ui.Option{Label: "Configure optimizer executable paths", Value: "paths"}, ui.Option{Label: "Install the shared personal Agent Skill", Value: "skill"}, ui.Option{Label: "Open pngquant source/download page", Value: "pngquant"}, ui.Option{Label: "Open OxiPNG source/download page", Value: "oxipng"}, ui.Option{Label: "Cancel", Value: "quit", Key: "q"})
+		initial := "continue"
+		if !tools.OxiPNG.Available && artifactErr == nil {
+			initial = "managed-oxipng"
+		}
+		action, e := p.Choose(ctx, "smolpng setup", desc, options, initial)
 		if errors.Is(e, ui.ErrBack) {
 			return e
 		}
@@ -109,6 +120,26 @@ func (a *app) onboard(ctx context.Context, p ui.Prompter) error {
 			return ui.ErrBack
 		case "continue":
 			return state.Write(ctx, filepath.Join(dirs.State, "setup.json"), state.Setup{SchemaVersion: 1, Acknowledged: true})
+		case "managed-oxipng":
+			confirm, er := p.Choose(ctx, "Install separate OxiPNG?", fmt.Sprintf("OxiPNG %s · %s\nSource: %s\nSHA-256: %s\nDestination: %s\nNo system PATH or existing configured/system tool is changed. The binary is verified and version-probed before activation.", artifact.Version, artifact.License, artifact.URL, artifact.SHA256, filepath.Join(dirs.Data, "tools", "oxipng")), []ui.Option{{Label: "Download, verify and install", Value: "install"}, {Label: "Back", Value: "back"}}, "back")
+			if errors.Is(er, ui.ErrBack) || confirm == "back" {
+				continue
+			}
+			if er != nil {
+				return er
+			}
+			m, er := a.managedTools()
+			if er != nil {
+				return er
+			}
+			if _, er = m.Install(ctx, artifact); er != nil {
+				if ctx.Err() != nil {
+					return ctx.Err()
+				}
+				if er = a.notice(ctx, p, "Dependency installation refused", er.Error()); er != nil {
+					return er
+				}
+			}
 		case "paths":
 			fields := []ui.Field{{Key: "tools.pngquant", Label: "pngquant executable (empty uses discovery)", Value: w.User.Document.Tools.PNGQuant}, {Key: "tools.oxipng", Label: "OxiPNG executable (empty uses discovery)", Value: w.User.Document.Tools.OxiPNG}}
 			values, er := p.Edit(ctx, "Local executable paths; these run as your user", fields)
