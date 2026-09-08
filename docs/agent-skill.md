@@ -46,7 +46,7 @@ smolpng skill sync --apply --include-custom --json
 smolpng skill sync --destination /exact/tracked/smolpng --apply --json
 ```
 
-`update` aliases `sync`. The first applied form updates eligible app-managed destinations only. `--include-custom` or a specific `--destination` supplies custom-path consent. Modified, missing and unknown content is preserved, not silently repaired or replaced. Restore it deliberately, or stop tracking it and install elsewhere. The library's `SyncAfterUpdate` entry point applies the same managed-only rule; a standalone executable updater has not yet been implemented.
+`update` aliases `sync`. The first applied form updates eligible app-managed destinations only. `--include-custom` or a specific `--destination` supplies custom-path consent. Modified, missing and unknown content is preserved, not silently repaired or replaced. Restore it deliberately, or stop tracking it and install elsewhere. The library's `SyncAfterUpdate` entry point applies the same managed-only rule; the implemented standalone updater invokes it only after signature/hash and new-build identity verification.
 
 ```sh
 smolpng skill uninstall --destination /exact/tracked/smolpng --apply

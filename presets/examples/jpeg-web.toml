@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: CC0-1.0
+[presets.jpeg-web]
+schema = 1
+label = "JPEG for the web"
+description = "Preserves display orientation and ICC; removes private metadata."
+extends = "web"
+formats = ["jpeg"]
+quality = "65-85"
+metadata = "safe"
+remote = "never"
+
+[presets.jpeg-web.menu]
+pinned = false

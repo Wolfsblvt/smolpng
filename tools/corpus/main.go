@@ -33,7 +33,11 @@ func main() {
 		data := specimens[name]
 		a, e := imagefile.Inspect(data, 1_000_000)
 		must(e)
-		fmt.Fprintf(&manifest, "\n[[image]]\npath = %q\ncreator = \"Wolfsblvt Works contributors\"\nsource = \"project-generated\"\nmethod = \"internal/testutil/testutil.go\"\nlicense = \"CC0-1.0\"\nredistributable = true\npurpose = %q\nwidth = %d\nheight = %d\nalpha = %t\nsha256 = \"%x\"\n", name, strings.TrimSuffix(name, ".png"), a.Dimensions.Width, a.Dimensions.Height, a.Transparency, sha256.Sum256(data))
+		method := "internal/testutil/testutil.go"
+		if a.Format == "jpeg" {
+			method = "internal/testutil/jpeg.go"
+		}
+		fmt.Fprintf(&manifest, "\n[[image]]\npath = %q\ncreator = \"Wolfsblvt Works contributors\"\nsource = \"project-generated\"\nmethod = %q\nlicense = \"CC0-1.0\"\nredistributable = true\npurpose = %q\nwidth = %d\nheight = %d\nalpha = %t\nsha256 = \"%x\"\n", name, method, strings.TrimSuffix(name, filepath.Ext(name)), a.Dimensions.Width, a.Dimensions.Height, a.Transparency, sha256.Sum256(data))
 		path := filepath.Join(*root, name)
 		if *check {
 			b, e := os.ReadFile(path)

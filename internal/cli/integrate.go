@@ -68,18 +68,31 @@ func (a *app) integrationPlan(m integration.Manager, desktop, sendto bool, prese
 	if preset == "" {
 		preset = "auto"
 	}
-	w, e := a.loadConfig(p)
+	// A durable launcher starts from the user's home. Resolve its named recipe
+	// without transient project definitions rather than generating a broken link.
+	cwd, e := a.cwd()
+	if e != nil {
+		return nil, e
+	}
+	configPath := a.configPath
+	if configPath == "" {
+		configPath = os.Getenv("SMOLPNG_CONFIG")
+	}
+	w, e := config.Load(config.LoadOptions{Paths: p, CWD: cwd, ConfigPath: configPath, NoProject: true})
 	if e != nil {
 		return nil, e
 	}
 	if _, e = w.Resolve(preset, config.Fields{}); e != nil {
-		return nil, e
+		return nil, fmt.Errorf("launcher needs a built-in or installed user preset; import a project-only preset into user storage first: %w", e)
+	}
+	if configPath != "" {
+		configPath = w.User.Path
 	}
 	portable := ""
 	if p.Portable {
 		portable = p.Data
 	}
-	return integration.Plan(m.Allowed, integration.Request{OS: runtime.GOOS, Executable: exe, WorkingDirectory: home, Home: portable, Preset: preset, Desktop: desktop, SendTo: sendto, Custom: name != "", Name: name, Interactive: interactive})
+	return integration.Plan(m.Allowed, integration.Request{OS: runtime.GOOS, Executable: exe, ConfigPath: configPath, NoProject: true, WorkingDirectory: home, Home: portable, Preset: preset, Desktop: desktop, SendTo: sendto, Custom: name != "", Name: name, Interactive: interactive})
 }
 func (a *app) integrationCommand() *cobra.Command {
 	root := &cobra.Command{Use: "integrate", Short: "Opt-in per-user launchers with hash-protected removal"}

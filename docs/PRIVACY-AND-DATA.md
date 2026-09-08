@@ -2,31 +2,22 @@
 
 ## Meaning
 
-The current CLI has no telemetry or remote compression. This document describes actual input transport, temporary files and reports, not a promise that metadata stripping removes every private field.
+smolpng has no telemetry, analytics or operated image-hosting service. Local Auto remains local under the initial remote policy. Explicit URL input downloads from its source, explicit TinyPNG policies upload an image, and explicitly enabled update/dependency operations contact their selected servers. These are separate permissions.
 
-Local files and stdin are processed locally. Explicit HTTP(S) inputs are downloaded from the supplied source and permitted redirects. Query parameters are sent but omitted from report labels and request-error messages. Auto never uploads and no TinyPNG credential is retrieved.
+## Image data
 
-Original-derived candidates live in a private temporary directory under the application cache and are removed on ordinary completion/cancellation. A forced crash may leave a directory. Outputs persist until removed by their owner. Reports go to stdout unless a report path is explicitly selected, and may disclose local paths and optimizer versions/arguments. Safe PNG metadata removes textual/time annotations while retaining color/physical/orientation data; it is not a complete EXIF scrubber.
+Local inputs, stdin and clipboard images become private temporary original-derived copies. Temporary candidates are cleaned after normal completion and cancellation; forced process/machine termination can leave private cache residue. Outputs persist at the selected paths. Only explicit in-place mode replaces an original. PNG/JPEG safe metadata policies retain rendering interpretation; JPEG safe removes private EXIF/GPS by reconstructing an orientation-only record.
 
-Human/drop mode retains the bounded last-result record and writes the clipboard as described below. Neither effect happens implicitly in deterministic compression. Secrets never belong in presets, reports or config files.
+TinyPNG receives metadata-filtered input only after the selected user/invocation policy permits it. Keep-all metadata, unsupported color/orientation and remote geometry combinations are refused rather than silently discarding preservation promises. `remoteUsed` reports attempted uploads even if the result is not selected or the response is lost. Retention after upload is controlled by the service's current terms, not by smolpng. No billable request is automatically retried. API keys are read from process environment or native keyring and never included in reports or optimizer process environments.
 
-## Configuration and installed presets
+## Reports, state and installed integrations
 
-User/project TOML files are read locally. App imports persist in the user-data `presets.toml`, with no network calls and no global environment changes. Export is explicit. `config show`/provenance can reveal local paths and user-supplied descriptive text. Shareable presets do not admit secrets or executable paths; a project/preset cannot upgrade a personal remote prohibition. Pinning and removal update only app-owned presets.
+Reports may include source/artifact paths, dimensions, sizes, versions, non-secret tool argument arrays and warnings. URL query parameters are used for explicit downloads but omitted from source labels. A report file is written only when selected. Human/drop workflows retain last-result metadata; `last --clear` deletes that metadata, not output images.
 
-## Agent Skill state
+Preset, dependency, Skill and shortcut registries live in per-user state/data locations. They retain destinations and exact file hashes needed to protect edits. They are not synchronized to a cloud service. Clipboard smart publishing can expose file/path/image representations to the desktop and its clipboard history manager. A tagged JPEG may expose only file/path representations rather than a miscolored conversion.
 
-Explicit Skill management persists local destinations, app/bundle versions and exact resource hashes under the state directory. It stores no credentials and makes no network request. `skill status` and `doctor` inspect without creating state. Directory transactions can retain a journal or verified backup after an interrupted write; changed backup bytes are preserved rather than deleted. The human-startup observer records last-seen version/bundle and ignored-bundle preference; no deterministic command displays a synchronization prompt. The exported instruction ZIP contains guidance and a license, not a local binary or private state.
+## Update data
 
+Updates are manual by default. Only a user-enabled daily human-startup policy can perform a periodic request, and only when a trusted feed/key is configured. Projects, copied presets, deterministic CLI, JSON and background drop cannot opt users into those checks. A check records the last attempt time and ignored version. No device identifier or API key is sent.
 
-## Human and desktop state
-
-Interactive startup explicitly reads the desktop clipboard to detect a useful source or preset. Unrelated text is not displayed as an invented filename. A copied image/file representation remains the input throughout recipe retries, even after the output is written to the clipboard. Smart copy writes PNG bytes, file references and path text; batch copy writes files/path text. Native platform behavior and persistence are qualification-dependent.
-
-`state/setup.json` (or the platform's corresponding state directory) records only schema and first-use acknowledgement. `last-result.json` retains one human/drop operation's report, timestamp and warnings, bounded to 4MiB; it includes file paths and size/recipe information but no image bytes. A later human/drop operation replaces it. `smolpng last --clear` removes the record, never the image artifacts. Source images and outputs have their own independent filesystem lifetimes. Last-result copy verifies file availability again.
-
-Deterministic compression does not copy by default or retain human history. Explicit `--copy` is available; Linux owners may need `--clipboard-hold` to remain alive until paste. Background `drop` defaults to at most five minutes of ownership on Linux, ending earlier if replaced or cancelled; JSON mode does not wait unless the duration was explicitly supplied. Notifications contain only a generic result count/exit status, not source paths. Output-copy failures do not delete successfully produced image files.
-
-## Explicit dependency downloads
-
-`deps install/update --apply`, or the separate setup confirmation, contacts GitHub for the fixed OxiPNG release artifact and permitted GitHub asset redirects. It sends no image, config contents or credential. Status, licenses and preview commands perform no download. The complete archive checksum is pinned in the app; only after it matches can a version probe execute. The per-user tool index records source URL, version, archive and installed-file hashes, platform, timestamp and active selection. Retired versions remain until a protected `deps remove`; this never deletes system installations. Forced termination may leave `.prepare-*`, `.install-*`, or `.remove-*` residue. Those paths must be inspected, not assumed disposable if subsequently modified. PNGquant is not downloaded by this build.
+Standalone updates retain signed payloads, old/new file hashes, private backups, completion/rollback status and a bounded worker log in a transaction directory beside the application. That evidence is intentionally retained for recovery. Config, user images, managed optimizers and custom Skills are not package members. Public keys are not secrets; private signing keys never enter normal application state or release archives.

@@ -13,7 +13,7 @@ smolpng integrate status --json
 smolpng integrate remove --id preset-mcp-icon --apply
 ```
 
-`--send-to` is Windows-specific. Ordinary installation creates a menu entry opening the TUI and an Auto entry running the background workflow. Optional desktop targets provide both variants. A custom preset shortcut can use `--interactive` to start the recipe picker instead. The preset must exist when created; it is resolved by name when the launcher runs. No preset definition or credential is embedded.
+`--send-to` is Windows-specific. Ordinary installation creates a menu entry opening the TUI and an Auto entry running the background workflow. Optional desktop targets provide both variants. A custom preset shortcut can use `--interactive` to start the recipe picker instead. The preset must exist in built-ins or installed user settings when created; project-only definitions must first be imported into user storage. It is resolved by name when the launcher runs. No preset definition or credential is embedded.
 
 ## Native behavior
 
@@ -21,7 +21,7 @@ Windows uses Known Folders for user Programs, Desktop and Send To. Windows Scrip
 
 Linux uses user XDG applications and Desktop locations. Desktop files quote executable and argument values according to the desktop-entry specification, append a standalone `%F` for file lists, and select `Terminal=true` only for interactive operation. No shell wrapper or MIME default is installed. Some desktops still require a user to mark a desktop launcher trusted, or choose their preferred terminal. That is a native qualification step, not silently automated security-policy changes.
 
-The working directory is the user's home, not the binary folder. Explicit portable installation records its data root through `--home`; relocating the application requires reinstalling its app-owned launchers. macOS Finder wrappers are not installed by this command.
+The working directory is the user's home, not the binary folder. Launchers ignore transient project settings through `--no-project` and retain an explicitly selected config file. Explicit portable installation records its data root through `--home`; relocating the application requires reinstalling its app-owned launchers. macOS Finder wrappers are not installed by this command.
 
 ## Modification and interruption safety
 

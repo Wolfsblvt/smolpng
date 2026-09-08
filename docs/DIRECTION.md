@@ -2,34 +2,20 @@
 
 ## Meaning
 
-The first useful source cut is a deterministic static-PNG CLI. User/project configuration and shareable presets are implemented alongside it. Version-bound Agent Skills and safe installation tracking are implemented. The keyboard, clipboard, background/drop and last-result workflows are implemented over the same engine. This is sequencing of the full Vision, not a reduced product destination.
+smolpng now has a substantial PNG/JPEG daily-use source candidate: one engine under deterministic CLI, keyboard and background/drop workflows, with inherited presets, native clipboard adapters, optional TinyPNG, tracked integrations, version-bound Agent Skills, managed OxiPNG and standalone update transactions. This is implemented source, not a claim of a publicly released or fully native-qualified 1.0.
 
-## Current behavior
+## Current frontier
 
-Files, directories, globs, URLs, stdin and native clipboard adapters and an injectable test boundary resolve to planned jobs. Four built-ins, original-derived pngquant/OxiPNG candidates, strict target search, explicit resizing, metadata/pixel validation, collision-safe atomic writes, JSON/JSONL and capability/inspection commands are implemented. Ten original CC0 specimens and focused domain, filesystem, process, workflow and CLI tests accompany the source.
+The source implements original-derived PNG/JPEG candidates, exact target semantics, explicit resizing, safe metadata/orientation handling, atomic outputs, data-only configuration/presets and structured reporting. TinyPNG requires explicit policy and native/environment credentials; fake HTTP tests never consume quota. Desktop installers produce Windows per-user `.lnk` and Linux `.desktop` targets with exact ownership hashes. The signed updater stages bounded archives, verifies all members, preserves prior files for guarded rollback and synchronizes only untouched app-managed Skills.
 
-Normal tests use fake optimizer and HTTP boundaries. Real optimizer output quality, actual Windows/Linux/macOS clipboard and desktop behavior, signing, publication and external credentials remain separate qualification surfaces. The next source work can continue without pretending those surfaces have been observed.
+Local release tooling now builds six platform packages and optional offline Winget, Scoop, Homebrew, Chocolatey and nFPM inputs from actual archive hashes. A separate signing tool requires an explicitly supplied protected key. Neither tool publishes or creates a production trust authority.
 
-## Next coherent boundary
+## Remaining source refinements and external boundaries
 
-TOML layers, field provenance, immutable built-ins, inherited presets, import previews/collision handling, portable normal/resolved export and pinned placement now feed the existing CLI. TUI/onboarding, native clipboard, editable defaults and recoverable results now reuse that path. Managed OxiPNG delivery, byte-verified selection, explicit system/managed preference and protected removal now accompany setup. The next qualification boundary is real optimizer and Windows/Linux graphical behavior; standalone application updating, desktop shortcut installers, TinyPNG and JPEG remain accepted source work. Current Work stays in the implementation conversation; durable documents own behavior, not an accumulating task queue.
+Final JPEG backend/quality calibration remains evidence-led; jpegoptim is the reversible first backend and Go encodes explicit original-derived geometry changes. Remote geometry/keep-all metadata combinations intentionally refuse unsupported promises. Richer macOS Finder integration, a final installer/MSIX/signing composition and package-manager submission refinements remain after corresponding host/publisher decisions. The website, final art and hosted sibling retain separate writer boundaries.
 
-## Agent integration status
+Wolf explicitly deferred intermediate native smoke tests to let this source line continue. Windows/Linux/macOS graphical clipboard, file-picker paste, real optimizer behavior, native shortcut execution, running-program update replacement and keyring availability still need direct observations. Public repository/release, package registration, signing/feed operation, Store submission and legal brand qualification have not occurred. These limits are not substitutes for implemented source or grounds to describe cross-builds as desktop tests.
 
-The embedded Skill, tracked standard/custom destinations, manual replacement detection, modified-file protection, instruction-only package, and interrupted-update recovery have focused tests. `skill status` and `doctor` report stale/modified/missing state without writes. Native directory behavior is tested on the authoring Linux host; complete graphical desktop behavior and a standalone application updater are not implied. The interactive launcher now invokes the observer and presents changed-bundle synchronization choices; deterministic commands remain prompt-free.
+## Continuation
 
-### Remote source increment
-
-TinyPNG HTTPS upload/download, native-keyring login/logout/status, environment precedence, upload-policy dispatch and actual-remote-use reporting now exist. Fake transport/secret-store tests exercise these boundaries without a real key. See REMOTE.md for limitations. Native qualification remains deferred by Wolf; it is not a gate on the next source feature.
-
-### JPEG source frontier
-
-JPEG file/directory/URL/stdin inspection and compression now join the shared engine. jpegoptim discovery, same-size lossless/lossy candidates, strict targets, original-derived resize, orientation/ICC handling, legal JPEG fixtures and regression tests are implemented. Final quality calibration and real JPEG optimizer/native desktop evidence remain unobserved.
-
-### Desktop installer source frontier
-
-Windows Start menu, optional Desktop and Send To, and Linux user launchers now have preview/apply/status/remove/repair commands, preset-specific shortcuts and setup-menu access. Ownership and argument semantics are tested through native-boundary doubles; actual Windows Script Host and graphical file-manager behavior remain separately qualified.
-
-### Update source frontier
-
-Signed standalone staging, a short-lived replacement helper, integrity/ownership checks, guarded rollback, exact new-build probing, post-update managed-Skill synchronization and opt-in daily human checks are implemented. There is deliberately no production signing key, feed or public release effect in this source session.
+The complete Git recovery ZIP is the source carrier until remote implementation delivery is reconciled. Current Work belongs to the owning implementation conversation. Root commands, current architecture and qualification instructions live in Development, Architecture, Releasing, JPEG, Remote, Integration and Updates rather than an accumulating roadmap here.

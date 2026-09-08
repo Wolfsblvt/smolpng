@@ -55,3 +55,9 @@ No font files, commissioned artwork, theme imagery, private profiles, credential
 ## Native secret storage
 
 `github.com/zalando/go-keyring v0.2.8`, `github.com/danieljoos/wincred v1.2.3`, and `github.com/godbus/dbus/v5 v5.2.2` are compiled for native credential storage. Exact notices, including go-keyring's Apache-noticed macOS adapter, are retained under `LICENSES/keyring*`, `wincred*`, and `dbus*`. Upstream: https://github.com/zalando/go-keyring . Source was read at adoption; full live advisory qualification is not claimed.
+
+## JPEG optimizer and release tooling
+
+jpegoptim is discovered/invoked separately and is not redistributed in these packages. Current upstream source uses GPL-3.0-or-later; older distributed releases/man pages carry their own exact terms. No assertion that every installed version has identical licensing is made. The current first JPEG path does not link libjpeg/jpegli or download an optimizer.
+
+Release/update archive tooling uses Go's existing standard library. Package-manager files are generated offline from exact archive hashes, without adopting GoReleaser/nFPM as application dependencies or executing package submission. A future operator may separately qualify nFPM to consume the generated Linux package definitions.

@@ -229,7 +229,7 @@ func (a *app) editSettings(ctx context.Context, p ui.Prompter) error {
 	}
 	fields := []ui.Field{
 		{Key: "defaults.preset", Label: "Default recipe", Value: defaultPreset, Options: presetOptions},
-		{Key: "defaults.quality", Label: "PNG quality MIN-MAX", Value: fmt.Sprintf("%d-%d", eff.Recipe.QualityMin, eff.Recipe.QualityMax), Validate: quality},
+		{Key: "defaults.quality", Label: "Quality MIN-MAX (encoder-specific)", Value: fmt.Sprintf("%d-%d", eff.Recipe.QualityMin, eff.Recipe.QualityMax), Validate: quality},
 		{Key: "output.template", Label: "Output filename template", Value: eff.Output.Template},
 		{Key: "output.detached", Label: "Clipboard/URL output folder", Value: eff.Output.Detached},
 		{Key: "clipboard.single", Label: "Copy a single result", Value: eff.Clipboard, Options: copyOptions},

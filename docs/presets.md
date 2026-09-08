@@ -2,7 +2,7 @@
 
 ## Meaning
 
-This is the implemented TOML contract for user/project settings, data-only inherited presets, provenance, preview/import and export. It owns file placement and persistence semantics. Menu and clipboard preferences are stored for the human workflow; they do not cause implicit clipboard writes or desktop integration from `compress`. JPEG names may be reserved in format filters but JPEG compression remains unimplemented.
+This is the implemented TOML contract for user/project settings, data-only inherited presets, provenance, preview/import and export. It owns file placement and persistence semantics. Menu and clipboard preferences are stored for the human workflow; they do not cause implicit clipboard writes or desktop integration from `compress`. PNG and JPEG format filters are enforced against the actual input format.
 
 ## Configuration sources and precedence
 
@@ -52,7 +52,7 @@ channel = "stable"
 
 `[tools]` may contain `pngquant` and `oxipng` executable paths in user configuration only. Automatically discovered project files cannot choose executables. Explicit CLI tool paths remain the highest-precedence selection. `output.directory` selects a directory for all sources; omit it for source siblings and detached Downloads. Explicit `--output`, stdout or in-place replaces an inherited directory, never becomes ambiguous with it.
 
-Unknown fields and TOML type mismatches fail rather than being ignored. This candidate accepts the implemented fields, not every illustrative spelling from the historical design conversation. Integer palette limits and OxiPNG levels use integers; omit a palette field for its inherited value. Automatic update checks are not implemented and cannot be enabled in this cut.
+Unknown fields and TOML type mismatches fail rather than being ignored. This candidate accepts the implemented fields, not every illustrative spelling from the historical design conversation. Integer palette limits and OxiPNG levels use integers; omit a palette field for its inherited value. User `[updates] check = "daily"` enables rate-limited checks only in human startup and only with a configured trusted feed. Default is `manual`; project configs and imported presets cannot enable update network behavior.
 
 ## Preset fields
 

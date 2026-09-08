@@ -2,7 +2,7 @@
 
 ## Meaning
 
-The current static-PNG CLI has one format-neutral recipe/result domain and one compression engine. This document describes actual components and the accepted seams that later TUI, drop and agent consumers must reuse.
+The current PNG/JPEG CLI has one format-neutral recipe/result domain and one compression engine. This document describes actual components and the shared boundaries used by TUI, drop and agent consumers.
 
 ## Data flow
 
@@ -20,11 +20,11 @@ Safe metadata removes text/time fields and preserves rendering metadata. Pixel-i
 
 Outputs use a synced temporary sibling and atomic rename/MoveFileEx, or exclusive Unix hard-link publication for no-clobber writes. A race-time collision fails instead of changing a reserved batch plan. In-place checks original bytes again before replacement; it is not a lock against a hostile directory owner.
 
-`internal/config` now resolves strict TOML user/project layers, app-managed presets and invocation fields into these same recipe and job options. Pointer fields preserve explicit false/zero. Provenance records the owning file and TOML key. Imports write a separately owned `presets.toml`, preserving hand-edited configuration comments. The user remote grant caps project/preset requests. Native clipboard, TUI, last-result state, installed Skill hashes and updater decisions are separate boundaries, not another compressor. The full JPEG and hosted sibling destination remains in Vision; it does not require an empty registry or local MCP server.
+`internal/config` now resolves strict TOML user/project layers, app-managed presets and invocation fields into these same recipe and job options. Pointer fields preserve explicit false/zero. Provenance records the owning file and TOML key. Imports write a separately owned `presets.toml`, preserving hand-edited configuration comments. The user remote grant caps project/preset requests. Native clipboard, TUI, last-result state, installed Skill hashes and updater decisions are separate boundaries, not another compressor. JPEG dispatch is now implemented; the hosted sibling destination remains in Vision; it does not require an empty registry or local MCP server.
 
 ## Installed Agent Skill
 
-`skills/` embeds the user-facing package; `internal/skill` owns version-independent bundle hashes, explicit destination management and a journaled directory transaction. Inspection is read-only. Replacement and removal require exact last-installed hashes, preserve user changes, and use an OS advisory lock plus atomic no-replace directory moves. Standard destinations may synchronize during a future in-app update; custom destinations require consent. The keyboard UI can consume a persistent changed-bundle prompt without contaminating the deterministic CLI. [Agent Skill](agent-skill.md) owns the exact lifecycle and recovery contract.
+`skills/` embeds the user-facing package; `internal/skill` owns version-independent bundle hashes, explicit destination management and a journaled directory transaction. Inspection is read-only. Replacement and removal require exact last-installed hashes, preserve user changes, and use an OS advisory lock plus atomic no-replace directory moves. Standard destinations synchronize after a verified in-app update; custom destinations require consent. The keyboard UI can consume a persistent changed-bundle prompt without contaminating the deterministic CLI. [Agent Skill](agent-skill.md) owns the exact lifecycle and recovery contract.
 
 
 ## Shared human workflow
@@ -38,3 +38,13 @@ Outputs use a synced temporary sibling and atomic rename/MoveFileEx, or exclusiv
 ## Managed optimizer delivery
 
 `internal/toolchain` carries a fixed archive catalog, bounded ZIP/TAR reader, per-user installer and management index. The installer verifies the entire archive SHA-256 before extracting an executable, retains its license, probes its exact version, stages a new immutable version and atomically changes the active index. Existing system tools and PATH are never altered. Upgrades retain old versions; downgrade through an older app catalog is refused. Modified/untracked bytes are never adopted, overwritten or deleted silently. [Dependency setup](dependencies.md) owns the commands and native qualification boundary.
+
+## JPEG, remote and installation boundaries
+
+`internal/jpegimage` validates JPEG marker/scans, parses bounded EXIF orientation and reconstructs safe metadata. `workflow` dispatches by actual image format while keeping common target/output contracts. Each JPEG candidate uses original bytes; explicit geometry is encoded from the original upright decode. Numeric quality is backend-specific, never described as a cross-codec perceptual metric.
+
+`internal/secret` resolves environment then native keyring. `internal/tinypng` owns fixed-origin authenticated POST/download and never retries a potentially billed upload. `workflow` owns permission and reporting: a local candidate winning does not erase the fact that bytes left the host.
+
+`internal/integration` plans user-native destinations and records exact installed launcher hashes. `internal/updates` verifies standard-library Ed25519 signatures and bounded package members, then stages a recoverable replacement transaction. Its short-lived helper is a copy of the old application, not unverified downloaded code; it probes the new build before asking it to synchronize its embedded Skill. Neither boundary is a privileged service.
+
+`internal/packaging` and `tools/release` produce deterministic archives, member receipts and optional offline package manifests. `tools/sign-update` consumes an independently held private key only when explicitly invoked. No production key/feed, submission credential, deployment API or release publication is part of a normal build.

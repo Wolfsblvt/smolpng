@@ -1,6 +1,6 @@
 ---
 name: smolpng
-description: Compress local PNG images, inspect image structure, satisfy strict byte limits, and use project presets through the smolpng CLI. Use when a user asks to shrink website assets, icons, screenshots or batches. Requires a host able to invoke an installed smolpng executable; never assume ChatGPT Web can execute a user's local binary.
+description: Compress local PNG/JPEG images, inspect image structure, satisfy strict byte limits, and use project presets through the smolpng CLI. Use when a user asks to shrink website assets, icons, screenshots or batches. Requires a host able to invoke an installed smolpng executable; never assume ChatGPT Web can execute a user's local binary.
 license: MIT
 metadata:
   author: Wolfsblvt Works
@@ -19,7 +19,7 @@ smolpng deps status --json
 smolpng preset list --json
 ```
 
-Check capabilities rather than assuming a newer feature exists. PNG compression is implemented. JPEG and remote TinyPNG may not be available in the installed version. Missing local tools are a setup problem, not permission to upload images. `smolpng deps install oxipng --json` previews a pinned native artifact; do not add `--apply` without permission to download and execute that dependency. PNGquant and unsupported native targets still require separate setup. Modified managed installations are preserved, not forcibly replaced. Inspect image properties with `smolpng inspect INPUT --json`.
+Check capabilities rather than assuming a newer feature exists. This bundle supports PNG and JPEG plus optional TinyPNG; discover the installed version rather than assuming all past versions did. Missing local tools are a setup problem, not permission to upload images. `smolpng deps install oxipng --json` previews a pinned native artifact; do not add `--apply` without permission to download and execute that dependency. pngquant, jpegoptim and unsupported native targets still require separate setup. Modified managed installations are preserved, not forcibly replaced. Inspect image properties with `smolpng inspect INPUT --json`.
 
 ## Deterministic workflow
 
@@ -52,10 +52,16 @@ The nearest project `.smolpng.toml` participates in resolution. Presets are data
 
 Use `--json` for an envelope or `--jsonl` for one result per image. Report status, before/after bytes, target satisfaction, warnings, remote use, and the actual artifact path. A result lacking `output` has not produced a committed artifact. On a partial batch, deliver successful outputs and identify failures separately. See [results](references/results.md).
 
-Auto is local under the initial `never` policy. A configured key is capability, not consent. An imported preset cannot raise global upload permission. URL input explicitly downloads from the supplied source; it is distinct from sending an image to a remote optimizer. Use `--offline` to reject URLs too. Never read, print, request through a command-line secret flag, or copy `TINIFY_API_KEY` or native keyring contents into a transcript. Where a future installed build supports TinyPNG, the app retrieves credentials internally under explicit upload policy.
+Auto is local under the initial `never` policy. A configured key is capability, not consent. An imported preset cannot raise global upload permission. URL input explicitly downloads from the supplied source; it is distinct from sending an image to a remote optimizer. Use `--offline` to reject URLs too. Never read, print, request through a command-line secret flag, or copy `TINIFY_API_KEY` or native keyring contents into a transcript. For TinyPNG, the app retrieves credentials internally under explicit upload policy.
 
-`--output -` reserves stdout for PNG bytes. Do not combine it with JSON stdout; use `--report-file` for metadata. Do not use raw `exec` for ordinary compression: it relinquishes original-preservation and managed-output guarantees.
+`--output -` reserves stdout for image bytes. Do not combine it with JSON stdout; use `--report-file` for metadata. Do not use raw `exec` for ordinary compression: it relinquishes original-preservation and managed-output guarantees.
 
 ## Runtime boundary
 
 This Skill contains instructions only, not an executable or remote endpoint. Local coding agents can invoke their host's installed binary. ChatGPT Web cannot reach a desktop installation merely because this Skill was uploaded. A future authenticated `smolpng-web` app is a different execution route and must be separately configured. Never claim a compression ran when no capable runtime or returned artifact exists.
+
+## Optional service and installation effects
+
+A user-approved remote operation can use `--engine tinypng --remote-policy always`, or an explicit compare/fallback policy. The app resolves environment/native-keyring credentials internally. Never turn a configured key into implied consent. `remoteUsed` remains true after an attempted upload even when local output wins. JPEG safe preserves orientation/ICC and removes private metadata; explicit transformations still require permission.
+
+`integrate` previews per-user shortcuts; adding `--apply` is an OS-file mutation needing authority. `update status` is read-only and offline. Standalone `update apply` requires verified signing trust, stages/replaces application files and returns scheduled status; do not report it completed until the journal says complete. Package-manager files, modified Skills and custom destinations are not silently replaced. Release/signing tools are maintainer operations, not part of ordinary image compression.

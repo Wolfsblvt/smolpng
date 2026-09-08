@@ -25,6 +25,8 @@ type Entry struct {
 }
 type Request struct {
 	OS, Executable, Home, WorkingDirectory, Preset, Name string
+	ConfigPath                                           string
+	NoProject                                            bool
 	Desktop, SendTo, Interactive, Custom                 bool
 }
 
@@ -44,7 +46,7 @@ func Plan(loc Locations, q Request) ([]Entry, error) {
 	if e != nil {
 		return nil, e
 	}
-	for _, s := range []string{exe, q.Home, q.WorkingDirectory, q.Name} {
+	for _, s := range []string{exe, q.Home, q.WorkingDirectory, q.Name, q.ConfigPath} {
 		if strings.ContainsAny(s, "\r\n\x00") {
 			return nil, fmt.Errorf("launcher values cannot contain control characters")
 		}
@@ -67,6 +69,12 @@ func Plan(loc Locations, q Request) ([]Entry, error) {
 		}
 		if q.Home != "" {
 			args = append(args, "--home", q.Home)
+		}
+		if q.ConfigPath != "" {
+			args = append(args, "--config", q.ConfigPath)
+		}
+		if q.NoProject {
+			args = append(args, "--no-project")
 		}
 		args = append(args, "--preset", q.Preset, "--")
 		extension := ".desktop"

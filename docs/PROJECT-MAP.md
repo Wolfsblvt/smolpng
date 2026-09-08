@@ -28,3 +28,7 @@ Start with Development for commands, Architecture for invariants, and Vision for
 `internal/ui` owns keyboard and typed-name presentation; `internal/desktop` owns native clipboard and OS actions; `internal/state` owns bounded human metadata. `cmd/smolpngw` is Windows's explicit no-console drop entry point. `internal/config/settings.go` patches supported scalar TOML values without discarding user comments. The [documentation index](README.md) routes the now-expanded maintained subject set.
 
 `tools/qualify/` is the optional native-host acceptance helper. It invokes a built binary and checks outputs against project-generated specimens; it is not a second compression engine or part of ordinary optimizer-free CI. Its bundled report stays local to the selected qualification directory.
+
+## Extended source surfaces
+
+`internal/jpegimage` and `imagefile` add format dispatch and orientation/privacy-safe JPEG structure. `internal/secret` and `tinypng` own remote credentials and HTTP. `internal/integration` owns launcher plans/registries; `internal/updates` owns signed standalone transactions. `internal/packaging`, `tools/release` and `tools/sign-update` produce local artifacts and operator-controlled signing inputs without publication.

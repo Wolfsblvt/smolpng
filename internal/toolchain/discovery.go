@@ -91,7 +91,7 @@ func probe(ctx context.Context, r process.Runner, name, explicit, configured str
 		t.Upstream = "https://pngquant.org/"
 	}
 	if name == "jpegoptim" {
-		t.License = "GPL-3.0-or-later (current upstream); installed version terms apply"
+		t.License = "GPL (exact terms depend on the installed jpegoptim release)"
 		t.Upstream = "https://github.com/tjko/jpegoptim"
 	}
 	switch {

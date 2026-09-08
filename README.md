@@ -2,7 +2,7 @@
 
 **Make images smol.** Local-first image compression for humans, scripts, and agents.
 
-The current private source candidate provides a keyboard-driven PNG utility and deterministic CLI over separately installed pngquant and OxiPNG. It preserves originals, compares original-derived candidates and treats upload limits as exact byte targets. The full PNG/JPEG, desktop and agent destination is retained in [Vision](docs/VISION.md); unimplemented pieces are not advertised as working features.
+The current private source candidate provides a keyboard-driven PNG/JPEG utility and deterministic CLI over separately installed pngquant, OxiPNG and jpegoptim. It preserves originals, compares original-derived candidates and treats upload limits as exact byte targets. The full PNG/JPEG, desktop and agent destination is retained in [Vision](docs/VISION.md); unimplemented pieces are not advertised as working features.
 
 ## Quick start
 
@@ -24,9 +24,9 @@ smolpng compress images --recursive --output-dir optimized --jobs 2 --jsonl
 smolpng inspect icon.png --json
 ```
 
-Detached clipboard/URL/stdin output uses the operating-system Downloads folder under `smolpng/`. `--in-place` is the explicit destructive exception. `--output -` streams clean PNG bytes; use `--report-file` instead of JSON on that same stream.
+Detached clipboard/URL/stdin output uses the operating-system Downloads folder under `smolpng/`. `--in-place` is the explicit destructive exception. `--output -` streams clean image bytes; use `--report-file` instead of JSON on that same stream.
 
-Built-ins: `auto`, `web`, `smallest`, `lossless`. Auto never uploads. The TUI, native clipboard adapter, background/drop workflow, last-result recovery and tracked Agent Skill are implemented. Actual graphical clipboard/notification behavior still needs real-host qualification; TinyPNG is not implemented yet. Managed OxiPNG uses pinned 10.2.1 archives on Linux/macOS x64/arm64 and Windows x64; pngquant and native Windows arm64 OxiPNG remain manual. [Dependency setup](docs/dependencies.md). [CLI reference](docs/cli.md) · [Development](docs/DEVELOPMENT.md) · [Current boundary](docs/DIRECTION.md).
+Built-ins: `auto`, `web`, `smallest`, `lossless`. Auto is local under the initial `never` policy. The TUI, native clipboard adapter, background/drop workflow, last-result recovery and tracked Agent Skill are implemented. Actual graphical clipboard/notification behavior still needs real-host qualification; TinyPNG is available only under explicit upload permission; native keyring login is separate from permission. Managed OxiPNG uses pinned 10.2.1 archives on Linux/macOS x64/arm64 and Windows x64; pngquant and native Windows arm64 OxiPNG remain manual. [Dependency setup](docs/dependencies.md). [CLI reference](docs/cli.md) · [Development](docs/DEVELOPMENT.md) · [Current boundary](docs/DIRECTION.md).
 
 ## One action for a human
 
@@ -43,6 +43,24 @@ Use arrows/Enter, `S` for source, `,` for settings, `D` for setup, and result sh
 `--plain` removes decorative styling; `--accessible` uses typed choice names rather than arrow keys or numbered menus. `--no-header` removes the header. Scripts should use `compress`; a redirected interactive invocation refuses rather than hanging for input.
 
 Windows builds also include an optional `smolpngw.exe` drop launcher compiled without a console. Linux clipboard ownership can need a living process: keep the result screen open until paste, or let `drop` serve it for a bounded period. Read the [desktop workflow guide](docs/desktop.md) for exact limits and qualification status.
+
+## JPEG, optional TinyPNG, and native launchers
+
+```sh
+smolpng compress photo.jpg --quality 65-85 --json
+smolpng compress photo.jpg --preset lossless --json
+smolpng providers login tinypng
+smolpng compress icon.png --engine tinypng --remote-policy always --json
+smolpng integrate install --desktop              # preview native launchers
+smolpng integrate install --desktop --apply      # explicitly install
+smolpng update status --json
+```
+
+[JPEG](docs/JPEG.md) preserves display orientation and ICC under the safe default while removing GPS/private metadata. Geometry changes come directly from the original decode, not repeated lossy output. jpegoptim is installed separately; use `--jpegoptim-path` or `deps configure jpegoptim PATH --apply`.
+
+[TinyPNG](docs/REMOTE.md) reads the process environment before the native keyring, never from a secret command-line argument. Its reports disclose upload attempts and service counts even when local output wins. Ordinary tests never call the service. A key does not enable Auto upload.
+
+[Desktop integrations](docs/INTEGRATION.md) create per-user menu, optional desktop and Windows Send To shortcuts. Modified or unrelated files are preserved. [Standalone updates](docs/UPDATES.md) require an independently trusted signed manifest, use guarded backups and rollback, and synchronize only unmodified managed Skills. Package-manager installations are never self-overwritten. This candidate has no production signing key/feed, package registration, or public deployment.
 
 ## Share a recipe, not a script
 
@@ -83,7 +101,7 @@ go test ./...
 go vet ./...
 ```
 
-Tests exercise real filesystem/process boundaries and fake optimizer/HTTP boundaries using original CC0 specimens. Cross-compilation and fake processes do not qualify a real desktop or optimizer version. Standard packages do not bundle either optimizer.
+Tests exercise real filesystem/process boundaries and fake optimizer/HTTP boundaries using original CC0 specimens. Cross-compilation and fake processes do not qualify a real desktop or optimizer version. Standard packages do not bundle optimizer executables.
 
 An open-source project from Wolfsblvt Works.
 

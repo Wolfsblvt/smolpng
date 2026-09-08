@@ -39,3 +39,7 @@ Use `smolpng-qualify` against the built candidate and separately installed real 
 ## Remaining outward effects
 
 A public release requires separate exact authority for repository visibility, release upload, packages, signing, website deployment, donations and Store effects. Pin and review release-tool dependencies when that machinery is selected. Do not publish install commands for unregistered packages or claim a signed binary when none was signed. Native platform observations, legal brand/artist grant, optimizer distribution composition and current package-manager acceptance remain distinct checks.
+
+## Executable local builder
+
+`go run ./tools/release --version 0.2.0-dev.1 --out artifacts/candidate` now creates the exact platform packages and checksum/index files described here. `--base-url` plus a stable version additionally authors package-manager inputs and a narrow standalone update payload. A separate `tools/sign-update` command requires an already held protected key; normal candidate builds do not sign. See [Packaging](PACKAGING.md) for the implemented invocation and strict publication boundary.
