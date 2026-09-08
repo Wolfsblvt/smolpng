@@ -18,6 +18,7 @@ import (
 	"github.com/Wolfsblvt/smolpng/internal/pngimage"
 	"github.com/Wolfsblvt/smolpng/internal/process"
 	"github.com/Wolfsblvt/smolpng/internal/secret"
+	"github.com/Wolfsblvt/smolpng/internal/shellmenu"
 	"github.com/Wolfsblvt/smolpng/internal/state"
 	"github.com/Wolfsblvt/smolpng/internal/tinypng"
 	"github.com/Wolfsblvt/smolpng/internal/toolchain"
@@ -41,6 +42,7 @@ type Environment struct {
 	UpdateHTTP           *http.Client
 	Executable           func() (string, error)
 	IntegrationLocations *integration.Locations
+	ShellLocations       *shellmenu.Locations
 	IntegrationRenderer  integration.Renderer
 	SecretStore          secret.Store
 	CredentialLookup     func(string) (string, bool)
@@ -205,11 +207,12 @@ func (a *app) root() *cobra.Command {
 	compress.RunE = func(c *cobra.Command, args []string) error { return a.compress(c, args, cf) }
 	c.AddCommand(a.compareCommand(), compress, a.inspectCommand(), a.configCommand(), a.presetCommand(), a.skillCommand(), a.setupCommand(), a.settingsCommand(), a.dropCommand(), a.lastCommand(), a.providersCommand(), a.integrationCommand(), a.updateCommand())
 	c.AddCommand(a.updateInternalCommands()...)
+	c.AddCommand(a.shellRunCommand())
 	c.AddCommand(&cobra.Command{Use: "version", Args: cobra.NoArgs, Short: "Build identity", RunE: func(*cobra.Command, []string) error {
 		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "commit": Commit, "distribution": Distribution, "platform": runtime.GOOS + "/" + runtime.GOARCH})
 	}})
 	c.AddCommand(&cobra.Command{Use: "capabilities", Args: cobra.NoArgs, Short: "Discover implemented features", RunE: func(*cobra.Command, []string) error {
-		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "localComparison": true, "pngBackground": true, "formats": []string{"png", "jpeg"}, "presets": []string{"auto", "web", "smallest", "lossless"}, "targetSize": true, "explicitResize": true, "remoteDefault": "never", "remoteImplemented": true, "jpegBackend": "jpegoptim", "desktopInstaller": runtime.GOOS == "windows" || runtime.GOOS == "linux", "signedStandaloneUpdater": true, "updateFeedConfigured": UpdateManifestURL != "", "config": true, "namedPresets": true, "presetImport": true, "agentSkill": true, "skillInstallationTracking": true, "interactive": true, "nativeClipboard": true, "managedDependencies": []string{"oxipng"}, "desktopQualification": "adapters implemented; real desktop tests outstanding", "exitCodes": map[string]int{"success": 0, "arguments": 2, "input": 3, "dependency": 4, "optimizer": 5, "target": 6, "network": 7, "batch": 8, "cancelled": 130}})
+		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "shellMenuAdapters": []string{"windows11-IExplorerCommand", "kde-dolphin"}, "windowsShellActivation": "requires matching native DLL and trusted signed sparse package", "localComparison": true, "pngBackground": true, "formats": []string{"png", "jpeg"}, "presets": []string{"auto", "web", "smallest", "lossless"}, "targetSize": true, "explicitResize": true, "remoteDefault": "never", "remoteImplemented": true, "jpegBackend": "jpegoptim", "desktopInstaller": runtime.GOOS == "windows" || runtime.GOOS == "linux", "signedStandaloneUpdater": true, "updateFeedConfigured": UpdateManifestURL != "", "config": true, "namedPresets": true, "presetImport": true, "agentSkill": true, "skillInstallationTracking": true, "interactive": true, "nativeClipboard": true, "managedDependencies": []string{"oxipng"}, "desktopQualification": "adapters implemented; real desktop tests outstanding", "exitCodes": map[string]int{"success": 0, "arguments": 2, "input": 3, "dependency": 4, "optimizer": 5, "target": 6, "network": 7, "batch": 8, "cancelled": 130}})
 	}})
 	c.AddCommand(&cobra.Command{Use: "doctor", Args: cobra.NoArgs, Short: "Inspect paths and optimizer status", RunE: a.doctor})
 	c.AddCommand(a.depsCommand())

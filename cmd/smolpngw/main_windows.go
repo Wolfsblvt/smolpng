@@ -15,7 +15,11 @@ import (
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-	code := cli.Run(ctx, append([]string{"drop"}, os.Args[1:]...), cli.Environment{OpenTerminal: desktop.OpenConsole})
+	args := os.Args[1:]
+	if len(args) == 0 || args[0] != "_shell-run" {
+		args = append([]string{"drop"}, args...)
+	}
+	code := cli.Run(ctx, args, cli.Environment{OpenTerminal: desktop.OpenConsole})
 	if code != 0 {
 		notice, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 		_ = (desktop.NativeActions{}).Notify(notice, "smolpng could not finish", "Use smolpng last or smolpng doctor in a terminal for details.")

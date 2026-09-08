@@ -48,3 +48,7 @@ Outputs use a synced temporary sibling and atomic rename/MoveFileEx, or exclusiv
 `internal/integration` plans user-native destinations and records exact installed launcher hashes. `internal/updates` verifies standard-library Ed25519 signatures and bounded package members, then stages a recoverable replacement transaction. Its short-lived helper is a copy of the old application, not unverified downloaded code; it probes the new build before asking it to synchronize its embedded Skill. Neither boundary is a privileged service.
 
 `internal/packaging` and `tools/release` produce deterministic archives, member receipts and optional offline package manifests. `tools/sign-update` consumes an independently held private key only when explicitly invoked. No production key/feed, submission credential, deployment API or release publication is part of a normal build.
+
+## Primary context-menu seam
+
+Optional shell actions resolve their installed generation and user-only preset through a bounded data handoff. The Windows IExplorerCommand addon performs no compression inside Explorer; Dolphin uses MIME-scoped service files and independently passed filenames. Hash-tracked native-user menu data can refer to portable app/config locations. The Go receiver caps remote use to never, controls replacement only through an explicitly labelled action, and calls existing human result/clipboard/state handling. Native code, package identity and signature trust are separately qualified.

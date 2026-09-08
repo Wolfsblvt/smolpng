@@ -69,3 +69,21 @@ jobs:
           path: artifacts/bin/
           if-no-files-found: error
           retention-days: 14
+
+  windows-shell:
+    name: Native shell compile (${{ matrix.arch }})
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, ARM64]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Configure Windows SDK addon (no signing or registration)
+        run: cmake -S native/windows-shell -B artifacts/native-shell -A ${{ matrix.arch }}
+      - run: cmake --build artifacts/native-shell --config Release
+      - if: matrix.arch == 'x64'
+        run: ctest --test-dir artifacts/native-shell -C Release --output-on-failure

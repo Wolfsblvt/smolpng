@@ -123,3 +123,7 @@ Application and ordinary docs: [MIT](LICENSE). Generated corpus: CC0. Dependenci
 ## Compare before changing defaults
 
 `smolpng compare images --recursive --output-dir artifacts/review --json` measures the same original through local presets and exports candidates with an offline visual report. See [comparison](docs/comparison.md) for tool isolation, repeats, targets and metric limits; [explicit background](docs/background.md) explains optional PNG alpha flattening.
+
+### Right-click images
+
+`smolpng integrate shell install --apply` selects a single preserve-original **Make smol** action; `--mode submenu --preset mcp-icon` exposes labelled replacement, interactive and custom-user recipes. Windows 11 uses an original native COM bridge and signed sparse package, **not** a legacy registry verb. Settings can be authored here; the native SDK build and signed activation remain a separate host qualification. Linux installation targets KDE Dolphin only. See [context-menu setup and boundaries](docs/context-menu.md).

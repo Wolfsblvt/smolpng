@@ -10,9 +10,11 @@ import (
 )
 
 type Locations struct {
-	Menu    string `json:"menu"`
-	Desktop string `json:"desktop"`
-	SendTo  string `json:"sendTo,omitempty"`
+	Menu         string `json:"menu"`
+	Desktop      string `json:"desktop"`
+	SendTo       string `json:"sendTo,omitempty"`
+	ShellState   string `json:"shellState,omitempty"`
+	ServiceMenus string `json:"serviceMenus,omitempty"`
 }
 type Entry struct {
 	ID               string   `json:"id"`

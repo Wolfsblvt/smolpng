@@ -32,3 +32,5 @@ Start with Development for commands, Architecture for invariants, and Vision for
 ## Extended source surfaces
 
 `internal/jpegimage` and `imagefile` add format dispatch and orientation/privacy-safe JPEG structure. `internal/secret` and `tinypng` own remote credentials and HTTP. `internal/integration` owns launcher plans/registries; `internal/updates` owns signed standalone transactions. `internal/packaging`, `tools/release` and `tools/sign-update` produce local artifacts and operator-controlled signing inputs without publication.
+
+`internal/shellmenu/` owns the data-only menu/wire protocol and native package validation; `native/windows-shell/` contains the minimal C++ COM bridge and its SDK/package builder. Both feed the Go engine rather than creating another compression path.

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+ xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+ xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
+ xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
+ xmlns:desktop4="http://schemas.microsoft.com/appx/manifest/desktop/windows10/4"
+ xmlns:desktop5="http://schemas.microsoft.com/appx/manifest/desktop/windows10/5"
+ xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+ IgnorableNamespaces="uap uap10 com desktop4 desktop5 rescap">
+ <Identity Name="Wolfsblvt.smolpng.ContextMenu" Publisher="@PUBLISHER@" Version="@VERSION@" ProcessorArchitecture="@ARCH@"/>
+ <Properties>
+  <DisplayName>smolpng context menu</DisplayName>
+  <PublisherDisplayName>Wolfsblvt Works</PublisherDisplayName>
+  <Logo>Assets\StoreLogo.png</Logo>
+  <uap10:AllowExternalContent>true</uap10:AllowExternalContent>
+ </Properties>
+ <Resources><Resource Language="en-us"/></Resources>
+ <Dependencies><TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.22000.0" MaxVersionTested="10.0.26100.0"/></Dependencies>
+ <Applications>
+  <Application Id="SmolpngShell" Executable="smolpng.exe" uap10:TrustLevel="mediumIL" uap10:RuntimeBehavior="win32App">
+   <uap:VisualElements AppListEntry="none" DisplayName="smolpng" Description="Make selected images smol" BackgroundColor="transparent" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png"/>
+   <Extensions>
+    <com:Extension Category="windows.comServer"><com:ComServer><com:SurrogateServer DisplayName="smolpng commands">
+     <com:Class Id="90BB1F36-193A-4D1A-891B-91DB43AE63DC" Path="SmolpngShell.dll" ThreadingModel="STA"/>
+    </com:SurrogateServer></com:ComServer></com:Extension>
+    <desktop4:Extension Category="windows.fileExplorerContextMenus"><desktop4:FileExplorerContextMenus>
+     <desktop5:ItemType Type=".png"><desktop5:Verb Id="MakeSmol" Clsid="90BB1F36-193A-4D1A-891B-91DB43AE63DC"/></desktop5:ItemType>
+     <desktop5:ItemType Type=".jpg"><desktop5:Verb Id="MakeSmol" Clsid="90BB1F36-193A-4D1A-891B-91DB43AE63DC"/></desktop5:ItemType>
+     <desktop5:ItemType Type=".jpeg"><desktop5:Verb Id="MakeSmol" Clsid="90BB1F36-193A-4D1A-891B-91DB43AE63DC"/></desktop5:ItemType>
+    </desktop4:FileExplorerContextMenus></desktop4:Extension>
+   </Extensions>
+  </Application>
+ </Applications>
+ <Capabilities><rescap:Capability Name="runFullTrust"/><rescap:Capability Name="unvirtualizedResources"/></Capabilities>
+</Package>

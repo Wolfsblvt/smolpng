@@ -2,3 +2,5 @@
 *.png binary
 *.zip binary
 *.bundle binary
+
+*.bin binary

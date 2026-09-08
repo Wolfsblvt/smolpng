@@ -78,14 +78,14 @@ func (m Manager) validate(x Entry) error {
 		return fmt.Errorf("invalid managed launcher record")
 	}
 	extension := filepath.Ext(x.Path)
-	if extension != ".lnk" && extension != ".desktop" {
+	if extension != ".lnk" && extension != ".desktop" && !(extension == ".ini" && x.ID == "shell-menu" && filepath.Dir(x.Path) == m.Allowed.ShellState) {
 		return fmt.Errorf("invalid launcher extension")
 	}
 	if filepath.Base(x.Path) != "smolpng-"+x.ID+extension {
 		return fmt.Errorf("invalid managed launcher filename")
 	}
 	dir := filepath.Dir(x.Path)
-	if !slices.Contains([]string{m.Allowed.Menu, m.Allowed.Desktop, m.Allowed.SendTo}, dir) {
+	if !slices.Contains([]string{m.Allowed.Menu, m.Allowed.Desktop, m.Allowed.SendTo, m.Allowed.ShellState, m.Allowed.ServiceMenus}, dir) {
 		return fmt.Errorf("launcher location no longer matches native user folders")
 	}
 	return noLinks(x.Path)

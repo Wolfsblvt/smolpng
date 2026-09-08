@@ -96,6 +96,7 @@ func (a *app) integrationPlan(m integration.Manager, desktop, sendto bool, prese
 }
 func (a *app) integrationCommand() *cobra.Command {
 	root := &cobra.Command{Use: "integrate", Short: "Opt-in per-user launchers with hash-protected removal"}
+	root.AddCommand(a.shellCommand())
 	root.AddCommand(&cobra.Command{Use: "status", Args: cobra.NoArgs, RunE: func(c *cobra.Command, _ []string) error {
 		m, e := a.integrations()
 		if e != nil {
@@ -201,12 +202,15 @@ func (a *app) installIntegrationsUI(ctx context.Context, p ui.Prompter) error {
 	if e != nil {
 		return e
 	}
-	action, e := p.Choose(ctx, "Desktop integration", "Per-user only. Existing unrelated or modified files are never replaced.", []ui.Option{{Label: "Menu launchers", Value: "menu"}, {Label: "Menu plus desktop drop targets", Value: "desktop"}, {Label: "Menu, desktop and Windows Send To", Value: "all"}, {Label: "Back", Value: "back"}}, "menu")
+	action, e := p.Choose(ctx, "Desktop integration", "Per-user only. Existing unrelated or modified files are never replaced.", []ui.Option{{Label: "Right-click menu (Windows 11 / Dolphin)...", Value: "shell"}, {Label: "Menu launchers", Value: "menu"}, {Label: "Menu plus desktop drop targets", Value: "desktop"}, {Label: "Menu, desktop and Windows Send To", Value: "all"}, {Label: "Back", Value: "back"}}, "menu")
 	if errors.Is(e, ui.ErrBack) || action == "back" {
 		return nil
 	}
 	if e != nil {
 		return e
+	}
+	if action == "shell" {
+		return a.shellUI(ctx, p)
 	}
 	plan, e := a.integrationPlan(m, action != "menu", action == "all", "auto", "", false)
 	if e != nil {

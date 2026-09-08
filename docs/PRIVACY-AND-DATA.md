@@ -21,3 +21,7 @@ Preset, dependency, Skill and shortcut registries live in per-user state/data lo
 Updates are manual by default. Only a user-enabled daily human-startup policy can perform a periodic request, and only when a trusted feed/key is configured. Projects, copied presets, deterministic CLI, JSON and background drop cannot opt users into those checks. A check records the last attempt time and ignored version. No device identifier or API key is sent.
 
 Standalone updates retain signed payloads, old/new file hashes, private backups, completion/rollback status and a bounded worker log in a transaction directory beside the application. That evidence is intentionally retained for recovery. Config, user images, managed optimizers and custom Skills are not package members. Public keys are not secrets; private signing keys never enter normal application state or release archives.
+
+## Right-click menus
+
+Menu settings contain application/config paths and preset identifiers, not credentials or images. Actions are deliberately local-only. Windows hands at most 512 selected absolute filenames through a bounded native-user `shell-requests` file; the Go receiver deletes a decoded request. A crash or invalid request can leave filenames there until manually cleared. Menu receipts and package-registration receipts persist until removed. Removing menu settings hides actions without silently uninstalling the separate signed Windows package. The context-menu guide distinguishes configured files, registered package identity and actually observed desktop behavior.

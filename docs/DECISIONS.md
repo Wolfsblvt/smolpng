@@ -64,3 +64,9 @@ Use standard-library Ed25519 over exact manifest payload bytes, plus signed hash
 ## Explicit alpha flattening, not background segmentation
 
 Wolf's final refinement request raised alpha/background removal. The reversible implementation is a named opaque matte in CLI/Custom/presets; it never changes the default preservation policy. Subject cutout and colour-key deletion are distinct editing products and were not silently added. Strict lossless and remote-source equivalence remain enforced. See `background.md` for the exact encoded-channel and colour-profile limits.
+
+## Optional primary context menus, 2026-09-08
+
+Wolf selected an opt-in one-action image menu and an alternative submenu with explicit replacement, interactive mode and user presets. Single-action Make smol preserves originals. The submenu's destructive first action says replace original. All shell invocations remain local and receive exact file selections, never clipboard fallback or project-discovered command behavior.
+
+Windows 11 primary-menu support uses a minimal C++ IExplorerCommand bridge plus separately signed sparse package identity. Static registry verbs are not presented as equivalent primary-menu support. The Go application remains the single compression/config/result engine; the native component only supplies menu/selection/launch ABI. DLL compilation/signing/activation are native host boundaries, not completed by cross-building Go. KDE Dolphin gets file-type-scoped, owned service files; its whole-service Terminal setting requires separate grouped background and interactive services. Other Linux file managers remain unclaimed.
