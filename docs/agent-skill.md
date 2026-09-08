@@ -59,7 +59,7 @@ Uninstall removes only an unchanged tracked directory, or unregisters a wholly m
 
 Installation/update records the last-seen application and embedded bundle identity. Read-only status detects a later executable version or bundle change. Only changed Skill content with outstanding installations earns a synchronization prompt; an application version bump alone does not. An interactive-startup observer retains a pending condition until handled, rather than consuming it before a human sees it. `skill ignore-update` remembers the current bundle hash; a different future bundle can prompt again.
 
-The predicate and persistence are implemented and tested. The next keyboard workflow calls the observer and renders that prompt. Current deterministic commands do not prompt or contaminate stdout, and diagnostic reads do not create a first-run state file.
+The predicate, persistence and keyboard startup observer are implemented and tested. The human sees synchronization, review, later and ignore-current-bundle choices only when the embedded content changed and a tracked destination is outstanding. Current deterministic commands do not prompt or contaminate stdout, and diagnostic reads do not create a first-run state file.
 
 ## Interrupted updates and filesystem safety
 

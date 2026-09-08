@@ -42,6 +42,8 @@ func (f inputFlags) limits() (domain.Limits, error) {
 }
 
 type compressFlags struct {
+	CopyMode                                                                                                 string
+	ClipboardHold                                                                                            time.Duration
 	Input                                                                                                    inputFlags
 	Output                                                                                                   output.Options
 	Preset, Quality, Dither, Level, Metadata, Target, Resize, MaxDimensions, MinDimensions, Engine, Remote   string
@@ -90,6 +92,8 @@ func (f *compressFlags) bind(c *cobra.Command) {
 	p.BoolVar(&f.NoRecursive, "no-recursive", false, "Override recursive traversal")
 	p.StringArrayVar(&f.PNGArgs, "pngquant-arg", nil, "Safe extra --posterize=N; use exec for arbitrary arguments")
 	p.StringArrayVar(&f.OxiArgs, "oxipng-arg", nil, "Safe extra --interlace=N or --zopfli")
+	p.StringVar(&f.CopyMode, "copy", "", "Explicitly copy a file output: smart, path, image, files, directory or none")
+	p.DurationVar(&f.ClipboardHold, "clipboard-hold", 0, "On Linux serve copied data until replaced or timeout (0..30m)")
 	p.StringVar(&f.ReportFile, "report-file", "", "Also write a structured report to this file")
 	c.MarkFlagsMutuallyExclusive("quantize", "no-quantize")
 	c.MarkFlagsMutuallyExclusive("optimize-alpha", "no-optimize-alpha")

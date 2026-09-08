@@ -31,3 +31,12 @@ These are durable smolpng choices whose reasons cannot be reconstructed from sou
 ## Source provenance
 
 These decisions adopt the owner-supplied `smolpng-product-brief.md` (SHA-256 `0b3eeacb11cd63f816e76034ac1b510f5c6f3d4f62d6b6a19ec916c1cb581232`) and licensing boundary (`8b3aecb93ce0a36c8151d818423f37ea635f9c895506ac48024f76fd19cb032b`). The direct implementation assignment authorizes private source delivery and a local Git/ZIP alternative when a connector fails. The raw design conversation is supporting history, not a competing live specification.
+
+
+## Human workflow uses one orchestration path
+
+The keyboard and drop commands consume typed results from the same config/input/output/engine orchestration as `compress`. Clipboard source is snapshotted once per human retry loop; output copying cannot become the next lossy input. Deterministic commands do not infer clipboard input, prompt, retain history or copy outputs without explicit selection.
+
+Huh/Bubble Tea and the cgo-free desktop clipboard package are retained for real keyboard forms and multi-representation copy. Native runtime availability is reported/qualified, not inferred from compilation. A small project-written text header remains replaceable. Plain and typed-name accessibility modes are available without inventing numbered-choice menus.
+
+Settings preserve handwritten TOML via byte-range edits from the pinned parser, validate both the project and standalone-user view, and recheck the file snapshot under a native lock. An unsupported document shape refuses instead of rewriting the whole file. App-owned preset storage remains separate.

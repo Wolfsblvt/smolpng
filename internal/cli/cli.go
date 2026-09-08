@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Wolfsblvt/smolpng/internal/config"
+	"github.com/Wolfsblvt/smolpng/internal/desktop"
 	"github.com/Wolfsblvt/smolpng/internal/domain"
 	"github.com/Wolfsblvt/smolpng/internal/fsutil"
 	"github.com/Wolfsblvt/smolpng/internal/input"
@@ -13,7 +15,9 @@ import (
 	"github.com/Wolfsblvt/smolpng/internal/paths"
 	"github.com/Wolfsblvt/smolpng/internal/pngimage"
 	"github.com/Wolfsblvt/smolpng/internal/process"
+	"github.com/Wolfsblvt/smolpng/internal/state"
 	"github.com/Wolfsblvt/smolpng/internal/toolchain"
+	"github.com/Wolfsblvt/smolpng/internal/ui"
 	"github.com/Wolfsblvt/smolpng/internal/workflow"
 	"github.com/spf13/cobra"
 	"io"
@@ -29,12 +33,16 @@ var Commit = "unknown"
 var Distribution = "source"
 
 type Environment struct {
-	In        io.Reader
-	Out, Err  io.Writer
-	Runner    process.Runner
-	Clipboard input.Clipboard
-	Paths     *paths.Paths
-	CWD       string
+	In           io.Reader
+	Out, Err     io.Writer
+	Runner       process.Runner
+	Clipboard    input.Clipboard
+	Paths        *paths.Paths
+	CWD          string
+	Prompt       ui.Prompter
+	Desktop      desktop.Actions
+	Copy         desktop.ClipboardWriter
+	OpenTerminal func() (desktop.Console, error)
 }
 
 // Environment has only invocation and external-resource seams, not a second engine.
@@ -43,7 +51,9 @@ type app struct {
 	json, jsonl, quiet, verbose, portable, auto bool
 	home, configPath                            string
 	noProject                                   bool
+	plain, accessible, noHeader                 bool
 	tools                                       toolchain.Paths
+	terminalRelease                             func()
 	configuredTools                             toolchain.Paths
 }
 type reported int
@@ -62,7 +72,23 @@ func Run(ctx context.Context, args []string, env Environment) int {
 	if env.Runner == nil {
 		env.Runner = process.OSRunner{}
 	}
+	if env.Clipboard == nil {
+		env.Clipboard = desktop.NativeClipboard{}
+	}
+	if env.Desktop == nil {
+		env.Desktop = desktop.NativeActions{Runner: env.Runner}
+	}
+	if env.Copy == nil {
+		if copy, ok := env.Clipboard.(desktop.ClipboardWriter); ok {
+			env.Copy = copy
+		}
+	}
 	a := &app{env: env}
+	defer func() {
+		if a.terminalRelease != nil {
+			a.terminalRelease()
+		}
+	}()
 	root := a.root()
 	root.SetArgs(args)
 	root.SetIn(env.In)
@@ -133,7 +159,7 @@ func (a *app) discover(ctx context.Context, p paths.Paths) toolchain.Set {
 	return toolchain.Discover(ctx, a.env.Runner, a.tools, a.configuredTools)
 }
 func (a *app) root() *cobra.Command {
-	c := &cobra.Command{Use: "smolpng [INPUT...]", Short: "Make images smol.", SilenceUsage: true, SilenceErrors: true}
+	c := &cobra.Command{Use: "smolpng [INPUT...]", Args: cobra.ArbitraryArgs, Short: "Make images smol.", SilenceUsage: true, SilenceErrors: true}
 	p := c.PersistentFlags()
 	p.BoolVar(&a.json, "json", false, "Machine-readable JSON only")
 	p.BoolVar(&a.jsonl, "jsonl", false, "One compact JSON result per image")
@@ -143,6 +169,9 @@ func (a *app) root() *cobra.Command {
 	p.StringVar(&a.home, "home", "", "Explicit portable data root")
 	p.StringVar(&a.configPath, "config", "", "Explicit user config file (must exist)")
 	p.BoolVar(&a.noProject, "no-project", false, "Do not load project .smolpng.toml")
+	p.BoolVar(&a.plain, "plain", false, "Plain keyboard interface without decorative header")
+	p.BoolVar(&a.accessible, "accessible", false, "Screen-reader prompts using choice names, not numbers")
+	p.BoolVar(&a.noHeader, "no-header", false, "Hide the replaceable interactive header")
 	p.StringVar(&a.tools.PNGQuant, "pngquant-path", "", "Explicit pngquant executable")
 	p.StringVar(&a.tools.OxiPNG, "oxipng-path", "", "Explicit OxiPNG executable")
 	c.MarkFlagsMutuallyExclusive("json", "jsonl")
@@ -151,7 +180,7 @@ func (a *app) root() *cobra.Command {
 	c.Flags().BoolVar(&a.auto, "auto", false, "One-shot deterministic compression")
 	c.RunE = func(cmd *cobra.Command, args []string) error {
 		if !a.auto {
-			return domain.E(2, "interactive mode is not implemented in this cut; use compress or --auto", nil)
+			return a.interactive(cmd, args, rootFlags)
 		}
 		return a.compress(cmd, args, rootFlags)
 	}
@@ -159,12 +188,12 @@ func (a *app) root() *cobra.Command {
 	compress := &cobra.Command{Use: "compress INPUT...", Short: "Compress deterministically; never prompt"}
 	cf.bind(compress)
 	compress.RunE = func(c *cobra.Command, args []string) error { return a.compress(c, args, cf) }
-	c.AddCommand(compress, a.inspectCommand(), a.configCommand(), a.presetCommand(), a.skillCommand())
+	c.AddCommand(compress, a.inspectCommand(), a.configCommand(), a.presetCommand(), a.skillCommand(), a.setupCommand(), a.settingsCommand(), a.dropCommand(), a.lastCommand())
 	c.AddCommand(&cobra.Command{Use: "version", Args: cobra.NoArgs, Short: "Build identity", RunE: func(*cobra.Command, []string) error {
 		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "commit": Commit, "distribution": Distribution, "platform": runtime.GOOS + "/" + runtime.GOARCH})
 	}})
 	c.AddCommand(&cobra.Command{Use: "capabilities", Args: cobra.NoArgs, Short: "Discover implemented features", RunE: func(*cobra.Command, []string) error {
-		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "formats": []string{"png"}, "presets": []string{"auto", "web", "smallest", "lossless"}, "targetSize": true, "explicitResize": true, "remoteDefault": "never", "remoteImplemented": false, "config": true, "namedPresets": true, "presetImport": true, "agentSkill": true, "skillInstallationTracking": true, "interactive": false, "nativeClipboard": false, "exitCodes": map[string]int{"success": 0, "arguments": 2, "input": 3, "dependency": 4, "optimizer": 5, "target": 6, "network": 7, "batch": 8, "cancelled": 130}})
+		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "formats": []string{"png"}, "presets": []string{"auto", "web", "smallest", "lossless"}, "targetSize": true, "explicitResize": true, "remoteDefault": "never", "remoteImplemented": false, "config": true, "namedPresets": true, "presetImport": true, "agentSkill": true, "skillInstallationTracking": true, "interactive": true, "nativeClipboard": true, "desktopQualification": "adapters implemented; real desktop tests outstanding", "exitCodes": map[string]int{"success": 0, "arguments": 2, "input": 3, "dependency": 4, "optimizer": 5, "target": 6, "network": 7, "batch": 8, "cancelled": 130}})
 	}})
 	c.AddCommand(&cobra.Command{Use: "doctor", Args: cobra.NoArgs, Short: "Inspect paths and optimizer status", RunE: a.doctor})
 	deps := &cobra.Command{Use: "deps", Short: "Separately installed optimizer dependencies"}
@@ -229,6 +258,22 @@ func (a *app) root() *cobra.Command {
 	return c
 }
 func (a *app) compress(c *cobra.Command, args []string, f *compressFlags) error {
+	return a.compression(c, args, f, nil)
+}
+
+// compression is shared orchestration. Human/drop callers consume the same typed
+// result before presentation; they never invoke a second engine or parse stdout.
+func (a *app) compression(c *cobra.Command, args []string, f *compressFlags, consume func(domain.Report, config.Effective) error) error {
+	if f.CopyMode != "" && !desktop.ValidCopy(f.CopyMode) {
+		return domain.E(2, "unknown clipboard output mode", nil)
+	}
+	if f.ClipboardHold < 0 || f.ClipboardHold > 30*time.Minute {
+		return domain.E(2, "clipboard-hold must be 0..30m", nil)
+	}
+	if (f.Stdout || f.Output.Path == "-") && f.CopyMode != "" && f.CopyMode != "none" {
+		return domain.E(2, "copy requires a saved output file; binary stdout has no artifact path", nil)
+	}
+
 	p, e := a.dirs()
 	if e != nil {
 		return e
@@ -332,6 +377,22 @@ func (a *app) compress(c *cobra.Command, args []string, f *compressFlags) error 
 	}
 	batch := workflow.Batch{Engine: workflow.Engine{Runner: a.env.Runner, Tools: tools, Limits: limits, CacheDir: p.Cache, Verbose: a.verbose}, Resolver: a.resolver(), Stdout: a.env.Out}
 	result := batch.Run(c.Context(), jobs, workflow.Options{Recipe: r, Output: f.Output, Jobs: f.Jobs, FailFast: f.FailFast, DryRun: f.DryRun, Offline: f.Input.Options.Offline})
+	var copied desktop.CopyReceipt
+	if consume == nil && !f.DryRun && f.CopyMode != "" && f.CopyMode != "none" && len(state.Outputs(result)) > 0 {
+		copied, e = a.copyOutputs(c.Context(), result, f.CopyMode)
+		if e != nil {
+			err := domain.E(5, "output saved, but requested clipboard copy failed", e)
+			if result.ExitCode == 0 {
+				result.Results[0].Fail(err)
+				result = domain.Summarize(result.Results)
+			} else {
+				result.Results[0].Warnings = append(result.Results[0].Warnings, err.Error())
+			}
+		} else if copied.NeedsOwner && f.ClipboardHold == 0 {
+			result.Results[0].Warnings = append(result.Results[0].Warnings, "Clipboard ownership may end on exit; use --clipboard-hold on this host.")
+		}
+	}
+
 	if f.ReportFile != "" {
 		b, e := json.MarshalIndent(result, "", "  ")
 		if e != nil {
@@ -340,6 +401,9 @@ func (a *app) compress(c *cobra.Command, args []string, f *compressFlags) error 
 		if e = fsutil.AtomicWrite(c.Context(), f.ReportFile, append(b, '\n'), 0600, f.Output.Overwrite); e != nil {
 			return domain.E(5, "cannot write report file", e)
 		}
+	}
+	if consume != nil {
+		return consume(result, effective)
 	}
 	if a.json {
 		e = a.emit(result)
@@ -360,6 +424,7 @@ func (a *app) compress(c *cobra.Command, args []string, f *compressFlags) error 
 	if e != nil {
 		return domain.E(5, "cannot write result report", e)
 	}
+	desktop.Hold(c.Context(), copied, f.ClipboardHold)
 	if result.ExitCode != 0 {
 		return reported(result.ExitCode)
 	}

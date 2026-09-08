@@ -11,3 +11,8 @@ Outputs are atomically visible, not claimed power-loss durable. No-clobber write
 ## Skill management
 
 Only explicit dedicated `smolpng` directories are tracked. Resource hashes gate synchronization and uninstall; symlinks, untracked bytes and unexpected empty directories are preserved. A journal and native directory moves recover interrupted updates without dropping unknown content. This is not an adversarial filesystem sandbox: a malicious concurrent owner of the containing directory remains outside the model. Corrupt registries and ambiguous recovery stop with diagnostics. App-managed and custom-path update consent are distinct.
+
+
+The native clipboard is untrusted input and is bounded before image processing; preset text still passes the data-only parser and permission cap. Terminal labels are stripped of escape/control sequences, with URL credentials/query strings omitted from source previews. Native browser opening accepts credential-free HTTPS links; folder/notification actions use direct executable arguments. The fixed Windows notification script quotes user-visible text as data and never interpolates executable source from a preset. Actual OS prompts and desktop availability remain local qualification work.
+
+The settings editor does not erase handwritten config to serialize a convenient struct. It updates supported scalar tokens only, validates the entire candidate, checks that user defaults work outside the current project and refuses stale or symlinked config writes. State records reject symlink files and unknown versions. None of these protections is a sandbox against an adversary who controls the user's directories or executable search path.

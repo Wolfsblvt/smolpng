@@ -23,3 +23,6 @@ Start with Development for commands, Architecture for invariants, and Vision for
 `internal/config/` owns TOML and preset resolution/import state, `docs/presets.md` owns its user contract, and `presets/examples/` contains tested CC0 copyable recipes.
 
 `skills/smolpng/` is the embedded user-facing guidance; `internal/skill/` owns its tracked installation, synchronization and recovery. `docs/agent-skill.md` owns the lifecycle and client/runtime distinction.
+
+
+`internal/ui` owns keyboard and typed-name presentation; `internal/desktop` owns native clipboard and OS actions; `internal/state` owns bounded human metadata. `cmd/smolpngw` is Windows's explicit no-console drop entry point. `internal/config/settings.go` patches supported scalar TOML values without discarding user comments. The [documentation index](README.md) routes the now-expanded maintained subject set.

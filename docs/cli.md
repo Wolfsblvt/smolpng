@@ -41,3 +41,14 @@ Binary `--stdout`/`--output -` is incompatible with JSON stdout. Use `--report-f
 ## Configuration and presets
 
 The implemented `config` and `preset` families are documented in [Configuration and presets](presets.md). `--config FILE` selects user configuration, `--no-project` suppresses project discovery, and `compress --preset NAME` now accepts inherited saved recipes. `config path` remains usable when parsing fails. These additions do not change binary stdout, target exit codes, or local-first permission.
+
+
+## Human and background commands
+
+Bare `smolpng [INPUT...]` opens the keyboard interface; `--auto` retains deterministic one-shot behavior. `setup` checks local dependencies and offers explicit paths or optional Agent Skill installation, with no automatic network. `settings` edits supported user defaults while preserving existing TOML comments. `config set KEY VALUE` performs the same scalar edit without prompts. `--plain`, `--accessible` and `--no-header` adjust interactive presentation. The accessible path uses displayed names, never numeric choices.
+
+`drop [INPUT...]` runs the configured drop preset; no input explicitly selects the clipboard. It records the last operation and attempts the configured copy/notification. `drop.mode='interactive'` selects the human path only outside JSON/JSONL mode. `smolpngw.exe` is the Windows no-console entry point for the same command. It is built with the GUI subsystem; this alone does not create OS shortcuts or prove desktop integration.
+
+`--copy smart|path|image|file|files|directory|none` explicitly selects copied output for `compress`, or overrides the configured human/drop preference. Binary stdout has no artifact file to copy and conflicts with non-none copy. A requested deterministic copy failure returns nonzero while retaining the saved artifact. Human/background copying is best effort with visible/retained warnings. `--clipboard-hold 0..30m` optionally retains Linux ownership; ordinary compression and JSON drop default to no wait. Human menus retain ownership while the result screen remains open; non-JSON drop defaults to five minutes or until replacement/cancellation.
+
+`last [--json]` reads the previous human/drop result and reports current artifact existence. `last --copy MODE [--clipboard-hold 5m]` reoffers existing outputs; `last --open` opens their folder; `last --clear` deletes metadata only. Dry-run never updates the clipboard, last result or notification. There is no implicit history for ordinary automation.

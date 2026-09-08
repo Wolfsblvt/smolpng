@@ -134,6 +134,24 @@ func (a *app) configCommand() *cobra.Command {
 	}}
 	init.Flags().BoolVar(&project, "project", false, "Create .smolpng.toml in the current directory")
 	root.AddCommand(init)
+	root.AddCommand(&cobra.Command{Use: "set KEY VALUE", Args: cobra.ExactArgs(2), Short: "Set a supported user preference while preserving comments", RunE: func(c *cobra.Command, args []string) error {
+		p, e := a.dirs()
+		if e != nil {
+			return e
+		}
+		w, e := a.loadConfig(p)
+		if e != nil {
+			return e
+		}
+		value, e := config.SettingValue(args[0], args[1])
+		if e != nil {
+			return domain.E(2, e.Error(), e)
+		}
+		if e = w.SaveUserSettings(c.Context(), map[string]any{args[0]: value}); e != nil {
+			return domain.E(2, e.Error(), e)
+		}
+		return a.emit(map[string]any{"schemaVersion": 1, "path": w.User.Path, "key": args[0], "value": value})
+	}})
 	return root
 }
 func (a *app) presetCommand() *cobra.Command {
@@ -310,6 +328,9 @@ func (a *app) presetCommand() *cobra.Command {
 func (f *compressFlags) configOverrides(c *cobra.Command) (config.Fields, error) {
 	p := config.Fields{}
 	changed := c.Flags().Changed
+	if changed("copy") && f.CopyMode != "" {
+		p.Clipboard = &f.CopyMode
+	}
 	if changed("quality") {
 		p.Quality = &f.Quality
 	}

@@ -2,7 +2,7 @@
 
 ## Meaning
 
-This repository owns smolpng, the local-first image compressor for humans, scripts, and agents. Wolf authorized this private implementation and its ordinary Git delivery. The application is PNG-first; PNG and JPEG, desktop convenience, shareable presets, Agent Skills, and distribution remain the accepted 1.0 destination. The current source implements the deterministic PNG CLI and focused tests; desktop and broader 1.0 behavior remain separately qualified.
+This repository owns smolpng, the local-first image compressor for humans, scripts, and agents. Wolf authorized this private implementation and its ordinary Git delivery. The application is PNG-first; PNG and JPEG, desktop convenience, shareable presets, Agent Skills, and distribution remain the accepted 1.0 destination. The current source implements the deterministic PNG CLI and focused tests; native desktop adapters and human workflows are implemented, while real graphical behavior and broader 1.0 work remain separately qualified.
 
 ## Source and boundaries
 
@@ -19,7 +19,7 @@ main:
   required pre-integration evidence: none
   required approval/review: none
   resolved conversations: no
-  automatic CI: none at bootstrap
+  automatic CI: Verify workflow source (hosted execution must be read back per SHA)
   automatic retained branch effects: none
   other pre-update evidence: inspect the effective diff and exact applicable test evidence
 ```

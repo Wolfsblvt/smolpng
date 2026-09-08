@@ -25,3 +25,12 @@ Outputs use a synced temporary sibling and atomic rename/MoveFileEx, or exclusiv
 ## Installed Agent Skill
 
 `skills/` embeds the user-facing package; `internal/skill` owns version-independent bundle hashes, explicit destination management and a journaled directory transaction. Inspection is read-only. Replacement and removal require exact last-installed hashes, preserve user changes, and use an OS advisory lock plus atomic no-replace directory moves. Standard destinations may synchronize during a future in-app update; custom destinations require consent. The keyboard UI can consume a persistent changed-bundle prompt without contaminating the deterministic CLI. [Agent Skill](agent-skill.md) owns the exact lifecycle and recovery contract.
+
+
+## Shared human workflow
+
+`internal/cli` resolves exactly the same config, source/output plan and `workflow.Batch` for deterministic, interactive and background calls. Human/drop presentation receives a typed report through the same orchestration boundary, not by parsing its own JSON or rebuilding a compressor. `internal/ui` owns keyboard menus and Huh forms. Clipboard reads are frozen for a human recipe-retry loop so automatic output copying cannot turn the next attempt into lossy recompression of the previous result.
+
+`internal/desktop` owns native clipboard formats and browser/folder/notification commands. Smart output makes one multi-representation clipboard write. Native actions use fixed argument arrays; the Windows notification helper is fixed code with escaped data. The no-console Windows entry point selects drop explicitly and requests a console only for the configured interactive variant. No generic daemon or local MCP server exists.
+
+`internal/state` bounds human-result retention. Ordinary `compress`, `doctor` and `skill status` neither create a first-run wizard nor silently write human history. User setting edits use the pinned TOML AST's value ranges under an advisory lock with a byte-snapshot recheck, preserving comments and unrelated fields. Preset storage remains a separate owned file.

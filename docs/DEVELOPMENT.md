@@ -50,3 +50,22 @@ The authoring sandbox uses an isolated checksum-verified Go/module cache transpo
 ## Agent integration verification
 
 `go test ./internal/skill ./internal/fsutil ./internal/cli` exercises actual temporary directories, native process-scoped locking, no-replace moves, installed hashes, custom-path consent, modified-file protection, replacement prompt conditions, interrupted swaps and deterministic ZIP entries. It does not install to the developer's actual harness folders. `skills/smolpng/` is the source of the embedded artifact; its content hash changes automatically when any resource changes. A rebuilt binary with unchanged resources retains the same bundle version.
+
+
+## Keyboard and desktop verification
+
+`go test ./internal/ui ./internal/desktop ./internal/state ./internal/cli` exercises actual menu key messages, typed-name accessibility, multi-format clipboard payloads, exact native command arguments, last-result retention, first-run acknowledgement, preset import, settings edits and shared-engine human/drop behavior. Graphical clipboard, file-picker and notification APIs are substituted by focused external-boundary doubles, not claimed as observed desktops.
+
+For Windows's no-console executable, build natively with:
+
+```powershell
+go build -ldflags=-H=windowsgui -o artifacts/bin/smolpngw.exe ./cmd/smolpngw
+```
+
+The normal console executable is still required for scripts, diagnostics and ordinary interactive launch. The no-console entry point always invokes `drop`. Only an explicitly configured interactive drop workflow allocates a console. The Windows GUI subsystem and both architectures must be checked before distribution; successful cross-builds do not qualify Start-menu/Explorer behavior.
+
+A Linux pseudo-terminal smoke has exercised actual menu rendering, Enter/Done, original-copy target success and last-result recording without fake terminal drivers. It used an already-fitting PNG, so it is not evidence of optimizer compression, graphical clipboard or a human's visual-quality assessment. Qualification records must bind that experiment to the exact rebuilt commit.
+
+## Hosted verification source
+
+`Verify` replaces the one-time build-cache transport workflow. It runs root tests/vet/corpus checks on Windows, macOS and Linux, plus six CGO-free cross-builds and Windows GUI-launcher builds. Its three Actions are pinned to exact official upstream commits, checked on 2026-09-08. It uses read-only repository permission, persists no checkout credential, consumes no paid provider quota and publishes no release. A workflow file is not a hosted green run; do not inherit the bootstrap run's status.

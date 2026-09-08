@@ -17,3 +17,12 @@ User/project TOML files are read locally. App imports persist in the user-data `
 ## Agent Skill state
 
 Explicit Skill management persists local destinations, app/bundle versions and exact resource hashes under the state directory. It stores no credentials and makes no network request. `skill status` and `doctor` inspect without creating state. Directory transactions can retain a journal or verified backup after an interrupted write; changed backup bytes are preserved rather than deleted. A future human-startup observer records last-seen version/bundle and ignored-bundle preference; no deterministic command displays a synchronization prompt. The exported instruction ZIP contains guidance and a license, not a local binary or private state.
+
+
+## Human and desktop state
+
+Interactive startup explicitly reads the desktop clipboard to detect a useful source or preset. Unrelated text is not displayed as an invented filename. A copied image/file representation remains the input throughout recipe retries, even after the output is written to the clipboard. Smart copy writes PNG bytes, file references and path text; batch copy writes files/path text. Native platform behavior and persistence are qualification-dependent.
+
+`state/setup.json` (or the platform's corresponding state directory) records only schema and first-use acknowledgement. `last-result.json` retains one human/drop operation's report, timestamp and warnings, bounded to 4MiB; it includes file paths and size/recipe information but no image bytes. A later human/drop operation replaces it. `smolpng last --clear` removes the record, never the image artifacts. Source images and outputs have their own independent filesystem lifetimes. Last-result copy verifies file availability again.
+
+Deterministic compression does not copy by default or retain human history. Explicit `--copy` is available; Linux owners may need `--clipboard-hold` to remain alive until paste. Background `drop` defaults to at most five minutes of ownership on Linux, ending earlier if replaced or cancelled; JSON mode does not wait unless the duration was explicitly supplied. Notifications contain only a generic result count/exit status, not source paths. Output-copy failures do not delete successfully produced image files.
