@@ -27,6 +27,9 @@ func (e Engine) Optimize(ctx context.Context, data []byte, r domain.Recipe) (Out
 		ctx, cancel = context.WithTimeout(ctx, r.Timeout)
 		defer cancel()
 	}
+	if r.Background != "" && (r.Engine == "tinypng" || r.RemotePolicy == "always" || r.RemotePolicy == "compare" || r.RemotePolicy == "fallback") {
+		return out, domain.E(2, "background flattening is local-only; remote comparison would compare different images", nil)
+	}
 	remoteOnly := r.Engine == "tinypng" || r.RemotePolicy == "always"
 	localRecipe := r
 	localRecipe.Engine = "local"
@@ -99,6 +102,9 @@ func (e Engine) Optimize(ctx context.Context, data []byte, r domain.Recipe) (Out
 }
 func (e Engine) optimizeLocal(ctx context.Context, data []byte, r domain.Recipe) (Outcome, error) {
 	if jpegimage.Is(data) {
+		if r.Background != "" {
+			return Outcome{}, domain.E(2, "JPEG has no transparency; --background is for PNG input", nil)
+		}
 		return e.optimizeJPEG(ctx, data, r)
 	}
 	return e.optimizePNG(ctx, data, r)

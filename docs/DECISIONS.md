@@ -60,3 +60,7 @@ Use per-user native `.lnk`/`.desktop` launchers with exact recorded file hashes.
 ## Update trust and ownership
 
 Use standard-library Ed25519 over exact manifest payload bytes, plus signed hashes for archives and each member. Ship no invented signing key or feed. A short-lived copy of the current executable handles locked-program replacement, exact snapshots permit rollback, and the new binary synchronizes its own embedded Skill only after identity verification. Package-manager ownership always wins over self-update.
+
+## Explicit alpha flattening, not background segmentation
+
+Wolf's final refinement request raised alpha/background removal. The reversible implementation is a named opaque matte in CLI/Custom/presets; it never changes the default preservation policy. Subject cutout and colour-key deletion are distinct editing products and were not silently added. Strict lossless and remote-source equivalence remain enforced. See `background.md` for the exact encoded-channel and colour-profile limits.

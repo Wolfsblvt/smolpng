@@ -307,6 +307,10 @@ func (e *Effective) remember(key string, origin Origin, field string) {
 func (e *Effective) apply(f Fields, o Origin, base string) error {
 	mark := func(k, field string) { e.remember(k, o, field) }
 	r := &e.Recipe
+	if f.Background != nil {
+		r.Background = *f.Background
+		mark("background", "background")
+	}
 	if f.Quality != nil {
 		lo, hi, err := domain.ParseQuality(*f.Quality)
 		if err != nil {

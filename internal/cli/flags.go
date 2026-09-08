@@ -42,6 +42,7 @@ func (f inputFlags) limits() (domain.Limits, error) {
 }
 
 type compressFlags struct {
+	Background                                                                                               string
 	CopyMode                                                                                                 string
 	ClipboardHold                                                                                            time.Duration
 	Input                                                                                                    inputFlags
@@ -64,6 +65,7 @@ func (f *compressFlags) bind(c *cobra.Command) {
 	p.IntVar(&f.Speed, "speed", 1, "pngquant speed, 1..11")
 	p.StringVar(&f.Dither, "dither", "auto", "Dither: auto, none, or 0..1")
 	p.StringVar(&f.Level, "oxipng-level", "4", "OxiPNG level, 0..6 or max")
+	p.StringVar(&f.Background, "background", "", "Explicit PNG matte: #RRGGBB, white, black; removes transparency, not the subject background")
 	p.StringVar(&f.Metadata, "strip", "safe", "Metadata: keep, safe, or all")
 	p.BoolVar(&f.Quantize, "quantize", false, "Enable lossy palette candidates")
 	p.BoolVar(&f.NoQuantize, "no-quantize", false, "Use only pixel-identical optimizer candidates")
@@ -130,6 +132,9 @@ func (f *compressFlags) apply(c *cobra.Command, r domain.Recipe) (domain.Recipe,
 				return r, e
 			}
 		}
+	}
+	if changed("background") {
+		r.Background = f.Background
 	}
 	if changed("strip") {
 		r.Metadata = f.Metadata

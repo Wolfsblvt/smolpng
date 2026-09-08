@@ -13,6 +13,7 @@ const MaxDocumentBytes = 1 << 20
 // distinguishable from inheritance. No execution, environment or secret fields
 // are available to a shared preset.
 type Fields struct {
+	Background    *string `toml:"background,omitempty" json:"background,omitempty"`
 	Quality       *string `toml:"quality,omitempty" json:"quality,omitempty"`
 	MinQuality    *int    `toml:"min_quality,omitempty" json:"min_quality,omitempty"`
 	Colors        *int    `toml:"colors,omitempty" json:"colors,omitempty"`

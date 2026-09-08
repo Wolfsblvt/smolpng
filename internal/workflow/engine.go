@@ -64,11 +64,24 @@ func (e Engine) optimizePNG(ctx context.Context, data []byte, r domain.Recipe) (
 	if er != nil {
 		return out, domain.E(3, er.Error(), er)
 	}
+	transform := []domain.Step{}
+	flattened := r.Background != ""
+	if flattened {
+		normalized, er = pngimage.Flatten(original, r.Background, r.Metadata)
+		if er != nil {
+			return out, domain.E(2, er.Error(), er)
+		}
+		original, er = pngimage.Decode(normalized, e.Limits.MaxPixels)
+		if er != nil {
+			return out, er
+		}
+		transform = append(transform, domain.Step{Tool: "smolpng-background", Version: "1", Arguments: []string{r.Background}})
+	}
 	if r.Resize.Width == 0 && r.MaxDimensions.Width == 0 && r.TargetBytes > 0 && int64(len(normalized)) <= r.TargetBytes {
-		out.Candidate = Candidate{Data: normalized, Info: original.Info, Rank: 100000000, Pipeline: []domain.Step{}}
+		out.Candidate = Candidate{Data: normalized, Info: original.Info, Rank: 100000000, Pipeline: transform}
 		return out, nil
 	}
-	if !e.Tools.OxiPNG.Available && (r.Lossless || !e.Tools.PNGQuant.Available) {
+	if !flattened && !e.Tools.OxiPNG.Available && (r.Lossless || !e.Tools.PNGQuant.Available) {
 		return out, domain.E(4, "no suitable local optimizer; run deps status or configure executable paths", nil)
 	}
 	if !e.Tools.PNGQuant.Available && !r.Lossless {
@@ -92,6 +105,9 @@ func (e Engine) optimizePNG(ctx context.Context, data []byte, r domain.Recipe) (
 	defer os.RemoveAll(temp)
 	var best *Candidate
 	validAttempts := 0
+	if flattened {
+		validAttempts = 1
+	}
 	serial := 0
 	retain := func(c Candidate) {
 		if !r.ForceOutput && len(c.Data) > len(data) {
@@ -132,10 +148,10 @@ func (e Engine) optimizePNG(ctx context.Context, data []byte, r domain.Recipe) (
 		if er != nil {
 			return out, domain.E(5, "normalized source failed validation", er)
 		}
-		prefix := []domain.Step{}
+		prefix := append([]domain.Step{}, transform...)
 		if resized {
 			prefix = append(prefix, domain.Step{Tool: "smolpng-resize", Version: "1"})
-		} else if !bytes.Equal(data, basisBytes) {
+		} else if !flattened && !bytes.Equal(data, basisBytes) {
 			prefix = append(prefix, domain.Step{Tool: "smolpng-metadata", Version: "1"})
 		}
 		retain(Candidate{Data: basisBytes, Info: basis.Info, Rank: 100000000, Pipeline: prefix})

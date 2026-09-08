@@ -626,6 +626,13 @@ func (a *app) interactive(c *cobra.Command, args []string, base *compressFlags) 
 					}
 					return nil
 				}},
+				{Key: "background", Label: "PNG background (#RRGGBB, white, black; empty keeps alpha)", Value: eff.Recipe.Background, Validate: func(s string) error {
+					if s == "" {
+						return nil
+					}
+					_, e := domain.ParseBackground(s)
+					return e
+				}},
 				{Key: "dither", Label: "Dithering", Value: eff.Recipe.Dither, Options: []ui.Option{{Label: "Automatic", Value: "auto"}, {Label: "None", Value: "none"}}},
 				{Key: "target-size", Label: "Optional target size (empty: smallest acceptable)", Value: base.Target, Validate: optionalSize},
 				{Key: "allow-resize", Label: "Permit target resize fallback", Value: "false", Options: []ui.Option{{Label: "No dimension changes", Value: "false"}, {Label: "Allow fallback resizing", Value: "true"}}},

@@ -349,6 +349,9 @@ func (f *compressFlags) configOverrides(c *cobra.Command) (config.Fields, error)
 	if changed("dither") {
 		p.Dither = &f.Dither
 	}
+	if changed("background") {
+		p.Background = &f.Background
+	}
 	if changed("strip") {
 		p.Metadata = &f.Metadata
 	}

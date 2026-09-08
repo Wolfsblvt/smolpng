@@ -101,6 +101,7 @@ func ParseQuality(s string) (int, int, error) {
 }
 
 type Recipe struct {
+	Background    string        `json:"background,omitempty"`
 	Name          string        `json:"name"`
 	Engine        string        `json:"engine"`
 	RemotePolicy  string        `json:"remotePolicy"`
@@ -143,6 +144,14 @@ func Builtin(name string) (Recipe, error) {
 }
 func IsBuiltin(name string) bool { _, e := Builtin(name); return e == nil }
 func (r Recipe) Validate() error {
+	if r.Background != "" {
+		if _, err := ParseBackground(r.Background); err != nil {
+			return err
+		}
+		if r.Lossless {
+			return fmt.Errorf("strict lossless cannot flatten transparency")
+		}
+	}
 	if r.QualityMin < 0 || r.QualityMax > 100 || r.QualityMin > r.QualityMax {
 		return fmt.Errorf("quality must satisfy 0 <= MIN <= MAX <= 100")
 	}
@@ -331,4 +340,22 @@ func Summarize(results []Result) Report {
 		r.ExitCode = Cancelled
 	}
 	return r
+}
+
+// ParseBackground accepts an explicit opaque RGB matte. Empty means no change.
+func ParseBackground(s string) ([3]uint16, error) {
+	switch strings.ToLower(s) {
+	case "white":
+		s = "#ffffff"
+	case "black":
+		s = "#000000"
+	}
+	if len(s) != 7 || s[0] != '#' {
+		return [3]uint16{}, fmt.Errorf("background must be #RRGGBB, white, or black (empty preserves transparency)")
+	}
+	n, e := strconv.ParseUint(s[1:], 16, 24)
+	if e != nil {
+		return [3]uint16{}, fmt.Errorf("background contains invalid hex digits")
+	}
+	return [3]uint16{uint16(n>>16) * 257, uint16((n>>8)&255) * 257, uint16(n&255) * 257}, nil
 }

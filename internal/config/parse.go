@@ -90,6 +90,11 @@ func validCopy(s string) bool {
 	return slices.Contains([]string{"none", "smart", "path", "image", "file", "files", "directory"}, s)
 }
 func validateFields(f Fields, shared bool) error {
+	if f.Background != nil && *f.Background != "" {
+		if _, err := domain.ParseBackground(*f.Background); err != nil {
+			return err
+		}
+	}
 	if f.Quality != nil {
 		if _, _, e := domain.ParseQuality(*f.Quality); e != nil {
 			return e
