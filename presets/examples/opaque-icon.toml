@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: CC0-1.0
+[presets.opaque-icon]
+schema = 1
+label = "Opaque icon on white"
+description = "Explicitly composites PNG transparency onto white; does not cut out a background."
+extends = "web"
+formats = ["png"]
+background = "#FFFFFF"
+metadata = "safe"
+remote = "never"
+
+[presets.opaque-icon.menu]
+pinned = false

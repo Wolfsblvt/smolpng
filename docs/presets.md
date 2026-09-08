@@ -113,3 +113,7 @@ smolpng preset remove mcp-icon
 Normal export includes the non-built-in parent closure and preserves inheritance. Resolved export freezes effective compression settings and clears `extends`. It never embeds a credential/tool path; a destination outside the invocation project cannot be frozen into a portable preset and produces a clear error. `{downloads}` placement remains installation policy, not a portable absolute machine path. Exported output files must not already exist.
 
 Only app-owned entries are mutated by pin/move/remove. Removing a required parent or selected default is refused. No export/import relicenses user-authored material; optional author/source fields are preserved.
+
+### Opaque destinations
+
+`presets/examples/opaque-icon.toml` uses `background = "#FFFFFF"` with PNG-only formats. This explicitly composites transparency onto white; it is not background/subject removal and cannot be combined with strict lossless. The empty background string preserves transparency. Safe profiled inputs may refuse flattening rather than silently applying an unqualified color transform; see [matte preparation](background.md).

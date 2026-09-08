@@ -88,3 +88,5 @@ Read on 2026-09-08. Recheck when installing into a new harness layout:
 - [Agent Skills specification](https://agentskills.io/specification): `SKILL.md` entry point and frontmatter.
 
 The shipped instruction text and path adapters were checked against those source contracts. No hosted app, authentication, paid provider request or public Skill upload occurred.
+
+For the optional binary-in-Skill experiment, see [ChatGPT execution boundaries](chatgpt-execution.md). The documented MCP Skill-import resource limits and direct personal upload flow are not assumed identical. Execution of a separate Linux candidate in an authoring container does not qualify a native binary inside an installed Skill or supply absent optimizers.

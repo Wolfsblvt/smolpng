@@ -87,3 +87,30 @@ func TestReportsEscapeNamesAndWithholdIncomparableMetrics(t *testing.T) {
 		t.Fatal("compared unaligned color spaces")
 	}
 }
+
+func TestCSVIncludesDiagnosticScoresAndHTMLBackgroundChoices(t *testing.T) {
+	r := NewReport("dev", "abc", testutil.Tools(), nil)
+	v := 0.25
+	r.Rows = []Row{{Input: "a.png", Variant: "web", Metrics: &Metrics{BlackRMSE: &v, WhiteRMSE: &v, AlphaMAE: &v, Samples: 42}}}
+	var b bytes.Buffer
+	if e := CSV(&b, r); e != nil {
+		t.Fatal(e)
+	}
+	for _, text := range []string{"black_composite_rmse", "white_composite_rmse", "metric_omission", "0.25", "42"} {
+		if !strings.Contains(b.String(), text) {
+			t.Fatal("missing CSV diagnostic", text)
+		}
+	}
+	h, e := HTML(r)
+	if e != nil {
+		t.Fatal(e)
+	}
+	for _, text := range []string{"matte-black", "matte-white", "type=\"radio\""} {
+		if !bytes.Contains(h, []byte(text)) {
+			t.Fatal("missing keyboard preview control", text)
+		}
+	}
+	if bytes.Contains(h, []byte("<script")) {
+		t.Fatal("report should not execute scripts")
+	}
+}

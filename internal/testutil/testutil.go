@@ -111,7 +111,7 @@ func Corpus() map[string][]byte {
 	meta := PNG(Pattern(32, 32, "flat"), png.NoCompression)
 	meta = AddChunk(meta, "gAMA", []byte{0, 0, 177, 143})
 	meta = AddChunk(meta, "tEXt", []byte("Comment\x00Generated metadata specimen, not personal data"))
-	return map[string][]byte{"flat-icon.png": PNG(Pattern(64, 64, "flat"), png.NoCompression), "alpha-gradient.png": PNG(Pattern(64, 64, "alpha"), png.NoCompression), "hidden-rgb.png": PNG(Pattern(16, 16, "hidden"), png.NoCompression), "synthetic-noise.png": PNG(Pattern(128, 96, "noise"), png.NoCompression), "screenshot.png": PNG(Pattern(96, 48, "screenshot"), png.NoCompression), "indexed.png": PNG(pal, png.NoCompression), "gray16.png": PNG(gray, png.NoCompression), "metadata.png": meta, "interlaced.png": Adam7(Pattern(17, 13, "alpha")), "tiny.png": PNG(Pattern(1, 1, "alpha"), png.BestCompression)}
+	return map[string][]byte{"alpha16.png": Alpha16(), "flat-icon.png": PNG(Pattern(64, 64, "flat"), png.NoCompression), "alpha-gradient.png": PNG(Pattern(64, 64, "alpha"), png.NoCompression), "hidden-rgb.png": PNG(Pattern(16, 16, "hidden"), png.NoCompression), "synthetic-noise.png": PNG(Pattern(128, 96, "noise"), png.NoCompression), "screenshot.png": PNG(Pattern(96, 48, "screenshot"), png.NoCompression), "indexed.png": PNG(pal, png.NoCompression), "gray16.png": PNG(gray, png.NoCompression), "metadata.png": meta, "interlaced.png": Adam7(Pattern(17, 13, "alpha")), "tiny.png": PNG(Pattern(1, 1, "alpha"), png.BestCompression)}
 }
 
 type Call struct {

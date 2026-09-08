@@ -94,6 +94,10 @@ User settings, the nearest project config, inherited presets and explicit flags 
 
 [Preset and configuration reference](docs/presets.md) · [Copyable CC0 examples](presets/examples/)
 
+## Regression corpus
+
+The [classified corpus](testdata/corpus/README.md) contains 24 CC0 structural PNG/JPEG specimens, including 16-bit alpha, all EXIF orientations, real synthetic GPS metadata, and a true progressive JPEG. Run `go run ./tools/corpus --check` to verify byte and provenance integrity. Use `--recursive` to compare the whole corpus; photographs and full ICC color-managed evaluation remain explicit admission gaps, not quality claims derived from synthetic patterns.
+
 ## Verify
 
 ```sh

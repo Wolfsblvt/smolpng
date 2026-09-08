@@ -19,7 +19,8 @@ func JPEG(m image.Image, quality int) []byte {
 }
 func JPEGCorpus() map[string][]byte {
 	base := JPEG(Pattern(96, 64, "noise"), 95)
-	out := map[string][]byte{"jpeg-baseline.jpg": base, "jpeg-high-chroma.jpg": JPEG(Pattern(128, 96, "noise"), 98)}
+	out := map[string][]byte{"jpeg-baseline.jpg": base, "jpeg-high-chroma.jpg": JPEG(Pattern(128, 96, "noise"), 98), "jpeg-progressive-flat.jpg": ProgressiveFlatJPEG()}
+	out["jpeg-private-exif.jpg"] = append(append(bytes.Clone(base[:2]), jpegimage.Marker(0xe1, PrivateEXIF())...), base[2:]...)
 	gray := image.NewGray(image.Rect(0, 0, 32, 16))
 	for y := range 16 {
 		for x := range 32 {

@@ -7,7 +7,7 @@ The application, data-only examples, generated test media and future website/bra
 | Path/material | License |
 | --- | --- |
 | Project Go code, generator, ordinary docs and repository tooling | MIT, root `LICENSE` |
-| `testdata/corpus/**` generated PNGs and manifest | CC0-1.0, local `LICENSE` |
+| `testdata/corpus/**` generated PNG/JPEG images, inventory documentation and manifest | CC0-1.0, local `LICENSE` |
 | `LICENSES/**` and third-party source notices | Their own unchanged terms |
 
 Standard MIT, CC0-1.0 and AGPL-3.0-or-later texts are installed in `LICENSES/`. Compiled dependency notices are in `third-party-notices.md`.

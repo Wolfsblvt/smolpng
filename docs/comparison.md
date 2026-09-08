@@ -35,3 +35,9 @@ Rows contain source/candidate hashes, exact byte counts, dimensions, alpha, orie
 The diagnostic scores sample at most 512 by 512 positions, compositing encoded-channel RGB over black and white. RMSE and mean absolute alpha error are normalized to 0..1. These are not perceptual scores, quality guarantees, or colour-managed evaluations. Geometry changes, matte preparation and differing colour metadata withhold the scores with a reason rather than comparing unlike representations. Compare transparent edges on light and dark surfaces and use actual corpus review before changing release defaults.
 
 The `comparison-v1.schema.json` schema owns this distinct report shape. It does not change the existing compression report schema. The current authoring tests use generated legal specimens and fake optimizer boundaries; actual optimizer performance/visual findings must be recorded against exact versions on the target host.
+
+## Use the corpus to refine defaults
+
+The [regression inventory](../testdata/corpus/README.md) has format/class folders, actual progressive JPEG and all EXIF orientations. Use `--recursive` for the whole inventory, and keep evaluation outputs outside it. First compare under identical recipe/target/geometry constraints; then inspect saved edges against the HTML report's checkerboard, white and black backgrounds. CSV includes the pipeline and diagnostic scores; JSON remains the exact nested representation.
+
+To compare optimizer versions, run the same command twice with explicit executable paths and separate new output directories. Preserve both reports and inspect their recorded versions and source hashes. A different library's quality number is not numerically comparable by itself. No public default is recalibrated from fake-process tests, synthetic noise, or minimum bytes alone. The current two-tool PNG stack remains pngquant plus OxiPNG; adding a different encoder requires its own dependency/license/behavior qualification.

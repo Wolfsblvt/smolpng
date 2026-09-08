@@ -10,6 +10,12 @@ The source implements original-derived PNG/JPEG candidates, exact target semanti
 
 Local release tooling now builds six platform packages and optional offline Winget, Scoop, Homebrew, Chocolatey and nFPM inputs from actual archive hashes. A separate signing tool requires an explicitly supplied protected key. Neither tool publishes or creates a production trust authority.
 
+## Current refinement boundary
+
+Local `compare` evaluates presets and the separate contributions of pngquant/OxiPNG from identical originals, with JSON/CSV and offline visual reports. Explicit PNG matte preparation is shared across CLI/presets/Custom without adding subject segmentation. The legal corpus now has 24 classified structural specimens, including true progressive JPEG, valid synthetic GPS EXIF and 16-bit alpha.
+
+Right-click configuration/dispatch and Dolphin service generation are implemented. Windows 11 primary-menu support has a small authored native IExplorerCommand bridge, sparse-package builder and protected activation route. Only the portable C++ protocol is tested on this authoring host; the Windows SDK bridge build, signature/identity validation and actual Explorer/Dolphin menu behavior remain separate native qualification. The ordinary Go archive does not contain a qualified DLL or signed menu package.
+
 ## Remaining source refinements and external boundaries
 
 Final JPEG backend/quality calibration remains evidence-led; jpegoptim is the reversible first backend and Go encodes explicit original-derived geometry changes. Remote geometry/keep-all metadata combinations intentionally refuse unsupported promises. Richer macOS Finder integration, a final installer/MSIX/signing composition and package-manager submission refinements remain after corresponding host/publisher decisions. The website, final art and hosted sibling retain separate writer boundaries.

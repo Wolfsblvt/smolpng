@@ -20,3 +20,7 @@ The maintained subjects now span product, automation, human workflows, setup and
 | Inputs, process/file safety and limits | [Security](SECURITY.md) |
 | Network use, clipboard and retained state | [Privacy and data](PRIVACY-AND-DATA.md) |
 | Per-path rights and dependencies | [License map](../LICENSE-MAP.md), [Third-party notices](../THIRD_PARTY_NOTICES.md) |
+
+## Refinement and native image menus
+
+[Local comparison](comparison.md) measures presets and PNG tool contributions with saved offline reports; [matte preparation](background.md) documents explicit alpha flattening. The [classified regression corpus](../testdata/corpus/README.md) distinguishes structural fixtures from visual calibration gaps. [Context menus](context-menu.md) owns Windows 11 native addon and Dolphin installation boundaries. [ChatGPT execution](chatgpt-execution.md) separates measured native execution from supported Skill-upload claims.
