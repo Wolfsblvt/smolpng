@@ -1,0 +1,33 @@
+# Decisions
+
+## Meaning
+
+These are durable smolpng choices whose reasons cannot be reconstructed from source alone. Wolf's frozen product and licensing briefs select the destination; this record separates that destination from provisional implementation and sequence. Routine progress is not recorded here.
+
+## Go, one engine, native boundaries
+
+**Decision:** Retain Go and share one image-job engine across CLI, TUI, and drop workflows. **Why:** A portable compiled orchestrator with native clipboard support fits the selected human/agent experience without an additional runtime or frontend framework. **Rejected:** Reopening the language for preference, separate interactive compression logic, and a local MCP server around one deterministic command. **Consequence:** Interfaces are earned at process, clipboard, HTTP, secrets, and OS boundaries; the domain admits JPEG without an empty provider framework.
+
+## Local-first is permission, not credential detection
+
+**Decision:** Auto defaults to local-only. TinyPNG participates only through explicit policy, and imported presets cannot override a global prohibition. **Why:** A key says the provider is usable, not that images may leave the machine. **Rejected:** Silent upload fallback. **Consequence:** Policy is checked before any remote operation; reports expose actual remote use; ordinary tests never spend quota.
+
+## Originals and exact targets
+
+**Decision:** Every lossy candidate starts from the original, outputs are atomic, and targets mean `bytes <= requested`. **Why:** Success must be dependable for hostile upload limits without compounding generation loss or corrupting source assets. **Rejected:** Repeated recompression, approximate targets labeled success, and automatic resizing without permission. **Consequence:** Target-missed is distinct; nearest output requires explicit acceptance; strict lossless checks decoded pixels including hidden RGB.
+
+## Presets are the extension surface
+
+**Decision:** Immutable built-ins plus data-only inherited user/project recipes, including clipboard preview/import and pinned placement. **Why:** Shareable text provides useful customization without code execution or a plugin infrastructure. **Rejected:** Hooks, scripts, secrets, arbitrary environment, executable overrides, and unrestricted provider arguments inside imported recipes. **Consequence:** Parse and validate before import; exports preserve inheritance or explicitly resolve it.
+
+## Mixed licensing and separate optimizers
+
+**Decision:** Application/Skill/docs MIT; project examples and corpus CC0; future site code and hosted sibling AGPL-3.0-or-later; protected editorial and brand assets separate. Standard distributions bundle neither optimizer. **Why:** The application should be easy to embed and sell, presets easy to copy, hosted code improvements available, and commissioned identity protected under an actual grant. **Rejected:** Calling AGPL a ban on reuse, imposing branding restrictions on MIT code, or publishing an unreviewed custom license. **Consequence:** Exact path map and third-party notices; artist/legal and publication boundaries remain unclaimed.
+
+## Installed Skills are maintained user files
+
+**Decision:** Track every app-created destination and hashes, including custom paths. **Why:** Updating instructions without silently destroying local edits is part of agent usability. **Rejected:** Fire-and-forget copies and unconditional overwrites. **Consequence:** Only exact unmodified managed installations auto-sync; custom destinations are offered synchronization; manual executable replacement prompts only for changed embedded content.
+
+## Source provenance
+
+These decisions adopt the owner-supplied `smolpng-product-brief.md` (SHA-256 `0b3eeacb11cd63f816e76034ac1b510f5c6f3d4f62d6b6a19ec916c1cb581232`) and licensing boundary (`8b3aecb93ce0a36c8151d818423f37ea635f9c895506ac48024f76fd19cb032b`). The direct implementation assignment authorizes private source delivery and a local Git/ZIP alternative when a connector fails. The raw design conversation is supporting history, not a competing live specification.

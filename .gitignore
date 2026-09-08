@@ -1,0 +1,16 @@
+# Product build and test output
+/artifacts/
+# Go tool-owned output
+*.test
+*.prof
+coverage.out
+# Local settings and secrets
+.env
+.env.*
+!.env.example
+.smolpng.local.toml
+# Editor state
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
