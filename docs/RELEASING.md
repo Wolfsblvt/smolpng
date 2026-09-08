@@ -20,7 +20,7 @@ go build -trimpath -ldflags "-X main.Commit=$sha" -o artifacts/bin/smolpng-quali
 
 On Linux/macOS, build `cmd/smolpng` and `tools/qualify` with the corresponding linker values and no `.exe` suffix. The `smolpngw` entry point is Windows-only. Explicit `GOOS`, `GOARCH` and `CGO_ENABLED=0` can cross-build the six supported source targets; compilation is not execution on the target host.
 
-`Distribution=standalone` records who owns these portable development files. It does not enable a self-update mechanism. Replacing the executable manually preserves external config, state, presets, managed tools and tracked Skills; human startup handles changed Skill contents. An application updater and its integrity-protected release channel remain unimplemented.
+`Distribution=standalone` records who owns these portable development files. Self-update still needs an independently trusted signed manifest; the candidate has no production feed/key. Replacing the executable manually preserves external config, state, presets, managed tools and tracked Skills; human startup handles changed Skill contents. The application updater is implemented; its production signing/feed operation is not configured. See UPDATES.md.
 
 ## What accompanies a candidate
 

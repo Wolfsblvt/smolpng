@@ -56,3 +56,7 @@ Use separately installed jpegoptim for ordinary local JPEG optimization, with a 
 ## Desktop installer boundary
 
 Use per-user native `.lnk`/`.desktop` launchers with exact recorded file hashes. Do not install context-menu registry handlers, MIME defaults, machine PATH entries or privileged integration implicitly. Keep the no-console launcher distinct from interactive execution. Journal each file installation so interrupted operations cannot silently claim unowned artifacts.
+
+## Update trust and ownership
+
+Use standard-library Ed25519 over exact manifest payload bytes, plus signed hashes for archives and each member. Ship no invented signing key or feed. A short-lived copy of the current executable handles locked-program replacement, exact snapshots permit rollback, and the new binary synchronizes its own embedded Skill only after identity verification. Package-manager ownership always wins over self-update.

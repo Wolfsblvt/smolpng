@@ -22,7 +22,7 @@ var UserSettingKinds = map[string]string{
 	"defaults.preset": "string", "defaults.remote_policy": "string", "defaults.quality": "string", "defaults.jobs": "int", "defaults.recursive": "bool",
 	"output.template": "string", "output.directory": "string", "output.detached": "string", "output.collision": "string",
 	"clipboard.single": "string", "clipboard.batch": "string", "drop.mode": "string", "drop.preset": "string", "drop.copy": "string", "drop.notify": "bool",
-	"ui.header": "string", "ui.animations": "bool", "tools.pngquant": "string", "tools.oxipng": "string", "tools.jpegoptim": "string", "tools.preference": "string",
+	"updates.check": "string", "updates.channel": "string", "ui.header": "string", "ui.animations": "bool", "tools.pngquant": "string", "tools.oxipng": "string", "tools.jpegoptim": "string", "tools.preference": "string",
 }
 
 func SettingValue(key, text string) (any, error) {

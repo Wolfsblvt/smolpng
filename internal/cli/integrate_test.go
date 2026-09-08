@@ -7,6 +7,7 @@ import (
 	"github.com/Wolfsblvt/smolpng/internal/paths"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -17,7 +18,13 @@ func (integrationRenderer) Render(_ context.Context, e integration.Entry) ([]byt
 	return integration.DesktopFile(e)
 }
 func TestIntegrationCLIPlanAndInstall(t *testing.T) {
-	root := t.TempDir()
+	if runtime.GOOS == "darwin" {
+		t.Skip("native launchers are Windows/Linux only")
+	}
+	root, e := filepath.EvalSymlinks(t.TempDir())
+	if e != nil {
+		t.Fatal(e)
+	}
 	exe := filepath.Join(root, "smolpng")
 	os.WriteFile(exe, []byte("fake app"), 0755)
 	os.WriteFile(filepath.Join(root, "smolpngw.exe"), []byte("fake background"), 0755)

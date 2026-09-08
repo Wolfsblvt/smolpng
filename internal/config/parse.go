@@ -75,11 +75,11 @@ func Parse(data []byte) (Document, error) {
 	if s := d.UI.Header; s != nil && !slices.Contains([]string{"cute", "compact", "none"}, *s) {
 		return d, fmt.Errorf("ui.header must be cute, compact, or none")
 	}
-	if s := d.Updates.Check; s != nil && *s != "manual" {
-		return d, fmt.Errorf("automatic update checks are not implemented; updates.check must be manual")
+	if s := d.Updates.Check; s != nil && !slices.Contains([]string{"manual", "daily"}, *s) {
+		return d, fmt.Errorf("updates.check must be manual or daily")
 	}
-	if s := d.Updates.Channel; s != nil && !slices.Contains([]string{"stable", "prerelease"}, *s) {
-		return d, fmt.Errorf("updates.channel must be stable or prerelease")
+	if s := d.Updates.Channel; s != nil && !slices.Contains([]string{"stable"}, *s) {
+		return d, fmt.Errorf("updates.channel must be stable; prerelease feeds are not enabled")
 	}
 	return d, nil
 }

@@ -29,3 +29,7 @@ JPEG file/directory/URL/stdin inspection and compression now join the shared eng
 ### Desktop installer source frontier
 
 Windows Start menu, optional Desktop and Send To, and Linux user launchers now have preview/apply/status/remove/repair commands, preset-specific shortcuts and setup-menu access. Ownership and argument semantics are tested through native-boundary doubles; actual Windows Script Host and graphical file-manager behavior remain separately qualified.
+
+### Update source frontier
+
+Signed standalone staging, a short-lived replacement helper, integrity/ownership checks, guarded rollback, exact new-build probing, post-update managed-Skill synchronization and opt-in daily human checks are implemented. There is deliberately no production signing key, feed or public release effect in this source session.

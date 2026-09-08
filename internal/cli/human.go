@@ -234,6 +234,7 @@ func (a *app) editSettings(ctx context.Context, p ui.Prompter) error {
 		{Key: "output.detached", Label: "Clipboard/URL output folder", Value: eff.Output.Detached},
 		{Key: "clipboard.single", Label: "Copy a single result", Value: eff.Clipboard, Options: copyOptions},
 		{Key: "drop.preset", Label: "Background/drop recipe", Value: eff.DropPreset, Options: presetOptions},
+		{Key: "updates.check", Label: "Update checks (human startup only)", Value: eff.UpdateCheck, Options: []ui.Option{{Label: "Manual only", Value: "manual"}, {Label: "Once daily, when a trusted feed is configured", Value: "daily"}}},
 		{Key: "ui.header", Label: "Small replaceable header", Value: eff.Header, Options: []ui.Option{{Label: "Cute placeholder", Value: "cute"}, {Label: "Compact", Value: "compact"}, {Label: "None", Value: "none"}}},
 	}
 	values, e := p.Edit(ctx, "User defaults (only changed fields are saved; project/preset overrides still apply)", fields)
@@ -431,6 +432,11 @@ func (a *app) interactive(c *cobra.Command, args []string, base *compressFlags) 
 	}
 	if e = a.skillStartup(ctx, p); e != nil && !errors.Is(e, ui.ErrBack) {
 		return e
+	}
+	if scheduled, err := a.updateStartup(ctx, p, base.Input.Options.Offline); err != nil {
+		return err
+	} else if scheduled {
+		return nil
 	}
 	originalClipboard := a.env.Clipboard
 	defer func() { a.env.Clipboard = originalClipboard }()

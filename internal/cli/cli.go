@@ -38,6 +38,7 @@ var Commit = "unknown"
 var Distribution = "source"
 
 type Environment struct {
+	UpdateHTTP           *http.Client
 	Executable           func() (string, error)
 	IntegrationLocations *integration.Locations
 	IntegrationRenderer  integration.Renderer
@@ -202,7 +203,8 @@ func (a *app) root() *cobra.Command {
 	compress := &cobra.Command{Use: "compress INPUT...", Short: "Compress deterministically; never prompt"}
 	cf.bind(compress)
 	compress.RunE = func(c *cobra.Command, args []string) error { return a.compress(c, args, cf) }
-	c.AddCommand(compress, a.inspectCommand(), a.configCommand(), a.presetCommand(), a.skillCommand(), a.setupCommand(), a.settingsCommand(), a.dropCommand(), a.lastCommand(), a.providersCommand(), a.integrationCommand())
+	c.AddCommand(compress, a.inspectCommand(), a.configCommand(), a.presetCommand(), a.skillCommand(), a.setupCommand(), a.settingsCommand(), a.dropCommand(), a.lastCommand(), a.providersCommand(), a.integrationCommand(), a.updateCommand())
+	c.AddCommand(a.updateInternalCommands()...)
 	c.AddCommand(&cobra.Command{Use: "version", Args: cobra.NoArgs, Short: "Build identity", RunE: func(*cobra.Command, []string) error {
 		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "commit": Commit, "distribution": Distribution, "platform": runtime.GOOS + "/" + runtime.GOARCH})
 	}})

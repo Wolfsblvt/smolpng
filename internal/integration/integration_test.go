@@ -15,7 +15,10 @@ type textRenderer struct{}
 func (textRenderer) Render(_ context.Context, x Entry) ([]byte, error) { return DesktopFile(x) }
 func fixture(t *testing.T) (Manager, []Entry) {
 	t.Helper()
-	root := t.TempDir()
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
 	exe := filepath.Join(root, "smolpng")
 	if e := os.WriteFile(exe, []byte("fixture executable"), 0755); e != nil {
 		t.Fatal(e)

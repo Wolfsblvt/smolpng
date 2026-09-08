@@ -115,6 +115,9 @@ func Load(o LoadOptions) (*Workspace, error) {
 	if project.Document.Tools.JPEGOptim != "" || project.Document.Tools.PNGQuant != "" || project.Document.Tools.OxiPNG != "" || project.Document.Tools.Preference != "" {
 		return nil, fmt.Errorf("project configuration cannot choose executables; use user [tools] or explicit CLI paths")
 	}
+	if project.Document.Updates.Check != nil || project.Document.Updates.Channel != nil {
+		return nil, fmt.Errorf("project configuration cannot change update network policy; use user [updates]")
+	}
 	w := &Workspace{User: user, Project: project, StorePath: filepath.Join(o.Paths.Data, "presets.toml"), Store: Bundle{Presets: map[string]Preset{}}, CWD: cwd, Paths: o.Paths}
 	f, e := os.Open(w.StorePath)
 	if e == nil {
