@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:smolpng:comparison:1",
+  "title": "smolpng local recipe comparison",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "version",
+    "commit",
+    "platform",
+    "tools",
+    "variants",
+    "rows",
+    "notes",
+    "exitCode"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "version": {
+      "type": "string"
+    },
+    "commit": {
+      "type": "string"
+    },
+    "platform": {
+      "type": "string"
+    },
+    "tools": {
+      "type": "object"
+    },
+    "variants": {
+      "type": "array"
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "exitCode": {
+      "type": "integer"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "input",
+          "variant",
+          "repetition",
+          "recipe",
+          "status",
+          "exitCode",
+          "originalBytes",
+          "candidateBytes",
+          "elapsedMilliseconds",
+          "pipeline",
+          "warnings"
+        ],
+        "properties": {
+          "input": {
+            "type": "string"
+          },
+          "variant": {
+            "type": "string"
+          },
+          "repetition": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "recipe": {
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "candidate",
+              "unchanged",
+              "target-missed",
+              "failed",
+              "skipped"
+            ]
+          },
+          "exitCode": {
+            "type": "integer"
+          },
+          "originalBytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "candidateBytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "elapsedMilliseconds": {
+            "type": "number",
+            "minimum": 0
+          },
+          "pipeline": {
+            "type": "array"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

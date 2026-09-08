@@ -119,3 +119,7 @@ The embedded instructions follow the installed CLI. Destinations and exact hashe
 ## License
 
 Application and ordinary docs: [MIT](LICENSE). Generated corpus: CC0. Dependencies and future website/brand terms remain separate in the [license map](license-map.md).
+
+## Compare before changing defaults
+
+`smolpng compare images --recursive --output-dir artifacts/review --json` measures the same original through local presets and exports candidates with an offline visual report. See [comparison](docs/comparison.md) for tool isolation, repeats, targets and metric limits; [explicit background](docs/background.md) explains optional PNG alpha flattening.
