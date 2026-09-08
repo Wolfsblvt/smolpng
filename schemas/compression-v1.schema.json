@@ -1,0 +1,268 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:smolpng:compression:1",
+  "title": "smolpng compression report or JSONL result",
+  "description": "Compression metadata only. Additional fields remain allowed for compatible extension. Other command families have independent contracts.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/report"
+    },
+    {
+      "$ref": "#/$defs/result"
+    }
+  ],
+  "$defs": {
+    "dimensions": {
+      "type": "object",
+      "properties": {
+        "width": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "width",
+        "height"
+      ]
+    },
+    "dimensionChange": {
+      "type": "object",
+      "properties": {
+        "before": {
+          "$ref": "#/$defs/dimensions"
+        },
+        "after": {
+          "$ref": "#/$defs/dimensions"
+        }
+      },
+      "required": [
+        "before",
+        "after"
+      ]
+    },
+    "step": {
+      "type": "object",
+      "properties": {
+        "tool": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "tool",
+        "version"
+      ]
+    },
+    "target": {
+      "type": "object",
+      "properties": {
+        "requestedBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "met": {
+          "type": "boolean"
+        },
+        "nearestBytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "requestedBytes",
+        "met"
+      ]
+    },
+    "result": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "planned",
+            "optimized",
+            "unchanged",
+            "failed",
+            "cancelled",
+            "skipped",
+            "target-missed"
+          ]
+        },
+        "input": {
+          "type": "string"
+        },
+        "output": {
+          "type": "string"
+        },
+        "originalBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "outputBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "savedBytes": {
+          "type": "integer"
+        },
+        "savingPercent": {
+          "type": "number"
+        },
+        "format": {
+          "type": "string"
+        },
+        "recipe": {
+          "type": "string"
+        },
+        "dimensions": {
+          "$ref": "#/$defs/dimensionChange"
+        },
+        "pipeline": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/step"
+          }
+        },
+        "target": {
+          "$ref": "#/$defs/target"
+        },
+        "resizeUsed": {
+          "type": "boolean"
+        },
+        "remoteUsed": {
+          "type": "boolean"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "error": {
+          "type": "string"
+        },
+        "exitCode": {
+          "type": "integer",
+          "enum": [
+            0,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            130
+          ]
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "status",
+        "input",
+        "originalBytes",
+        "outputBytes",
+        "savedBytes",
+        "savingPercent",
+        "format",
+        "recipe",
+        "dimensions",
+        "pipeline",
+        "resizeUsed",
+        "remoteUsed",
+        "warnings",
+        "exitCode"
+      ]
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "succeeded": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "skipped": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "originalBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "outputBytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "total",
+        "succeeded",
+        "failed",
+        "skipped",
+        "originalBytes",
+        "outputBytes"
+      ]
+    },
+    "report": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/result"
+          }
+        },
+        "summary": {
+          "$ref": "#/$defs/summary"
+        },
+        "exitCode": {
+          "type": "integer",
+          "enum": [
+            0,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            130
+          ]
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "results",
+        "summary",
+        "exitCode"
+      ]
+    }
+  }
+}
