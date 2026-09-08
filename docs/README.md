@@ -11,6 +11,7 @@ The maintained subjects now span product, automation, human workflows, setup and
 | Settled architecture/product choices | [Decisions](DECISIONS.md) |
 | Locate code and invariants | [Project map](PROJECT-MAP.md), [Architecture](ARCHITECTURE.md) |
 | Build, test and qualify locally | [Development](DEVELOPMENT.md) |
+| Private candidate archives and publication boundary | [Releasing](RELEASING.md) |
 | Stable automation interface | [CLI](cli.md) |
 | Settings, provenance and shared recipes | [Presets](presets.md) |
 | Keyboard, clipboard, drop and last result | [Desktop workflows](desktop.md) |
