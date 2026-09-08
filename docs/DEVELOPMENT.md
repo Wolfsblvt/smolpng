@@ -73,3 +73,15 @@ A Linux pseudo-terminal smoke has exercised actual menu rendering, Enter/Done, o
 ## Managed optimizer qualification
 
 Normal tests use an in-memory HTTP transport and staged fake executable/version boundary, not upstream downloads. They cover catalog digests, malformed archives, verified-before-execute behavior, failed-probe cleanup, modified installations, retained versions, downgrade refusal, concurrent writers and protected removal. Actual artifact bytes and native OxiPNG corpus behavior still require an explicit install on the target host. Run `deps licenses`, `deps install oxipng`, then `deps install oxipng --apply` only after reviewing the source. Record the resulting `deps status --json` and exact tool versions alongside corpus reports. On Windows arm64, configure a separately qualified native program; do not claim the x64 archive was a native build.
+
+## Exercise the built candidate without rebuilding
+
+The optional `smolpng-qualify` helper (`tools/qualify`) invokes the candidate executable with a fresh isolated home and project lookup disabled. It writes original CC0 specimens only under a new selected folder, exercises real Auto/lossless optimizers, exact targets, nearest acceptance, binary stdout and partial batches, and checks actual artifact decoding/pixels/bytes. It records the tested executable's SHA-256, build commit, platform, discovered tool versions and per-check reports. It never downloads tools, accesses the clipboard, sends images to a remote service or publishes its report.
+
+```sh
+smolpng-qualify -executable ./smolpng -output ./qualification-run
+```
+
+Use `.exe` names and PowerShell's `./` or `\.\` form on Windows. `-pngquant PATH` and `-oxipng PATH` select separate real executables; both are required for complete qualification. The package builder embeds the expected source commit; a mismatch refuses to qualify the wrong build. The output directory must not already exist. Native optimizer checks are not part of ordinary CI. A preflight refusal on a headless authoring host with no optimizers is not counted as real optimizer success.
+
+Graphical clipboard, drag/drop, native notifications, windowless launch/console allocation, locked files and visual TUI behavior still require the manual checks in the candidate's local qualification packet. The helper exercises rather than rebuilds the app.

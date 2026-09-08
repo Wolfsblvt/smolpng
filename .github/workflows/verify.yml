@@ -54,6 +54,11 @@ jobs:
       - name: Build explicit Windows background entry
         if: matrix.os == 'windows'
         run: go build -trimpath -ldflags "-H=windowsgui -X github.com/Wolfsblvt/smolpng/internal/cli.Commit=$SOURCE_COMMIT" -o artifacts/bin/smolpngw.exe ./cmd/smolpngw
+      - name: Build real-host qualification helper (not run in ordinary CI)
+        run: |
+          suffix=""
+          if [ "$GOOS" = windows ]; then suffix=".exe"; fi
+          go build -trimpath -ldflags "-X main.Commit=$SOURCE_COMMIT" -o "artifacts/bin/smolpng-qualify$suffix" ./tools/qualify
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: smolpng-${{ matrix.os }}-${{ matrix.arch }}-${{ env.SOURCE_COMMIT }}
