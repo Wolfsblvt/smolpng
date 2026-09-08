@@ -73,8 +73,8 @@ func (a *app) depsCommand() *cobra.Command {
 	remove.Flags().BoolVar(&removeApply, "apply", false, "Remove only recorded, unmodified managed versions")
 	root.AddCommand(remove)
 	configure := &cobra.Command{Use: "configure TOOL PATH", Args: cobra.ExactArgs(2), Short: "Select a local executable after a successful version probe", RunE: func(c *cobra.Command, args []string) error {
-		if args[0] != "pngquant" && args[0] != "oxipng" {
-			return domain.E(2, "choose pngquant or oxipng", nil)
+		if args[0] != "pngquant" && args[0] != "oxipng" && args[0] != "jpegoptim" {
+			return domain.E(2, "choose pngquant, oxipng, or jpegoptim", nil)
 		}
 		dirs, e := a.dirs()
 		if e != nil {
@@ -89,7 +89,9 @@ func (a *app) depsCommand() *cobra.Command {
 			path = filepath.Join(cwd, path)
 		}
 		paths := toolchain.Paths{}
-		if args[0] == "pngquant" {
+		if args[0] == "jpegoptim" {
+			paths.JPEGOptim = path
+		} else if args[0] == "pngquant" {
 			paths.PNGQuant = path
 		} else {
 			paths.OxiPNG = path
@@ -98,6 +100,9 @@ func (a *app) depsCommand() *cobra.Command {
 		chosen := tools.PNGQuant
 		if args[0] == "oxipng" {
 			chosen = tools.OxiPNG
+		}
+		if args[0] == "jpegoptim" {
+			chosen = tools.JPEGOptim
 		}
 		if !chosen.Available {
 			return domain.E(4, "selected executable failed qualification: "+chosen.Error, nil)
@@ -123,7 +128,7 @@ func (a *app) depsCommand() *cobra.Command {
 			if e != nil {
 				return e
 			}
-			changes := map[string]any{"tools.preference": preference, "tools.pngquant": "", "tools.oxipng": ""}
+			changes := map[string]any{"tools.preference": preference, "tools.pngquant": "", "tools.oxipng": "", "tools.jpegoptim": ""}
 			if apply {
 				if e = w.SaveUserSettings(c.Context(), changes); e != nil {
 					return domain.E(2, e.Error(), e)

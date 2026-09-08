@@ -216,6 +216,8 @@ func (l Limits) Validate() error {
 }
 
 type ImageInfo struct {
+	Orientation  int        `json:"orientation,omitempty"`
+	Progressive  bool       `json:"progressive,omitempty"`
 	Format       string     `json:"format"`
 	Bytes        int64      `json:"bytes"`
 	Dimensions   Dimensions `json:"dimensions"`

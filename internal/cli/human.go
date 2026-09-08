@@ -77,7 +77,7 @@ func (a *app) settingsCommand() *cobra.Command {
 }
 func toolDescription(t toolchain.Set) string {
 	lines := []string{"Local optimizer setup (no startup network check)"}
-	for _, v := range []toolchain.Tool{t.PNGQuant, t.OxiPNG} {
+	for _, v := range []toolchain.Tool{t.PNGQuant, t.OxiPNG, t.JPEGOptim} {
 		if v.Available {
 			lines = append(lines, fmt.Sprintf("%s %s: %s", v.Name, v.Version, strconv.Quote(v.Path)))
 		} else {
@@ -515,7 +515,7 @@ func (a *app) interactive(c *cobra.Command, args []string, base *compressFlags) 
 		if !hasInitial {
 			options = append(options, ui.Option{Label: "Configured default: " + initial, Value: initial})
 		}
-		options = append(options, ui.Option{Label: "Saved recipes…", Value: "@saved"}, ui.Option{Label: "Custom…", Value: "@custom"}, ui.Option{Label: "Change source", Value: "@source", Key: "s"}, ui.Option{Label: "Settings", Value: "@settings", Key: ","}, ui.Option{Label: "Dependencies and setup", Value: "@setup", Key: "d"})
+		options = append(options, ui.Option{Label: "TinyPNG (upload image)…", Value: "@tinypng"}, ui.Option{Label: "Saved recipes…", Value: "@saved"}, ui.Option{Label: "Custom…", Value: "@custom"}, ui.Option{Label: "Change source", Value: "@source", Key: "s"}, ui.Option{Label: "Settings", Value: "@settings", Key: ","}, ui.Option{Label: "Dependencies and setup", Value: "@setup", Key: "d"})
 		if hasPreset {
 			options = append(options, ui.Option{Label: "Import presets also found in clipboard", Value: "@import", Key: "i"})
 		}
@@ -578,7 +578,21 @@ func (a *app) interactive(c *cobra.Command, args []string, base *compressFlags) 
 		} else {
 			cmd.Flags().Set("clipboard", "false")
 		}
-		if selected == "@target" {
+		if selected == "@tinypng" {
+			choice, err := p.Choose(ctx, "Upload to TinyPNG?", "One original-derived image per input will leave this computer and may consume API quota. A saved key alone never authorizes uploads.", []ui.Option{{Label: "Upload this operation", Value: "upload"}, {Label: "Back", Value: "back"}}, "back")
+			if err != nil {
+				if errors.Is(err, ui.ErrBack) {
+					continue
+				}
+				return err
+			}
+			if choice != "upload" {
+				continue
+			}
+			cmd.Flags().Set("engine", "tinypng")
+			cmd.Flags().Set("remote-policy", "always")
+			selected = "auto"
+		} else if selected == "@target" {
 			value := base.Target
 			if value == "" {
 				value = "10KiB"

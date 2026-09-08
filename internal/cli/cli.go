@@ -10,6 +10,7 @@ import (
 	"github.com/Wolfsblvt/smolpng/internal/desktop"
 	"github.com/Wolfsblvt/smolpng/internal/domain"
 	"github.com/Wolfsblvt/smolpng/internal/fsutil"
+	"github.com/Wolfsblvt/smolpng/internal/imagefile"
 	"github.com/Wolfsblvt/smolpng/internal/input"
 	"github.com/Wolfsblvt/smolpng/internal/output"
 	"github.com/Wolfsblvt/smolpng/internal/paths"
@@ -180,6 +181,7 @@ func (a *app) root() *cobra.Command {
 	p.BoolVar(&a.plain, "plain", false, "Plain keyboard interface without decorative header")
 	p.BoolVar(&a.accessible, "accessible", false, "Screen-reader prompts using choice names, not numbers")
 	p.BoolVar(&a.noHeader, "no-header", false, "Hide the replaceable interactive header")
+	p.StringVar(&a.tools.JPEGOptim, "jpegoptim-path", "", "Explicit separately installed jpegoptim executable")
 	p.StringVar(&a.tools.PNGQuant, "pngquant-path", "", "Explicit pngquant executable")
 	p.StringVar(&a.tools.OxiPNG, "oxipng-path", "", "Explicit OxiPNG executable")
 	c.MarkFlagsMutuallyExclusive("json", "jsonl")
@@ -201,13 +203,13 @@ func (a *app) root() *cobra.Command {
 		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "commit": Commit, "distribution": Distribution, "platform": runtime.GOOS + "/" + runtime.GOARCH})
 	}})
 	c.AddCommand(&cobra.Command{Use: "capabilities", Args: cobra.NoArgs, Short: "Discover implemented features", RunE: func(*cobra.Command, []string) error {
-		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "formats": []string{"png"}, "presets": []string{"auto", "web", "smallest", "lossless"}, "targetSize": true, "explicitResize": true, "remoteDefault": "never", "remoteImplemented": true, "config": true, "namedPresets": true, "presetImport": true, "agentSkill": true, "skillInstallationTracking": true, "interactive": true, "nativeClipboard": true, "managedDependencies": []string{"oxipng"}, "desktopQualification": "adapters implemented; real desktop tests outstanding", "exitCodes": map[string]int{"success": 0, "arguments": 2, "input": 3, "dependency": 4, "optimizer": 5, "target": 6, "network": 7, "batch": 8, "cancelled": 130}})
+		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "formats": []string{"png", "jpeg"}, "presets": []string{"auto", "web", "smallest", "lossless"}, "targetSize": true, "explicitResize": true, "remoteDefault": "never", "remoteImplemented": true, "config": true, "namedPresets": true, "presetImport": true, "agentSkill": true, "skillInstallationTracking": true, "interactive": true, "nativeClipboard": true, "managedDependencies": []string{"oxipng"}, "desktopQualification": "adapters implemented; real desktop tests outstanding", "exitCodes": map[string]int{"success": 0, "arguments": 2, "input": 3, "dependency": 4, "optimizer": 5, "target": 6, "network": 7, "batch": 8, "cancelled": 130}})
 	}})
 	c.AddCommand(&cobra.Command{Use: "doctor", Args: cobra.NoArgs, Short: "Inspect paths and optimizer status", RunE: a.doctor})
 	c.AddCommand(a.depsCommand())
 	c.AddCommand(&cobra.Command{Use: "exec TOOL -- [ARG...]", Short: "Run a tool directly, relinquishing managed-output guarantees", DisableFlagParsing: true, RunE: func(c *cobra.Command, args []string) error {
-		if len(args) == 0 || (args[0] != "pngquant" && args[0] != "oxipng") {
-			return domain.E(2, "exec needs pngquant or oxipng", nil)
+		if len(args) == 0 || (args[0] != "pngquant" && args[0] != "oxipng" && args[0] != "jpegoptim") {
+			return domain.E(2, "exec needs pngquant, oxipng, or jpegoptim", nil)
 		}
 		p, e := a.dirs()
 		if e != nil {
@@ -220,6 +222,9 @@ func (a *app) root() *cobra.Command {
 		t := ts.PNGQuant
 		if args[0] == "oxipng" {
 			t = ts.OxiPNG
+		}
+		if args[0] == "jpegoptim" {
+			t = ts.JPEGOptim
 		}
 		if !t.Available {
 			return domain.E(4, t.Error, nil)
@@ -372,7 +377,7 @@ func (a *app) compression(c *cobra.Command, args []string, f *compressFlags, con
 		tools = a.discover(c.Context(), p)
 	}
 	batch := workflow.Batch{Engine: workflow.Engine{Remote: tinypng.Client{Credentials: a.credentials(), HTTP: a.env.RemoteHTTP}, Runner: a.env.Runner, Tools: tools, Limits: limits, CacheDir: p.Cache, Verbose: a.verbose}, Resolver: a.resolver(), Stdout: a.env.Out}
-	result := batch.Run(c.Context(), jobs, workflow.Options{Recipe: r, Output: f.Output, Jobs: f.Jobs, FailFast: f.FailFast, DryRun: f.DryRun, Offline: f.Input.Options.Offline})
+	result := batch.Run(c.Context(), jobs, workflow.Options{Formats: effective.Formats, Recipe: r, Output: f.Output, Jobs: f.Jobs, FailFast: f.FailFast, DryRun: f.DryRun, Offline: f.Input.Options.Offline})
 	var copied desktop.CopyReceipt
 	if consume == nil && !f.DryRun && f.CopyMode != "" && f.CopyMode != "none" && len(state.Outputs(result)) > 0 {
 		copied, e = a.copyOutputs(c.Context(), result, f.CopyMode)
@@ -468,11 +473,11 @@ func (a *app) doctor(c *cobra.Command, _ []string) error {
 	if skillErr != nil {
 		skillState = map[string]any{"state": "unknown", "error": skillErr.Error()}
 	}
-	return a.emit(map[string]any{"schemaVersion": 1, "paths": p, "tools": ts, "skills": skillState, "managedDependencies": (toolchain.Managed{Root: filepath.Join(p.Data, "tools")}).All(), "networkCheckPerformed": false, "localAvailable": ts.PNGQuant.Available || ts.OxiPNG.Available})
+	return a.emit(map[string]any{"schemaVersion": 1, "paths": p, "tools": ts, "skills": skillState, "managedDependencies": (toolchain.Managed{Root: filepath.Join(p.Data, "tools")}).All(), "networkCheckPerformed": false, "localAvailable": ts.PNGQuant.Available || ts.OxiPNG.Available || ts.JPEGOptim.Available})
 }
 func (a *app) inspectCommand() *cobra.Command {
 	f := &inputFlags{}
-	c := &cobra.Command{Use: "inspect INPUT...", Short: "Validate PNG structure and report dimensions, alpha, and metadata"}
+	c := &cobra.Command{Use: "inspect INPUT...", Short: "Validate PNG/JPEG structure, dimensions, orientation, and metadata"}
 	f.bind(c)
 	c.RunE = func(c *cobra.Command, args []string) error {
 		limits, e := f.limits()
@@ -501,7 +506,9 @@ func (a *app) inspectCommand() *cobra.Command {
 			it := item{Input: s.Display}
 			if er == nil {
 				var asset *pngimage.Asset
-				asset, er = pngimage.Decode(b, limits.MaxPixels)
+				info, decodeErr := imagefile.Inspect(b, limits.MaxPixels)
+				er = decodeErr
+				asset = &pngimage.Asset{Info: info}
 				if er == nil {
 					it.Info = &asset.Info
 				} else {

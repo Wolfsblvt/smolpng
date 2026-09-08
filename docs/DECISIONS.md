@@ -48,3 +48,7 @@ Managed installation currently admits OxiPNG 10.2.1 only, on the five platforms 
 ## Explicit TinyPNG implementation
 
 The optional HTTP adapter uses no provider SDK or retries. Authorization is obtained only after policy chooses remote use. A single original-derived upload is preferred over a quota-consuming resize search. `keep` and explicit local resize reject remote processing before upload rather than pretending to meet preservation contracts. Unknown output hosts/redirects are rejected. The native secret library is pinned and license-noticed; no service credentials were used during implementation.
+
+## JPEG first implementation
+
+Use separately installed jpegoptim for ordinary local JPEG optimization, with a pure Go original-derived path for explicit resizing. Do not add a native codec-linking dependency to the CLI for this candidate. Final codec/quality selection remains subject to corpus evidence. Safe strips private metadata by reconstructing minimal orientation EXIF, not by preserving the whole camera record or re-encoding pixels merely to remove GPS.

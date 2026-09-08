@@ -27,8 +27,11 @@ func (a *app) loadConfig(p paths.Paths) (*config.Workspace, error) {
 	if e != nil {
 		return nil, domain.E(2, e.Error(), e)
 	}
-	a.configuredTools = toolchain.Paths{PNGQuant: w.User.Document.Tools.PNGQuant, OxiPNG: w.User.Document.Tools.OxiPNG, ManagedRoot: filepath.Join(p.Data, "tools"), Preference: w.User.Document.Tools.Preference}
+	a.configuredTools = toolchain.Paths{JPEGOptim: w.User.Document.Tools.JPEGOptim, PNGQuant: w.User.Document.Tools.PNGQuant, OxiPNG: w.User.Document.Tools.OxiPNG, ManagedRoot: filepath.Join(p.Data, "tools"), Preference: w.User.Document.Tools.Preference}
 	base := filepath.Dir(w.User.Path)
+	if v := a.configuredTools.JPEGOptim; v != "" && !filepath.IsAbs(v) {
+		a.configuredTools.JPEGOptim = filepath.Join(base, v)
+	}
 	if v := a.configuredTools.PNGQuant; v != "" && !filepath.IsAbs(v) {
 		a.configuredTools.PNGQuant = filepath.Join(base, v)
 	}

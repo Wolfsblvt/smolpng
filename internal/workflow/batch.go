@@ -5,10 +5,14 @@ import (
 	"bytes"
 	"context"
 	"github.com/Wolfsblvt/smolpng/internal/domain"
+	"github.com/Wolfsblvt/smolpng/internal/imagefile"
 	"github.com/Wolfsblvt/smolpng/internal/input"
 	"github.com/Wolfsblvt/smolpng/internal/output"
 	"io"
 	"os"
+	"path/filepath"
+	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 )
@@ -19,6 +23,7 @@ type Batch struct {
 	Stdout   io.Writer
 }
 type Options struct {
+	Formats                   []string
 	Recipe                    domain.Recipe
 	Output                    output.Options
 	Jobs                      int
@@ -80,6 +85,18 @@ func (b Batch) one(ctx context.Context, j output.Job, o Options) domain.Result {
 	if er != nil {
 		r.Fail(er)
 		return r
+	}
+	format := imagefile.Format(data)
+	if len(o.Formats) > 0 && !slices.Contains(o.Formats, format) {
+		r.Fail(domain.E(2, "input format is not admitted by the selected preset", nil))
+		return r
+	}
+	if j.Output != "-" {
+		ext := strings.ToLower(filepath.Ext(j.Output))
+		if format == "jpeg" && (ext != ".jpg" && ext != ".jpeg") || format == "png" && ext != ".png" {
+			r.Fail(domain.E(3, "input bytes disagree with output extension; correct the name or provide an explicit matching output", nil))
+			return r
+		}
 	}
 	out, er := b.Engine.Optimize(ctx, data, o.Recipe)
 	r.Remote = out.Remote

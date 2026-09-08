@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Wolfsblvt/smolpng/internal/imagefile"
 	"github.com/Wolfsblvt/smolpng/internal/input"
 	"github.com/Wolfsblvt/smolpng/internal/pngimage"
 	native "golang.design/x/clipboard"
@@ -105,11 +106,16 @@ func CopyPayload(files []string, mode string) ([]native.Option, []string, error)
 		if e != nil {
 			return nil, nil, e
 		}
-		if _, e := pngimage.Decode(b, 64_000_000); e != nil {
-			return nil, nil, fmt.Errorf("cannot copy invalid or oversized PNG: %w", e)
+		if b, e = imagefile.ClipboardPNG(b, 64_000_000); e != nil {
+			if mode == "image" {
+				return nil, nil, fmt.Errorf("cannot copy image representation: %w", e)
+			}
+			// A tagged JPEG cannot be relabeled as sRGB PNG without color
+			// management. Smart still supplies the actual file and its path.
+		} else {
+			options = append(options, native.Item{Format: native.FmtImage, Bytes: b})
+			modes = append(modes, "image")
 		}
-		options = append(options, native.Item{Format: native.FmtImage, Bytes: b})
-		modes = append(modes, "image")
 	}
 	if mode == "smart" || mode == "file" || mode == "files" {
 		uris := []string{}

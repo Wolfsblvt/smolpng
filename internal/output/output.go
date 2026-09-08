@@ -67,12 +67,16 @@ func Name(source, template string, now time.Time) (string, error) {
 		return "", e
 	}
 	source = SafeName(source)
+	ext := strings.ToLower(filepath.Ext(source))
+	if ext != ".jpg" && ext != ".jpeg" {
+		ext = ".png"
+	}
 	stem := strings.TrimSuffix(source, filepath.Ext(source))
 	stem = smolTail.ReplaceAllString(stem, "")
-	name := strings.NewReplacer("{stem}", stem, "{ext}", ".png", "{timestamp}", now.UTC().Format("20060102-150405")).Replace(template)
+	name := strings.NewReplacer("{stem}", stem, "{ext}", ext, "{timestamp}", now.UTC().Format("20060102-150405")).Replace(template)
 	name = SafeName(name)
-	if !strings.EqualFold(filepath.Ext(name), ".png") {
-		return "", fmt.Errorf("PNG output must have a .png extension")
+	if strings.ToLower(filepath.Ext(name)) != ext {
+		return "", fmt.Errorf("output extension must match the input format")
 	}
 	if len(name) > 230 {
 		base := strings.TrimSuffix(name, filepath.Ext(name))
@@ -80,7 +84,7 @@ func Name(source, template string, now time.Time) (string, error) {
 		for !utf8.ValidString(base) {
 			base = base[:len(base)-1]
 		}
-		name = base + ".png"
+		name = base + ext
 	}
 	return name, nil
 }

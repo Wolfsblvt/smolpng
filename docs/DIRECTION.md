@@ -21,3 +21,7 @@ The embedded Skill, tracked standard/custom destinations, manual replacement det
 ### Remote source increment
 
 TinyPNG HTTPS upload/download, native-keyring login/logout/status, environment precedence, upload-policy dispatch and actual-remote-use reporting now exist. Fake transport/secret-store tests exercise these boundaries without a real key. See REMOTE.md for limitations. Native qualification remains deferred by Wolf; it is not a gate on the next source feature.
+
+### JPEG source frontier
+
+JPEG file/directory/URL/stdin inspection and compression now join the shared engine. jpegoptim discovery, same-size lossless/lossy candidates, strict targets, original-derived resize, orientation/ICC handling, legal JPEG fixtures and regression tests are implemented. Final quality calibration and real JPEG optimizer/native desktop evidence remain unobserved.

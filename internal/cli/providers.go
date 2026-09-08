@@ -3,11 +3,11 @@ package cli
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"strings"
 
 	"github.com/Wolfsblvt/smolpng/internal/domain"
+	"github.com/Wolfsblvt/smolpng/internal/pngimage"
 	"github.com/Wolfsblvt/smolpng/internal/secret"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
@@ -43,7 +43,7 @@ func (a *app) providersCommand() *cobra.Command {
 		var key string
 		var err error
 		if stdin {
-			b, e := io.ReadAll(io.LimitReader(a.env.In, 514))
+			b, e := pngimage.ReadBounded(a.env.In, 514)
 			if e != nil {
 				return domain.E(3, "cannot read key from stdin", e)
 			}

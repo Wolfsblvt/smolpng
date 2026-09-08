@@ -112,7 +112,7 @@ func Load(o LoadOptions) (*Workspace, error) {
 	if e != nil {
 		return nil, e
 	}
-	if project.Document.Tools.PNGQuant != "" || project.Document.Tools.OxiPNG != "" || project.Document.Tools.Preference != "" {
+	if project.Document.Tools.JPEGOptim != "" || project.Document.Tools.PNGQuant != "" || project.Document.Tools.OxiPNG != "" || project.Document.Tools.Preference != "" {
 		return nil, fmt.Errorf("project configuration cannot choose executables; use user [tools] or explicit CLI paths")
 	}
 	w := &Workspace{User: user, Project: project, StorePath: filepath.Join(o.Paths.Data, "presets.toml"), Store: Bundle{Presets: map[string]Preset{}}, CWD: cwd, Paths: o.Paths}
@@ -201,7 +201,7 @@ func (w *Workspace) Resolve(name string, overrides Fields) (Effective, error) {
 		return Effective{}, e
 	}
 	r, _ := domain.Builtin(base)
-	eff := Effective{SchemaVersion: 1, Recipe: r, Output: output.Options{Detached: w.Paths.Detached(), Template: "{stem}.smol{ext}", Collision: "increment"}, Jobs: 2, Clipboard: "smart", BatchClipboard: "files", DropMode: "background", DropPreset: "auto", Notify: true, Header: "cute", Animations: true, UpdateCheck: "manual", UpdateChannel: "stable", RemotePermission: "never", Formats: []string{"png"}, Provenance: map[string]Origin{}, Warnings: []string{}}
+	eff := Effective{SchemaVersion: 1, Recipe: r, Output: output.Options{Detached: w.Paths.Detached(), Template: "{stem}.smol{ext}", Collision: "increment"}, Jobs: 2, Clipboard: "smart", BatchClipboard: "files", DropMode: "background", DropPreset: "auto", Notify: true, Header: "cute", Animations: true, UpdateCheck: "manual", UpdateChannel: "stable", RemotePermission: "never", Formats: []string{"png", "jpeg"}, Provenance: map[string]Origin{}, Warnings: []string{}}
 	for _, key := range []string{"quality_min", "quality_max", "colors", "speed", "dither", "oxipng_level", "metadata", "quantize", "optimize_alpha", "target_size", "allow_resize", "resize", "max_dimensions", "min_dimensions", "accept_nearest", "force_output", "engine", "remote", "timeout", "output.template", "output.directory", "output.detached", "output.collision", "output.overwrite", "recursive", "jobs", "clipboard", "clipboard.batch", "drop.mode", "drop.preset", "drop.notify", "ui.header", "ui.animations", "updates.check", "updates.channel", "remote_permission"} {
 		eff.Provenance[key] = Origin{File: "builtin:" + base, Key: key}
 	}
@@ -289,8 +289,8 @@ func allows(permission, request string) bool {
 	return false
 }
 func (e Effective) CheckUsable() error {
-	if !slices.Contains(e.Formats, "png") {
-		return fmt.Errorf("selected preset does not admit PNG; JPEG compression is not implemented")
+	if !slices.Contains(e.Formats, "png") && !slices.Contains(e.Formats, "jpeg") {
+		return fmt.Errorf("preset admits no implemented format")
 	}
 	if !allows(e.RemotePermission, e.Recipe.RemotePolicy) || e.Recipe.Engine == "tinypng" && (e.Recipe.RemotePolicy == "never" || e.Recipe.RemotePolicy == "ask") {
 		return fmt.Errorf("preset requests remote processing outside current permission %q; change user settings or explicitly select --remote-policy", e.RemotePermission)
@@ -505,6 +505,10 @@ func (e *Effective) applyDocument(l Layer, downloads string) error {
 	if d.Tools.Preference != "" {
 		e.Tools.Preference = d.Tools.Preference
 		mark("tools.preference")
+	}
+	if d.Tools.JPEGOptim != "" {
+		e.Tools.JPEGOptim = relativeTo(d.Tools.JPEGOptim, filepath.Dir(l.Path))
+		mark("tools.jpegoptim")
 	}
 	if d.Tools.PNGQuant != "" {
 		e.Tools.PNGQuant = relativeTo(d.Tools.PNGQuant, filepath.Dir(l.Path))

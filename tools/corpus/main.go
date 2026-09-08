@@ -6,7 +6,7 @@ import (
 	"crypto/sha256"
 	"flag"
 	"fmt"
-	"github.com/Wolfsblvt/smolpng/internal/pngimage"
+	"github.com/Wolfsblvt/smolpng/internal/imagefile"
 	"github.com/Wolfsblvt/smolpng/internal/testutil"
 	"os"
 	"path/filepath"
@@ -19,6 +19,9 @@ func main() {
 	check := flag.Bool("check", false, "Verify without writing")
 	flag.Parse()
 	specimens := testutil.Corpus()
+	for n, b := range testutil.JPEGCorpus() {
+		specimens[n] = b
+	}
 	names := []string{}
 	for n := range specimens {
 		names = append(names, n)
@@ -28,9 +31,9 @@ func main() {
 	manifest.WriteString("# SPDX-License-Identifier: CC0-1.0\nschema = 1\n")
 	for _, name := range names {
 		data := specimens[name]
-		a, e := pngimage.Decode(data, 1_000_000)
+		a, e := imagefile.Inspect(data, 1_000_000)
 		must(e)
-		fmt.Fprintf(&manifest, "\n[[image]]\npath = %q\ncreator = \"Wolfsblvt Works contributors\"\nsource = \"project-generated\"\nmethod = \"internal/testutil/testutil.go\"\nlicense = \"CC0-1.0\"\nredistributable = true\npurpose = %q\nwidth = %d\nheight = %d\nalpha = %t\nsha256 = \"%x\"\n", name, strings.TrimSuffix(name, ".png"), a.Info.Dimensions.Width, a.Info.Dimensions.Height, a.Info.Transparency, sha256.Sum256(data))
+		fmt.Fprintf(&manifest, "\n[[image]]\npath = %q\ncreator = \"Wolfsblvt Works contributors\"\nsource = \"project-generated\"\nmethod = \"internal/testutil/testutil.go\"\nlicense = \"CC0-1.0\"\nredistributable = true\npurpose = %q\nwidth = %d\nheight = %d\nalpha = %t\nsha256 = \"%x\"\n", name, strings.TrimSuffix(name, ".png"), a.Dimensions.Width, a.Dimensions.Height, a.Transparency, sha256.Sum256(data))
 		path := filepath.Join(*root, name)
 		if *check {
 			b, e := os.ReadFile(path)

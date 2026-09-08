@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/Wolfsblvt/smolpng/internal/domain"
+	"github.com/Wolfsblvt/smolpng/internal/jpegimage"
 	"github.com/Wolfsblvt/smolpng/internal/pngimage"
 	"github.com/Wolfsblvt/smolpng/internal/tinypng"
 )
@@ -97,9 +98,23 @@ func (e Engine) Optimize(ctx context.Context, data []byte, r domain.Recipe) (Out
 	return out, nil
 }
 func (e Engine) optimizeLocal(ctx context.Context, data []byte, r domain.Recipe) (Outcome, error) {
+	if jpegimage.Is(data) {
+		return e.optimizeJPEG(ctx, data, r)
+	}
 	return e.optimizePNG(ctx, data, r)
 }
 func remoteInput(data []byte, r domain.Recipe, maxPixels int64) ([]byte, domain.ImageInfo, error) {
+	if jpegimage.Is(data) {
+		a, err := jpegimage.Decode(data, maxPixels)
+		if err != nil {
+			return nil, domain.ImageInfo{}, err
+		}
+		if a.Orientation != 1 {
+			return nil, a.Info, fmt.Errorf("remote JPEG with EXIF rotation needs a qualified orientation contract; use local optimization")
+		}
+		b, err := jpegimage.Filter(a, r.Metadata)
+		return b, a.Info, err
+	}
 	a, err := pngimage.Decode(data, maxPixels)
 	if err != nil {
 		return nil, domain.ImageInfo{}, err
@@ -111,6 +126,24 @@ func remoteInput(data []byte, r domain.Recipe, maxPixels int64) ([]byte, domain.
 	return b, a.Info, err
 }
 func remoteCandidate(source, data []byte, r domain.Recipe, before domain.ImageInfo, maxPixels int64) (Candidate, error) {
+	if before.Format == "jpeg" {
+		src, err := jpegimage.Decode(source, maxPixels)
+		if err != nil {
+			return Candidate{}, err
+		}
+		a, err := jpegimage.Decode(data, maxPixels)
+		if err != nil {
+			return Candidate{}, err
+		}
+		if a.Info.Dimensions != before.Dimensions {
+			return Candidate{}, fmt.Errorf("JPEG dimensions changed")
+		}
+		b, err := jpegimage.Reconcile(src, a, r.Metadata, true)
+		if err != nil {
+			return Candidate{}, err
+		}
+		return Candidate{Data: b, Info: a.Info, Rank: 0, Pipeline: []domain.Step{{Tool: "tinypng", Version: "HTTP API"}}}, nil
+	}
 	a, err := pngimage.Decode(data, maxPixels)
 	if err != nil {
 		return Candidate{}, err

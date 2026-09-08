@@ -90,6 +90,7 @@ type Updates struct {
 	Channel *string `toml:"channel,omitempty" json:"channel,omitempty"`
 }
 type Tools struct {
+	JPEGOptim  string `toml:"jpegoptim,omitempty" json:"jpegoptim,omitempty"`
 	Preference string `toml:"preference,omitempty" json:"preference,omitempty"`
 	PNGQuant   string `toml:"pngquant,omitempty" json:"pngquant,omitempty"`
 	OxiPNG     string `toml:"oxipng,omitempty" json:"oxipng,omitempty"`

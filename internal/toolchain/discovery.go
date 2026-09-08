@@ -24,10 +24,11 @@ type Tool struct {
 	Upstream  string `json:"upstream"`
 }
 type Set struct {
-	PNGQuant Tool `json:"pngquant"`
-	OxiPNG   Tool `json:"oxipng"`
+	JPEGOptim Tool `json:"jpegoptim"`
+	PNGQuant  Tool `json:"pngquant"`
+	OxiPNG    Tool `json:"oxipng"`
 }
-type Paths struct{ PNGQuant, OxiPNG, ManagedRoot, Preference string }
+type Paths struct{ PNGQuant, OxiPNG, JPEGOptim, ManagedRoot, Preference string }
 
 var version = regexp.MustCompile(`\b([0-9]+)\.([0-9]+)(?:\.([0-9]+))?\b`)
 
@@ -81,13 +82,17 @@ func Discover(ctx context.Context, r process.Runner, explicit, config Paths) Set
 		}
 		return system
 	}
-	return Set{selectTool("pngquant", explicit.PNGQuant, config.PNGQuant), selectTool("oxipng", explicit.OxiPNG, config.OxiPNG)}
+	return Set{PNGQuant: selectTool("pngquant", explicit.PNGQuant, config.PNGQuant), OxiPNG: selectTool("oxipng", explicit.OxiPNG, config.OxiPNG), JPEGOptim: probe(ctx, r, "jpegoptim", explicit.JPEGOptim, config.JPEGOptim)}
 }
 func probe(ctx context.Context, r process.Runner, name, explicit, configured string) Tool {
 	t := Tool{Name: name, Source: "none", License: "MIT", Upstream: "https://github.com/oxipng/oxipng"}
 	if name == "pngquant" {
 		t.License = "GPL-3.0-or-later with upstream notices OR commercial"
 		t.Upstream = "https://pngquant.org/"
+	}
+	if name == "jpegoptim" {
+		t.License = "GPL-3.0-or-later (current upstream); installed version terms apply"
+		t.Upstream = "https://github.com/tjko/jpegoptim"
 	}
 	switch {
 	case explicit != "":
@@ -132,7 +137,7 @@ func probe(ctx context.Context, r process.Runner, name, explicit, configured str
 	t.Version = m[0]
 	major, _ := strconv.Atoi(m[1])
 	minor, _ := strconv.Atoi(m[2])
-	if !(name == "pngquant" && (major == 3 || major == 2 && minor >= 12) || name == "oxipng" && (major == 9 || major == 10)) {
+	if !(name == "pngquant" && (major == 3 || major == 2 && minor >= 12) || name == "oxipng" && (major == 9 || major == 10) || name == "jpegoptim" && major == 1 && (minor == 4 || minor == 5)) {
 		t.Error = fmt.Sprintf("unsupported argument family for %s %s", name, t.Version)
 		return t
 	}

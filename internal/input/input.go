@@ -182,7 +182,7 @@ func (r Resolver) Resolve(ctx context.Context, args []string, o Options) ([]Sour
 			}
 			return nil
 		}
-		if !explicit && (!strings.EqualFold(filepath.Ext(p), ".png") || generated.MatchString(p) || len(o.Include) > 0 && !matches(o.Include, rel)) {
+		if !explicit && (!supported(p) || generated.MatchString(p) || len(o.Include) > 0 && !matches(o.Include, rel)) {
 			return nil
 		}
 		add(Source{Kind: "file", Display: p, Name: filepath.Base(p), Path: p, Relative: rel})
@@ -428,4 +428,9 @@ func matches(ps []string, name string) bool {
 func within(root, p string) bool {
 	r, e := filepath.Rel(root, p)
 	return e == nil && (r == "." || r != ".." && !strings.HasPrefix(r, ".."+string(filepath.Separator)))
+}
+
+func supported(p string) bool {
+	ext := strings.ToLower(filepath.Ext(p))
+	return ext == ".png" || ext == ".jpg" || ext == ".jpeg"
 }
