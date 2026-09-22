@@ -16,4 +16,4 @@ The [Vision](docs/VISION.md) preserves the complete destination. [Direction](doc
 
 ## License
 
-The application and Agent Skill use [MIT](LICENSE), with separately identified preset, corpus, future website, and protected-brand boundaries described in the [license map](LICENSE-MAP.md).
+The application and Agent Skill use [MIT](LICENSE), with separately identified preset, corpus, future website, and protected-brand boundaries described in the [license map](license-map.md).
