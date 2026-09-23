@@ -9,7 +9,7 @@ smolpng is a mixed-license product. This map identifies the selected rights boun
 | Material | License |
 | --- | --- |
 | Application source, Agent Skill, ordinary documentation, repository tooling | MIT; root `LICENSE` |
-| Third-party libraries and tools | Their own licenses; `THIRD_PARTY_NOTICES.md` |
+| Third-party libraries and tools | Their own licenses; `third-party-notices.md` |
 
 ## Boundaries applied as material arrives
 
