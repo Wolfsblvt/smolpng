@@ -2,7 +2,7 @@
 
 ## Meaning
 
-This is the current static-PNG machine interface. The canonical noninteractive path is `smolpng compress INPUT...`; it never prompts. Root `--auto` is the one-shot convenience form. Bare-root interactive use is not yet implemented in this cut.
+This guide owns the implemented PNG/JPEG command interface, including deterministic compression, discovery, configuration, human workflows and integrations. The canonical noninteractive path is `smolpng compress INPUT...`; it never prompts. Root `--auto` is the one-shot convenience form; bare `smolpng [INPUT...]` opens the keyboard interface.
 
 ## Input/output
 
@@ -18,7 +18,7 @@ Default output is `{stem}.smol{ext}` beside a local original, or OS Downloads/sm
 
 `--target-size` is inclusive bytes with exact SI/IEC units. No resize occurs unless `--allow-resize`, `--resize` or `--max-dimensions` is explicit. Target fallback respects `--min-dimensions`. `--accept-nearest` writes on a miss while retaining exit 6; `--force-output` permits size growth. `--jobs` is 1..32; fail-fast uses serial work. `--timeout` defaults to 2m including input and optimization; zero disables it.
 
-Only local optimization exists. Remote policy defaults to never. A TinyPNG key is not read; upload-requiring options fail explicitly, not silently or with a fake success. Safe extra optimizer arguments are restricted; `exec TOOL -- ARGS` is the deliberately unrestricted escape hatch and returns upstream exit codes.
+Local optimization is the default. TinyPNG is available only under an explicit permitting remote policy; default `never` does not look up credentials or upload. See [optional TinyPNG](REMOTE.md) for policy and reporting. Safe extra optimizer arguments are restricted; `exec TOOL -- ARGS` is the deliberately unrestricted escape hatch and returns upstream exit codes.
 
 ## Reports and discovery
 

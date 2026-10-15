@@ -35,13 +35,13 @@ go run ./tools/corpus
 go run ./tools/corpus --check
 ```
 
-The generator owns ten project-original CC0 PNGs and a hash/structure/source manifest. Ordinary tests generate temporary specimens, not source-tree output. No lossy byte snapshots are asserted across optimizer versions.
+The generator owns 24 project-original CC0 PNG/JPEG structural specimens and a hash/structure/source manifest. Ordinary tests generate temporary specimens, not source-tree output. No lossy byte snapshots are asserted across optimizer versions. The [corpus guide](../testdata/corpus/README.md) records the admitted classes and remaining photographic/ICC gaps.
 
 ## Real-host qualification
 
 Install current compatible pngquant/OxiPNG separately; record their exact `deps status --json` output. Compress the corpus into a fresh directory, compare dimensions/alpha and strict lossless decoded channels, exercise target success/miss, cancellation, locked outputs and binary stdout. The admitted argument families are pngquant 2.12+/3.x and OxiPNG 9.x/10.x; an admitted version probe is not a claim that every version was actually exercised.
 
-The authoring sandbox uses an isolated checksum-verified Go/module cache transported from an earlier private workflow because shell DNS is unavailable. This changes neither product installation nor source prerequisites. Repository checkpoints include Git history, not the compiler/cache or external optimizer binaries. Hosted CI results must name their exact commit rather than inherit a predecessor's green result.
+The original Web authoring host used a transported checksum-verified Go/module cache because its shell could not resolve the module proxy. That is historical authoring evidence, not a development prerequisite. Normal local development uses the installed SDK and the ordinary checksum-verified module download route. Repository checkpoints include Git history, not the compiler/cache or external optimizer binaries. Hosted CI results must name their exact commit rather than inherit a predecessor's green result.
 
 ## Configuration/preset verification
 

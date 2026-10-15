@@ -1,5 +1,9 @@
 # smolpng
 
+[![Inputs: PNG + JPEG](https://img.shields.io/badge/inputs-PNG_%2B_JPEG-566C86)](docs/cli.md)
+[![Targets: exact bytes](https://img.shields.io/badge/targets-exact_bytes-39756A)](docs/cli.md)
+[![Recipes: shareable TOML](https://img.shields.io/badge/recipes-shareable_TOML-8A668C)](docs/presets.md)
+
 **Make images smol.** Local-first image compression for humans, scripts, and agents.
 
 The current private source candidate provides a keyboard-driven PNG/JPEG utility and deterministic CLI over separately installed pngquant, OxiPNG and jpegoptim. It preserves originals, compares original-derived candidates and treats upload limits as exact byte targets. The full PNG/JPEG, desktop and agent destination is retained in [Vision](docs/VISION.md); unimplemented pieces are not advertised as working features.
@@ -11,11 +15,18 @@ Use Go 1.26.6 or a compatible newer toolchain. From the repository root:
 ```sh
 go mod download
 go build -o artifacts/bin/ ./cmd/smolpng
-go run ./cmd/smolpng deps status
-go run ./cmd/smolpng compress icon.png --target-size 10KiB --json
+./artifacts/bin/smolpng deps status
 ```
 
-Install pngquant separately. For OxiPNG, `smolpng deps install oxipng` previews a pinned upstream archive; add `--apply` to download, verify and install it per-user. Or use existing tools with `--pngquant-path` and `--oxipng-path`. The result defaults to `icon.smol.png` beside `icon.png`; existing outputs get a collision number. A target is `outputBytes <= requestedBytes`, so `10KB` is 10,000 bytes and `10KiB` is 10,240. Missing a target exits `6`; `--accept-nearest` may write the best result but does not pretend the target was met.
+Install pngquant separately. For OxiPNG, `./artifacts/bin/smolpng deps install oxipng` previews a pinned upstream archive; add `--apply` to download, verify and install it per-user. Or use existing tools with `--pngquant-path` and `--oxipng-path`. JPEG uses separately installed jpegoptim. See [dependency setup](docs/dependencies.md).
+
+With the PNG tools available:
+
+```sh
+./artifacts/bin/smolpng compress icon.png --target-size 10KiB --json
+```
+
+The result defaults to `icon.smol.png` beside `icon.png`; existing outputs get a collision number. A target is `outputBytes <= requestedBytes`, so `10KB` is 10,000 bytes and `10KiB` is 10,240. Missing a target exits `6`; `--accept-nearest` may write the best result but does not pretend the target was met. The examples below use `smolpng` as shorthand for the built executable.
 
 ```sh
 smolpng compress icon.png --preset lossless
@@ -120,10 +131,6 @@ smolpng skill package --target chatgpt --output smolpng-skill.zip
 
 The embedded instructions follow the installed CLI. Destinations and exact hashes are tracked; synchronization never silently overwrites local edits. Custom paths and instruction-only ChatGPT packaging are supported. See the [Agent Skill guide](docs/agent-skill.md) for version replacement, safe updates and the local-runtime boundary.
 
-## License
-
-Application and ordinary docs: [MIT](LICENSE). Generated corpus: CC0. Dependencies and future website/brand terms remain separate in the [license map](license-map.md).
-
 ## Compare before changing defaults
 
 `smolpng compare images --recursive --output-dir artifacts/review --json` measures the same original through local presets and exports candidates with an offline visual report. See [comparison](docs/comparison.md) for tool isolation, repeats, targets and metric limits; [explicit background](docs/background.md) explains optional PNG alpha flattening.
@@ -131,3 +138,7 @@ Application and ordinary docs: [MIT](LICENSE). Generated corpus: CC0. Dependenci
 ### Right-click images
 
 `smolpng integrate shell install --apply` selects a single preserve-original **Make smol** action; `--mode submenu --preset mcp-icon` exposes labelled replacement, interactive and custom-user recipes. Windows 11 uses an original native COM bridge and signed sparse package, **not** a legacy registry verb. Settings can be authored here; the native SDK build and signed activation remain a separate host qualification. Linux installation targets KDE Dolphin only. See [context-menu setup and boundaries](docs/context-menu.md).
+
+## License
+
+The application and ordinary documentation use the [MIT license](LICENSE), allowing use, modification and redistribution; corpus, dependency and future website/brand rights are identified separately in the [license map](license-map.md).

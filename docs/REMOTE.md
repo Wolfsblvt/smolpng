@@ -1,5 +1,9 @@
 # Optional TinyPNG
 
+## Meaning
+
+This guide owns the optional TinyPNG upload policy, credential lookup and remote-result contract. TinyPNG is implemented alongside local compression, but a stored credential never grants permission to upload. Ordinary tests substitute HTTP and do not contact the paid service.
+
 TinyPNG is now an implemented remote adapter, not a requirement for local compression. No real service call is part of ordinary tests. Public API contract consulted 2026-09-08: https://tinify.com/developers/reference/http . It uses HTTPS Basic authentication, a binary POST to `/shrink`, a provider output URL, and the `Compression-Count` response header.
 
 ```

@@ -1,5 +1,9 @@
 # Native Windows 11 menu bridge
 
+## Meaning
+
+This directory owns the C++ Explorer ABI bridge, its portable request protocol and the Windows SDK/package staging script. It supplies the optional Windows 11 primary-menu boundary while the Go application owns compression. Compilation, signed-package activation and observed Explorer behavior are separate qualification claims.
+
 This is the small native COM boundary required by Windows 11's **primary** File Explorer menu. It is not another compressor, a Go language migration, a persistent daemon, an in-process Go runtime or a legacy registry hack.
 
 `core.hpp` contains the cross-platform bounded UTF-16 menu parser, argument quoting and one-shot request serializer. `shell.cpp` implements `IExplorerCommand`, `IEnumExplorerCommand`, the COM factory and the Windows launch boundary. `AppxManifest.xml.in` defines the separately signed sparse package identity. `build.ps1` compiles and stages from an exact matching Go candidate without installing anything.
