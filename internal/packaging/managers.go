@@ -88,7 +88,7 @@ func Metadata(version string, artifacts []Artifact) (map[string][]byte, error) {
 		}
 		brew.WriteString("  end\n")
 	}
-	brew.WriteString("  def install\n    bin.install 'smolpng'\n    pkgshare.install 'LICENSES', 'LICENSE', 'LICENSE-MAP.md', 'THIRD_PARTY_NOTICES.md'\n  end\n  def caveats\n    'Optimizers are separate. Run smolpng setup. TinyPNG requires explicit upload permission.'\n  end\n  test do\n    assert_match 'schemaVersion', shell_output(\"#{bin}/smolpng capabilities --json\")\n  end\nend\n")
+	brew.WriteString("  def install\n    bin.install 'smolpng'\n    pkgshare.install 'LICENSES', 'LICENSE', 'license-map.md', 'third-party-notices.md'\n  end\n  def caveats\n    'Optimizers are separate. Run smolpng setup. TinyPNG requires explicit upload permission.'\n  end\n  test do\n    assert_match 'schemaVersion', shell_output(\"#{bin}/smolpng capabilities --json\")\n  end\nend\n")
 	if brewAssets > 0 {
 		out["homebrew/smolpng.rb"] = []byte(brew.String())
 	}
@@ -102,7 +102,7 @@ func Metadata(version string, artifacts []Artifact) (map[string][]byte, error) {
 		if _, ok := index["linux/"+arch]; !ok {
 			continue
 		}
-		out["nfpm/"+arch+".yaml"] = []byte(fmt.Sprintf("# Run from the generated output root after separately qualifying/installing nFPM.\nname: smolpng\narch: %s\nplatform: linux\nversion: %s\nmaintainer: Wolfsblvt Works <wolf@wolfsblvt.com>\ndescription: Local-first image compression for humans, scripts, and agents.\nlicense: MIT\nhomepage: https://github.com/Wolfsblvt/smolpng\nsection: graphics\npriority: optional\ncontents:\n  - src: stage/linux-%s/smolpng\n    dst: /usr/bin/smolpng\n    file_info:\n      mode: 0755\n  - src: stage/linux-%s/LICENSE\n    dst: /usr/share/licenses/smolpng/LICENSE\n  - src: stage/linux-%s/LICENSES/\n    dst: /usr/share/licenses/smolpng/dependencies/\n    type: tree\n  - src: stage/linux-%s/THIRD_PARTY_NOTICES.md\n    dst: /usr/share/doc/smolpng/THIRD_PARTY_NOTICES.md\n", arch, q(version), arch, arch, arch, arch))
+		out["nfpm/"+arch+".yaml"] = []byte(fmt.Sprintf("# Run from the generated output root after separately qualifying/installing nFPM.\nname: smolpng\narch: %s\nplatform: linux\nversion: %s\nmaintainer: Wolfsblvt Works <wolf@wolfsblvt.com>\ndescription: Local-first image compression for humans, scripts, and agents.\nlicense: MIT\nhomepage: https://github.com/Wolfsblvt/smolpng\nsection: graphics\npriority: optional\ncontents:\n  - src: stage/linux-%s/smolpng\n    dst: /usr/bin/smolpng\n    file_info:\n      mode: 0755\n  - src: stage/linux-%s/LICENSE\n    dst: /usr/share/licenses/smolpng/LICENSE\n  - src: stage/linux-%s/LICENSES/\n    dst: /usr/share/licenses/smolpng/dependencies/\n    type: tree\n  - src: stage/linux-%s/third-party-notices.md\n    dst: /usr/share/doc/smolpng/third-party-notices.md\n", arch, q(version), arch, arch, arch, arch))
 	}
 	out["PUBLICATION-NOT-AUTHORIZED.md"] = []byte("# Generated metadata, not a publication\n\nThese files have not been submitted, accepted, installed or verified by any package manager. Package identities and URLs require separate publication authority and platform validation. Checksums describe the generated local archives, not proof that those URLs are live. Do not add credentials, private signing keys, or invoke submission commands from this directory automatically. External optimizers are not bundled. nFPM is a separately qualified packaging tool, not a runtime dependency.\n")
 	return out, nil

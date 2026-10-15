@@ -61,7 +61,7 @@ jobs:
           go build -trimpath -ldflags "-X main.Commit=$SOURCE_COMMIT" -o "artifacts/bin/smolpng-qualify$suffix" ./tools/qualify
       - name: Retain software license notices with development binaries
         run: |
-          cp LICENSE LICENSE-MAP.md THIRD_PARTY_NOTICES.md artifacts/bin/
+          cp LICENSE license-map.md third-party-notices.md artifacts/bin/
           cp -R LICENSES artifacts/bin/LICENSES
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

@@ -18,7 +18,7 @@ Default output is `{stem}.smol{ext}` beside a local original, or OS Downloads/sm
 
 `--target-size` is inclusive bytes with exact SI/IEC units. No resize occurs unless `--allow-resize`, `--resize` or `--max-dimensions` is explicit. Target fallback respects `--min-dimensions`. `--accept-nearest` writes on a miss while retaining exit 6; `--force-output` permits size growth. `--jobs` is 1..32; fail-fast uses serial work. `--timeout` defaults to 2m including input and optimization; zero disables it.
 
-Local optimization is the default. TinyPNG is available only under an explicit permitting remote policy; default `never` does not look up credentials or upload. See [optional TinyPNG](REMOTE.md) for policy and reporting. Safe extra optimizer arguments are restricted; `exec TOOL -- ARGS` is the deliberately unrestricted escape hatch and returns upstream exit codes.
+Local optimization is the default. TinyPNG is available only under an explicit permitting remote policy; default `never` does not look up credentials or upload. See [optional TinyPNG](remote.md) for policy and reporting. Safe extra optimizer arguments are restricted; `exec TOOL -- ARGS` is the deliberately unrestricted escape hatch and returns upstream exit codes.
 
 ## Reports and discovery
 
@@ -61,8 +61,8 @@ The machine-readable [compression schema](../schemas/compression-v1.schema.json)
 
 ## JPEG, providers, launchers and updates
 
-JPEG shares `compress`, `inspect`, presets, output naming, strict target and JSON contracts. `--jpegoptim-path` selects a separate JPEG optimizer. See [JPEG](JPEG.md) for orientation, metadata and geometry bounds.
+JPEG shares `compress`, `inspect`, presets, output naming, strict target and JSON contracts. `--jpegoptim-path` selects a separate JPEG optimizer. See [JPEG](jpeg.md) for orientation, metadata and geometry bounds.
 
-`providers login/status/logout tinypng` manages native credentials without changing upload policy. Login supports masked terminal input or `--stdin`; no key argument exists. `--remote-policy always|compare|fallback` is explicit permission; initial `never` and deterministic `ask` do not upload. See [Remote](REMOTE.md).
+`providers login/status/logout tinypng` manages native credentials without changing upload policy. Login supports masked terminal input or `--stdin`; no key argument exists. `--remote-policy always|compare|fallback` is explicit permission; initial `never` and deterministic `ask` do not upload. See [Remote](remote.md).
 
-`integrate install/status/remove/repair` and `integrate shortcut create NAME` expose exact tracked destinations, preview by default and `--apply` for mutation. `update status/check/apply/recover` respects installation ownership and signed manifests. Apply reports scheduling rather than falsely claiming the later worker completed. See [Integration](INTEGRATION.md) and [Updates](UPDATES.md).
+`integrate install/status/remove/repair` and `integrate shortcut create NAME` expose exact tracked destinations, preview by default and `--apply` for mutation. `update status/check/apply/recover` respects installation ownership and signed manifests. Apply reports scheduling rather than falsely claiming the later worker completed. See [Integration](integration.md) and [Updates](updates.md).

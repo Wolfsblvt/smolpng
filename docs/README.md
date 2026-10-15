@@ -19,7 +19,7 @@ The maintained subjects now span product, automation, human workflows, setup and
 | Using and maintaining installed Agent Skills | [Agent Skill](agent-skill.md) |
 | Inputs, process/file safety and limits | [Security](SECURITY.md) |
 | Network use, clipboard and retained state | [Privacy and data](PRIVACY-AND-DATA.md) |
-| Per-path rights and dependencies | [License map](../LICENSE-MAP.md), [Third-party notices](../THIRD_PARTY_NOTICES.md) |
+| Per-path rights and dependencies | [License map](../license-map.md), [Third-party notices](../third-party-notices.md) |
 
 ## Refinement and native image menus
 

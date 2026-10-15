@@ -96,7 +96,7 @@ func run() error {
 	}
 	common := map[string]packaging.Content{}
 	for _, name := range strings.Split(names, "\n") {
-		include := name == "LICENSE" || name == "README.md" || name == "LICENSE-MAP.md" || name == "THIRD_PARTY_NOTICES.md" || strings.HasPrefix(name, "LICENSES/") || strings.HasPrefix(name, "docs/") || strings.HasPrefix(name, "schemas/") || strings.HasPrefix(name, "presets/examples/") || strings.HasPrefix(name, "testdata/corpus/") || strings.HasPrefix(name, "skills/smolpng/")
+		include := name == "LICENSE" || name == "README.md" || name == "license-map.md" || name == "third-party-notices.md" || strings.HasPrefix(name, "LICENSES/") || strings.HasPrefix(name, "docs/") || strings.HasPrefix(name, "schemas/") || strings.HasPrefix(name, "presets/examples/") || strings.HasPrefix(name, "testdata/corpus/") || strings.HasPrefix(name, "skills/smolpng/")
 		if include {
 			b, e := os.ReadFile(name)
 			if e != nil {

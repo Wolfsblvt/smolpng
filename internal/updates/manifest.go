@@ -195,7 +195,7 @@ func allowedFile(name, platform string) bool {
 		base := strings.TrimPrefix(name, "LICENSES/")
 		return namePattern.MatchString(base) && strings.HasSuffix(base, ".txt")
 	}
-	if name == "LICENSE" || name == "LICENSE-MAP.md" || name == "THIRD_PARTY_NOTICES.md" {
+	if name == "LICENSE" || name == "license-map.md" || name == "third-party-notices.md" {
 		return true
 	}
 	suffix := ""

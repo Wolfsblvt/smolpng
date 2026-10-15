@@ -67,11 +67,11 @@ smolpng integrate install --desktop --apply      # explicitly install
 smolpng update status --json
 ```
 
-[JPEG](docs/JPEG.md) preserves display orientation and ICC under the safe default while removing GPS/private metadata. Geometry changes come directly from the original decode, not repeated lossy output. jpegoptim is installed separately; use `--jpegoptim-path` or `deps configure jpegoptim PATH --apply`.
+[JPEG](docs/jpeg.md) preserves display orientation and ICC under the safe default while removing GPS/private metadata. Geometry changes come directly from the original decode, not repeated lossy output. jpegoptim is installed separately; use `--jpegoptim-path` or `deps configure jpegoptim PATH --apply`.
 
-[TinyPNG](docs/REMOTE.md) reads the process environment before the native keyring, never from a secret command-line argument. Its reports disclose upload attempts and service counts even when local output wins. Ordinary tests never call the service. A key does not enable Auto upload.
+[TinyPNG](docs/remote.md) reads the process environment before the native keyring, never from a secret command-line argument. Its reports disclose upload attempts and service counts even when local output wins. Ordinary tests never call the service. A key does not enable Auto upload.
 
-[Desktop integrations](docs/INTEGRATION.md) create per-user menu, optional desktop and Windows Send To shortcuts. Modified or unrelated files are preserved. [Standalone updates](docs/UPDATES.md) require an independently trusted signed manifest, use guarded backups and rollback, and synchronize only unmodified managed Skills. Package-manager installations are never self-overwritten. This candidate has no production signing key/feed, package registration, or public deployment.
+[Desktop integrations](docs/integration.md) create per-user menu, optional desktop and Windows Send To shortcuts. Modified or unrelated files are preserved. [Standalone updates](docs/updates.md) require an independently trusted signed manifest, use guarded backups and rollback, and synchronize only unmodified managed Skills. Package-manager installations are never self-overwritten. This candidate has no production signing key/feed, package registration, or public deployment.
 
 ## Share a recipe, not a script
 

@@ -95,7 +95,7 @@ func UpdateAsset(files map[string]Content, platform, url, format string, stamp t
 	chosen := map[string]Content{}
 	a := updates.Asset{URL: url}
 	for n, c := range files {
-		if n == "LICENSE" || n == "LICENSE-MAP.md" || n == "THIRD_PARTY_NOTICES.md" || strings.HasPrefix(n, "LICENSES/") || c.Executable && strings.HasPrefix(n, "smolpng") && !strings.Contains(n, "/") {
+		if n == "LICENSE" || n == "license-map.md" || n == "third-party-notices.md" || strings.HasPrefix(n, "LICENSES/") || c.Executable && strings.HasPrefix(n, "smolpng") && !strings.Contains(n, "/") {
 			chosen[n] = c
 			a.Files = append(a.Files, updates.File{Name: n, Size: int64(len(c.Data)), SHA256: updates.SHA(c.Data)})
 		}

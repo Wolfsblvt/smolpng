@@ -20,7 +20,7 @@ go build -trimpath -ldflags "-X main.Commit=$sha" -o artifacts/bin/smolpng-quali
 
 On Linux/macOS, build `cmd/smolpng` and `tools/qualify` with the corresponding linker values and no `.exe` suffix. The `smolpngw` entry point is Windows-only. Explicit `GOOS`, `GOARCH` and `CGO_ENABLED=0` can cross-build the six supported source targets; compilation is not execution on the target host.
 
-`Distribution=standalone` records who owns these portable development files. Self-update still needs an independently trusted signed manifest; the candidate has no production feed/key. Replacing the executable manually preserves external config, state, presets, managed tools and tracked Skills; human startup handles changed Skill contents. The application updater is implemented; its production signing/feed operation is not configured. See UPDATES.md.
+`Distribution=standalone` records who owns these portable development files. Self-update still needs an independently trusted signed manifest; the candidate has no production feed/key. Replacing the executable manually preserves external config, state, presets, managed tools and tracked Skills; human startup handles changed Skill contents. The application updater is implemented; its production signing/feed operation is not configured. See updates.md.
 
 ## What accompanies a candidate
 
@@ -42,4 +42,4 @@ A public release requires separate exact authority for repository visibility, re
 
 ## Executable local builder
 
-`go run ./tools/release --version 0.2.0-dev.1 --out artifacts/candidate` now creates the exact platform packages and checksum/index files described here. `--base-url` plus a stable version additionally authors package-manager inputs and a narrow standalone update payload. A separate `tools/sign-update` command requires an already held protected key; normal candidate builds do not sign. See [Packaging](PACKAGING.md) for the implemented invocation and strict publication boundary.
+`go run ./tools/release --version 0.2.0-dev.1 --out artifacts/candidate` now creates the exact platform packages and checksum/index files described here. `--base-url` plus a stable version additionally authors package-manager inputs and a narrow standalone update payload. A separate `tools/sign-update` command requires an already held protected key; normal candidate builds do not sign. See [Packaging](packaging.md) for the implemented invocation and strict publication boundary.

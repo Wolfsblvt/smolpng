@@ -21,7 +21,7 @@ The settings editor does not erase handwritten config to serialize a convenient 
 
 Only the application catalog supplies archive URLs and hashes; the CLI has no arbitrary executable URL or checksum override. HTTPS redirects are limited to GitHub and its release-asset hosts. Whole archives are bounded to 16MiB, expansion and entry counts are bounded, links/special entries and escaping paths are rejected, and exactly one executable basename is accepted. The pinned archive hash is checked before extraction or execution. Exact version probes are not a sandbox or a complete upstream-code audit.
 
-An OS advisory lock serializes app mutations. Existing unmanaged folders and modified recorded bytes stop installation/removal. New version files are immutable by convention; index activation is atomic, not a promise of durable directory metadata after sudden power loss. The per-user owner is trusted; a malicious actor with the same user's write permissions can replace code outside the application's check/use interval. The standalone updater has a separate Ed25519 trust and staged rollback contract in UPDATES.md; no production feed/key or binary-signing claim exists.
+An OS advisory lock serializes app mutations. Existing unmanaged folders and modified recorded bytes stop installation/removal. New version files are immutable by convention; index activation is atomic, not a promise of durable directory metadata after sudden power loss. The per-user owner is trusted; a malicious actor with the same user's write permissions can replace code outside the application's check/use interval. The standalone updater has a separate Ed25519 trust and staged rollback contract in updates.md; no production feed/key or binary-signing claim exists.
 
 ## Native menu boundary
 

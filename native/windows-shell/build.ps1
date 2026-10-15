@@ -32,7 +32,7 @@ try {
  $CLI = Join-Path $AppDirectory 'smolpng.exe'
  $Metadata = (& $CLI version --json | ConvertFrom-Json)
  if ($LASTEXITCODE -ne 0 -or $Metadata.commit -ne $Commit -or $Metadata.platform -ne "windows/$Architecture") { throw 'Application candidate must match this exact source commit and architecture.' }
- foreach($name in @('smolpng.exe','smolpngw.exe','LICENSE','THIRD_PARTY_NOTICES.md','LICENSES')) { if (!(Test-Path -LiteralPath (Join-Path $AppDirectory $name))) { throw "Candidate is missing $name" } }
+ foreach($name in @('smolpng.exe','smolpngw.exe','LICENSE','third-party-notices.md','LICENSES')) { if (!(Test-Path -LiteralPath (Join-Path $AppDirectory $name))) { throw "Candidate is missing $name" } }
  New-Item -ItemType Directory -Path $Out | Out-Null
  $Build = Join-Path $Out 'build'
  $Payload = Join-Path $Out 'payload'
@@ -44,7 +44,7 @@ try {
  # x64 contract executable can be executed on x64 hosts. ARM64 binaries are
  # compiled only here; the target host runs its matching test executable.
  if ($Architecture -eq 'amd64') { Run-Native 'ctest' @('--test-dir',$Build,'-C','Release','--output-on-failure') }
- foreach($name in @('smolpng.exe','smolpngw.exe','LICENSE','THIRD_PARTY_NOTICES.md')) { Copy-Item -LiteralPath (Join-Path $AppDirectory $name) -Destination $Payload }
+ foreach($name in @('smolpng.exe','smolpngw.exe','LICENSE','third-party-notices.md')) { Copy-Item -LiteralPath (Join-Path $AppDirectory $name) -Destination $Payload }
  Copy-Item -LiteralPath (Join-Path $AppDirectory 'LICENSES') -Destination $Payload -Recurse
  Copy-Item -LiteralPath (Join-Path $Build 'Release\SmolpngShell.dll') -Destination $Payload
  $Hashes = [ordered]@{}

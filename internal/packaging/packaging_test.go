@@ -37,7 +37,16 @@ func TestArchivesAreDeterministicAndCarryFileModes(t *testing.T) {
 	}
 }
 func TestUpdatePackageIsExactlyTheVerifiedSubset(t *testing.T) {
-	files := map[string]Content{"smolpng": {Data: []byte("binary"), Executable: true}, "LICENSE": {Data: []byte("MIT")}, "LICENSES/library.txt": {Data: []byte("BSD notice")}, "docs/README.md": {Data: []byte("documentation")}, "config.toml": {Data: []byte("user preference")}, "testdata/image.png": {Data: []byte("input")}}
+	files := map[string]Content{
+		"smolpng":                {Data: []byte("binary"), Executable: true},
+		"LICENSE":                {Data: []byte("MIT")},
+		"license-map.md":         {Data: []byte("material rights")},
+		"third-party-notices.md": {Data: []byte("dependency notices")},
+		"LICENSES/library.txt":   {Data: []byte("BSD notice")},
+		"docs/README.md":         {Data: []byte("documentation")},
+		"config.toml":            {Data: []byte("user preference")},
+		"testdata/image.png":     {Data: []byte("input")},
+	}
 	for _, format := range []string{"zip", "tar.gz"} {
 		b, a, e := UpdateAsset(files, "linux/amd64", "https://example.test/update", format, time.Date(2026, 9, 8, 0, 0, 0, 0, time.UTC))
 		if e != nil {
@@ -47,8 +56,14 @@ func TestUpdatePackageIsExactlyTheVerifiedSubset(t *testing.T) {
 		if e = updates.Extract(b, a, "linux/amd64", dir); e != nil {
 			t.Fatal(e)
 		}
-		if len(a.Files) != 3 {
+		if len(a.Files) != 5 {
 			t.Fatal(a.Files)
+		}
+		for _, name := range []string{"license-map.md", "third-party-notices.md"} {
+			got, err := os.ReadFile(filepath.Join(dir, name))
+			if err != nil || !bytes.Equal(got, files[name].Data) {
+				t.Fatalf("update lost %s: bytes %q, error %v", name, got, err)
+			}
 		}
 		if b, e := os.ReadFile(filepath.Join(dir, "smolpng")); e != nil || string(b) != "binary" {
 			t.Fatal(e)
