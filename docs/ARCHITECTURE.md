@@ -43,6 +43,8 @@ Outputs use a synced temporary sibling and atomic rename/MoveFileEx, or exclusiv
 
 `internal/jpegimage` validates JPEG marker/scans, parses bounded EXIF orientation and reconstructs safe metadata. `workflow` dispatches by actual image format while keeping common target/output contracts. Each JPEG candidate uses original bytes; explicit geometry is encoded from the original upright decode. Numeric quality is backend-specific, never described as a cross-codec perceptual metric.
 
+The primary JPEG ends at its structurally parsed EOI. Subsequent bytes are a separate opaque attachment, reported by inspection and covered by the existing encoded-input bound. Safe/all strip it before optimization and expose a still-image warning. Keep short-circuits compression with the complete unchanged file; opaque camera offsets are never claimed valid after a primary-image rewrite. A missed target remains a miss. Background notifications include the first job warning; the full typed report remains in last-result state.
+
 `internal/secret` resolves environment then native keyring. `internal/tinypng` owns fixed-origin authenticated POST/download and never retries a potentially billed upload. `workflow` owns permission and reporting: a local candidate winning does not erase the fact that bytes left the host.
 
 `internal/integration` plans user-native destinations and records exact installed launcher hashes. `internal/updates` verifies standard-library Ed25519 signatures and bounded package members, then stages a recoverable replacement transaction. Its short-lived helper is a copy of the old application, not unverified downloaded code; it probes the new build before asking it to synchronize its embedded Skill. Neither boundary is a privileged service.

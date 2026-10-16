@@ -32,6 +32,6 @@ TinyPNG accepts upright JPEG under explicit permission. A remotely changed orien
 
 ## Evidence and qualification
 
-Generated CC0 baseline, grayscale, high-chroma and eight-orientation specimens accompany parser, metadata, target, original-preservation and process-boundary tests. Ordinary tests do not execute jpegoptim or consume TinyPNG quota. JPEG quality, progressive output from the real optimizer, CMYK/ICC edge cases and native clipboard rendering still need corpus/desktop qualification.
+Generated CC0 baseline, grayscale, high-chroma and eight-orientation specimens accompany parser, metadata, target, original-preservation and process-boundary tests. Ordinary tests do not execute jpegoptim or consume TinyPNG quota. [Native Windows structural qualification](reference/2026-10-16-windows-jpeg-qualification.md) exercised real jpegoptim, targets, progressive output and orientation cases. [Real camera attachment qualification](reference/2026-10-16-jpeg-camera-attachments.md) independently checked Safe/Lossless, strip-all and byte-exact Keep against a CC0 Samsung photograph. Final quality selection, broader photographic/ICC/CMYK calibration and native clipboard rendering remain separate.
 
 Upstream command contract: https://github.com/tjko/jpegoptim/blob/main/jpegoptim.1 . Current source and older releases have differing GPL license vintages; the installed tool retains its own exact license. External invocation is not permission to relicense or bundle it.

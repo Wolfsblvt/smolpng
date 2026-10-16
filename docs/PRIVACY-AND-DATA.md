@@ -8,6 +8,8 @@ smolpng has no telemetry, analytics or operated image-hosting service. Local Aut
 
 Local inputs, stdin and clipboard images become private temporary original-derived copies. Temporary candidates are cleaned after normal completion and cancellation; forced process/machine termination can leave private cache residue. Outputs persist at the selected paths. Only explicit in-place mode replaces an original. PNG/JPEG safe metadata policies retain rendering interpretation; JPEG safe removes private EXIF/GPS by reconstructing an orientation-only record.
 
+Safe/all also remove opaque data appended after a JPEG's primary still image, with a warning that attached depth/refocus, motion or other auxiliary content does not survive. The attachment is removed before local optimization or an explicitly permitted remote upload. Keep preserves these compound files unchanged. See [JPEG metadata and orientation](jpeg.md#metadata-and-orientation) for target and geometry consequences.
+
 TinyPNG receives metadata-filtered input only after the selected user/invocation policy permits it. Keep-all metadata, unsupported color/orientation and remote geometry combinations are refused rather than silently discarding preservation promises. `remoteUsed` reports attempted uploads even if the result is not selected or the response is lost. Retention after upload is controlled by the service's current terms, not by smolpng. No billable request is automatically retried. API keys are read from process environment or native keyring and never included in reports or optimizer process environments.
 
 ## Reports, state and installed integrations
