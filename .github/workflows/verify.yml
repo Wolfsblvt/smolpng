@@ -63,7 +63,7 @@ jobs:
         run: |
           cp LICENSE license-map.md third-party-notices.md artifacts/bin/
           cp -R LICENSES artifacts/bin/LICENSES
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: smolpng-${{ matrix.os }}-${{ matrix.arch }}-${{ env.SOURCE_COMMIT }}
           path: artifacts/bin/
