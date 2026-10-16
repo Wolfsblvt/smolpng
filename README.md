@@ -8,7 +8,7 @@
 
 An icon, a screenshot, a photo. A very unreasonable upload limit. smolpng helps the image fit, keeps the original, and reports a missed target instead of pretending it fits. One engine serves the keyboard interface, background drop workflow, and deterministic CLI.
 
-**Private source candidate, not a published release.** Build this source branch to try it. Windows, Linux, and macOS are build targets; native desktop behavior still needs host-specific qualification.
+**Source candidate, not a published release.** Build this source branch to try it. Windows, Linux, and macOS are build targets; native desktop behavior still needs host-specific qualification.
 
 **[Build and try it](#make-one-image-smol)** · [User guides](docs/README.md) · [Full product vision](docs/VISION.md)
 
