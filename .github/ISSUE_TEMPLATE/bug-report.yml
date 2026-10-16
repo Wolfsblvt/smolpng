@@ -1,0 +1,24 @@
+name: Bug report
+description: Report a reproducible problem in the pre-release source.
+labels: ['🏷️ Bug']
+body:
+  - type: markdown
+    attributes:
+      value: 'For vulnerabilities, use private reporting through the Security tab. Do not post credentials or personal images.'
+  - type: input
+    id: version
+    attributes:
+      label: Version or source commit
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Operating system and optimizer versions
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps and result
+      description: Include the command or interaction, expected result and actual result. Prefer a generated sample image.
+    validations:
+      required: true

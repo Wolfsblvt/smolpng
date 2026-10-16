@@ -1,0 +1,40 @@
+name: Forgehand
+on:
+  issues:
+    types: [opened, edited, reopened, closed, labeled, unlabeled]
+  issue_comment:
+    types: [created, edited, deleted]
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited, labeled, unlabeled, ready_for_review, converted_to_draft, closed]
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+    inputs:
+      number:
+        description: Issue/PR number; leave empty for complete repository reconciliation.
+        type: string
+        required: false
+      apply:
+        description: Apply the selected mechanical policy, rather than preview it.
+        type: boolean
+        default: false
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  checks: read
+jobs:
+  reconcile:
+    # Fork PRs use this trusted base workflow and its enable flag; never execute PR-head code.
+    if: vars.FORGEHAND_ENABLED == 'true'
+    uses: Wolfsblvt/forgehand/.github/workflows/automation.yml@5bdbacfa6009589cbaeb699c0cfbacacc1b84dff
+    with:
+      runtime-repository: Wolfsblvt/forgehand
+      runtime-ref: 5bdbacfa6009589cbaeb699c0cfbacacc1b84dff
+      policy: .github/automation/policy.json
+      apply: ${{ github.event_name != 'workflow_dispatch' || inputs.apply }}
+      app-client-id: ${{ vars.WOLFSBLVT_AUTOMATON_CLIENT_ID }}
+    secrets:
+      app-private-key: ${{ secrets.WOLFSBLVT_AUTOMATON_PRIVATE_KEY }}
