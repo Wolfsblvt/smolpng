@@ -337,6 +337,9 @@ func (f *compressFlags) configOverrides(c *cobra.Command) (config.Fields, error)
 	if changed("quality") {
 		p.Quality = &f.Quality
 	}
+	if changed("jpeg-quality") {
+		p.JPEGQuality = &f.JPEGQuality
+	}
 	if changed("min-quality") {
 		p.MinQuality = &f.MinQuality
 	}

@@ -229,7 +229,8 @@ func (a *app) editSettings(ctx context.Context, p ui.Prompter) error {
 	}
 	fields := []ui.Field{
 		{Key: "defaults.preset", Label: "Default recipe", Value: defaultPreset, Options: presetOptions},
-		{Key: "defaults.quality", Label: "Quality MIN-MAX (encoder-specific)", Value: fmt.Sprintf("%d-%d", eff.Recipe.QualityMin, eff.Recipe.QualityMax), Validate: quality},
+		{Key: "defaults.quality", Label: "PNG quality MIN-MAX", Value: fmt.Sprintf("%d-%d", eff.Recipe.QualityMin, eff.Recipe.QualityMax), Validate: quality},
+		{Key: "defaults.jpeg_quality", Label: "JPEG quality MIN-MAX", Value: fmt.Sprintf("%d-%d", eff.Recipe.JPEGQualityRange().Min, eff.Recipe.JPEGQualityRange().Max), Validate: quality},
 		{Key: "output.template", Label: "Output filename template", Value: eff.Output.Template},
 		{Key: "output.detached", Label: "Clipboard/URL output folder", Value: eff.Output.Detached},
 		{Key: "clipboard.single", Label: "Copy a single result", Value: eff.Clipboard, Options: copyOptions},
@@ -249,6 +250,10 @@ func (a *app) editSettings(ctx context.Context, p ui.Prompter) error {
 	}
 	if len(changes) == 0 {
 		return nil
+	}
+	if _, changed := changes["defaults.quality"]; changed {
+		// The form offers independent PNG/JPEG controls; retain the visible JPEG value.
+		changes["defaults.jpeg_quality"] = values["defaults.jpeg_quality"]
 	}
 	if e = w.SaveUserSettings(ctx, changes); e != nil {
 		return a.notice(ctx, p, "Settings were not saved", e.Error())
@@ -618,7 +623,8 @@ func (a *app) interactive(c *cobra.Command, args []string, base *compressFlags) 
 			cmd.Flags().Set("target-size", fields["target"])
 		} else if selected == "@custom" {
 			fields, er := p.Edit(ctx, "Custom local recipe", []ui.Field{
-				{Key: "quality", Label: "Quality MIN-MAX", Value: fmt.Sprintf("%d-%d", eff.Recipe.QualityMin, eff.Recipe.QualityMax), Validate: quality},
+				{Key: "quality", Label: "PNG quality MIN-MAX", Value: fmt.Sprintf("%d-%d", eff.Recipe.QualityMin, eff.Recipe.QualityMax), Validate: quality},
+				{Key: "jpeg-quality", Label: "JPEG quality MIN-MAX", Value: fmt.Sprintf("%d-%d", eff.Recipe.JPEGQualityRange().Min, eff.Recipe.JPEGQualityRange().Max), Validate: quality},
 				{Key: "colors", Label: "Palette colors (2..256)", Value: strconv.Itoa(eff.Recipe.Colors), Validate: func(s string) error {
 					n, e := strconv.Atoi(s)
 					if e != nil || n < 2 || n > 256 {

@@ -129,6 +129,7 @@ func (w *Workspace) Export(name string, resolved bool) ([]byte, error) {
 }
 func resolvedFields(e Effective, cwd string) (Fields, error) {
 	r := e.Recipe
+	jpeg := r.JPEGQualityRange()
 	size := ""
 	if r.TargetBytes > 0 {
 		size = fmt.Sprintf("%dB", r.TargetBytes)
@@ -148,7 +149,7 @@ func resolvedFields(e Effective, cwd string) (Fields, error) {
 		}
 		dir = filepath.ToSlash(dir)
 	}
-	return Fields{Background: Ptr(r.Background), Quality: Ptr(fmt.Sprintf("%d-%d", r.QualityMin, r.QualityMax)), Colors: Ptr(r.Colors), Speed: Ptr(r.Speed), Dither: Ptr(r.Dither), OxiLevel: Ptr(r.OxiLevel), Metadata: Ptr(r.Metadata), Quantize: Ptr(!r.Lossless), OptimizeAlpha: Ptr(r.OptimizeAlpha), Target: Ptr(size), AllowResize: Ptr(r.AllowResize), Resize: dim(r.Resize), MaxDimensions: dim(r.MaxDimensions), MinDimensions: dim(r.MinDimensions), AcceptNearest: Ptr(r.AcceptNearest), ForceOutput: Ptr(r.ForceOutput), Engine: Ptr(r.Engine), Remote: Ptr(r.RemotePolicy), Template: Ptr(e.Output.Template), Directory: Ptr(dir), Clipboard: Ptr(e.Clipboard), Recursive: Ptr(e.Recursive), Jobs: Ptr(e.Jobs), Timeout: Ptr(r.Timeout.String())}, nil
+	return Fields{Background: Ptr(r.Background), Quality: Ptr(fmt.Sprintf("%d-%d", r.QualityMin, r.QualityMax)), JPEGQuality: Ptr(fmt.Sprintf("%d-%d", jpeg.Min, jpeg.Max)), Colors: Ptr(r.Colors), Speed: Ptr(r.Speed), Dither: Ptr(r.Dither), OxiLevel: Ptr(r.OxiLevel), Metadata: Ptr(r.Metadata), Quantize: Ptr(!r.Lossless), OptimizeAlpha: Ptr(r.OptimizeAlpha), Target: Ptr(size), AllowResize: Ptr(r.AllowResize), Resize: dim(r.Resize), MaxDimensions: dim(r.MaxDimensions), MinDimensions: dim(r.MinDimensions), AcceptNearest: Ptr(r.AcceptNearest), ForceOutput: Ptr(r.ForceOutput), Engine: Ptr(r.Engine), Remote: Ptr(r.RemotePolicy), Template: Ptr(e.Output.Template), Directory: Ptr(dir), Clipboard: Ptr(e.Clipboard), Recursive: Ptr(e.Recursive), Jobs: Ptr(e.Jobs), Timeout: Ptr(r.Timeout.String())}, nil
 }
 
 type ImportItem struct {

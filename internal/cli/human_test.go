@@ -471,6 +471,22 @@ func TestSettingsFormWritesOnlyChangesAndShowsBuiltins(t *testing.T) {
 		t.Fatal(string(raw), e)
 	}
 }
+
+func TestSettingsFormKeepsVisibleJPEGQualityWhenPNGQualityChanges(t *testing.T) {
+	h, p, _, _ := humanSetup(t, edit("User defaults", map[string]string{"defaults.quality": "60-90"}))
+	if code := h.run("settings"); code != 0 {
+		t.Fatal(code, h.err)
+	}
+	p.done()
+	raw, err := os.ReadFile(h.Paths.Config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	document, err := config.Parse(raw)
+	if err != nil || document.Defaults.Quality == nil || *document.Defaults.Quality != "60-90" || document.Defaults.JPEGQuality == nil || *document.Defaults.JPEGQuality != "70-85" {
+		t.Fatal(string(raw), err)
+	}
+}
 func TestNoTerminalAndInvalidStateDoNotPretendInteractiveSuccess(t *testing.T) {
 	h := setup(t)
 	if c := h.run(h.source); c != 2 {

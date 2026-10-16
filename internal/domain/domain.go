@@ -100,6 +100,12 @@ func ParseQuality(s string) (int, int, error) {
 	return lo, hi, nil
 }
 
+// QualityRange contains encoder-specific quality bounds, not perceptual scores.
+type QualityRange struct {
+	Min int `json:"min"`
+	Max int `json:"max"`
+}
+
 type Recipe struct {
 	Background    string        `json:"background,omitempty"`
 	Name          string        `json:"name"`
@@ -108,6 +114,7 @@ type Recipe struct {
 	Lossless      bool          `json:"lossless"`
 	QualityMin    int           `json:"qualityMin"`
 	QualityMax    int           `json:"qualityMax"`
+	JPEGQuality   *QualityRange `json:"jpegQuality,omitempty"`
 	Colors        int           `json:"colors"`
 	Speed         int           `json:"speed"`
 	Dither        string        `json:"dither"`
@@ -126,16 +133,42 @@ type Recipe struct {
 	OxiPNGArgs    []string      `json:"oxipngArgs,omitempty"`
 }
 
+// JPEGQualityRange returns explicit JPEG bounds or the shared quality override.
+func (r Recipe) JPEGQualityRange() QualityRange {
+	if r.JPEGQuality != nil {
+		return *r.JPEGQuality
+	}
+	return QualityRange{Min: r.QualityMin, Max: r.QualityMax}
+}
+
+// SetQuality applies a shared override to both supported formats.
+func (r *Recipe) SetQuality(minimum, maximum int) {
+	r.QualityMin, r.QualityMax = minimum, maximum
+	r.JPEGQuality = &QualityRange{Min: minimum, Max: maximum}
+}
+
+// SetMinQuality preserves each format's upper bound while changing the floor.
+func (r *Recipe) SetMinQuality(minimum int) {
+	jpeg := r.JPEGQualityRange()
+	jpeg.Min = minimum
+	r.QualityMin, r.JPEGQuality = minimum, &jpeg
+}
+
 func Builtin(name string) (Recipe, error) {
 	r := Recipe{Name: name, Engine: "local", RemotePolicy: "never", QualityMin: 70, QualityMax: 95, Colors: 256, Speed: 1, Dither: "auto", OxiLevel: 4, Metadata: "safe", MinDimensions: Dimensions{64, 64}, Timeout: 2 * time.Minute}
 	switch name {
-	case "auto", "web":
+	case "auto":
+		r.JPEGQuality = &QualityRange{Min: 70, Max: 85}
+	case "web":
+		r.JPEGQuality = &QualityRange{Min: 70, Max: 80}
 	case "smallest":
+		r.JPEGQuality = &QualityRange{Min: 55, Max: 70}
 		r.QualityMin = 55
 		r.QualityMax = 85
 		r.Colors = 128
 		r.OxiLevel = 6
 	case "lossless":
+		r.JPEGQuality = &QualityRange{Min: 70, Max: 95}
 		r.Lossless = true
 	default:
 		return Recipe{}, fmt.Errorf("unknown built-in preset %q", name)
@@ -154,6 +187,10 @@ func (r Recipe) Validate() error {
 	}
 	if r.QualityMin < 0 || r.QualityMax > 100 || r.QualityMin > r.QualityMax {
 		return fmt.Errorf("quality must satisfy 0 <= MIN <= MAX <= 100")
+	}
+	jpeg := r.JPEGQualityRange()
+	if jpeg.Min < 0 || jpeg.Max > 100 || jpeg.Min > jpeg.Max {
+		return fmt.Errorf("JPEG quality must satisfy 0 <= MIN <= MAX <= 100")
 	}
 	if r.Colors < 2 || r.Colors > 256 {
 		return fmt.Errorf("colors must be 2..256")

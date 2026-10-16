@@ -16,7 +16,10 @@ import (
 	"testing"
 )
 
-type jpegRunner struct{ sources [][]byte }
+type jpegRunner struct {
+	sources   [][]byte
+	qualities []int
+}
 
 func (r *jpegRunner) Run(ctx context.Context, i process.Invocation) (process.Result, error) {
 	b, e := os.ReadFile(i.Args[len(i.Args)-1])
@@ -34,6 +37,7 @@ func (r *jpegRunner) Run(ctx context.Context, i process.Invocation) (process.Res
 			quality, _ = strconv.Atoi(strings.TrimPrefix(a, "--max="))
 		}
 	}
+	r.qualities = append(r.qualities, quality)
 	if quality >= 0 {
 		a, e := jpegimage.Decode(b, 1000000)
 		if e != nil {
@@ -50,14 +54,43 @@ func jpegData() []byte {
 	_ = jpeg.Encode(&b, testutil.Pattern(64, 64, "noise"), &jpeg.Options{Quality: 98})
 	return b.Bytes()
 }
+
+func TestJPEGBuiltinsUseSelectedFormatSpecificQuality(t *testing.T) {
+	for _, test := range []struct {
+		name        string
+		jpegQuality int
+		pngQuality  int
+	}{{"auto", 85, 95}, {"web", 80, 95}, {"smallest", 70, 85}, {"lossless", -1, 95}} {
+		t.Run(test.name, func(t *testing.T) {
+			runner := &jpegRunner{}
+			engine := Engine{Runner: runner, Tools: toolchain.Set{JPEGOptim: toolchain.Tool{Name: "jpegoptim", Path: "jpegoptim", Available: true}}, Limits: domain.DefaultLimits()}
+			recipe, err := domain.Builtin(test.name)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if recipe.QualityMax != test.pngQuality {
+				t.Fatal("PNG quality changed", recipe.QualityMax)
+			}
+			if _, err = engine.Optimize(context.Background(), jpegData(), recipe); err != nil {
+				t.Fatal(err)
+			}
+			wantCalls := 2
+			if test.name == "lossless" {
+				wantCalls = 1
+			}
+			if len(runner.qualities) != wantCalls || runner.qualities[0] != -1 || runner.qualities[len(runner.qualities)-1] != test.jpegQuality {
+				t.Fatalf("JPEG encoder qualities: got %v, want final %d and an initial lossless attempt", runner.qualities, test.jpegQuality)
+			}
+		})
+	}
+}
 func TestJPEGCandidatesAlwaysUseOriginalAndStrictTarget(t *testing.T) {
 	data := jpegData()
 	runner := &jpegRunner{}
 	engine := Engine{Runner: runner, Tools: toolchain.Set{JPEGOptim: toolchain.Tool{Name: "jpegoptim", Path: "jpegoptim", Version: "1.5.6", Available: true}}, Limits: domain.DefaultLimits()}
 	r, _ := domain.Builtin("auto")
 	r.TargetBytes = 1
-	r.QualityMin = 50
-	r.QualityMax = 85
+	r.SetQuality(50, 85)
 	out, e := engine.Optimize(context.Background(), data, r)
 	if domain.Code(e) != 6 || len(out.Candidate.Data) == 0 || out.Candidate.Info.Format != "jpeg" {
 		t.Fatal(out, e)

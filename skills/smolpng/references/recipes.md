@@ -2,6 +2,8 @@
 
 Built-ins: `auto` (recommended local default), `web` (balanced), `smallest` (stronger quantization), `lossless` (pixel-identical, including hidden RGB beneath transparency). Exact lossy bytes depend on upstream versions. Recipe ranking is not a measured visual-quality score.
 
+JPEG quality ceilings are 85 / 80 / 70 for Auto / Web balanced / Maximum squeeze; PNG settings are independent. `--quality MIN-MAX` overrides both formats; `--jpeg-quality MIN-MAX` or TOML `jpeg_quality` specializes JPEG. Within a layer the JPEG-specific range wins; later shared overrides still win over earlier layers. Inspect `recipe.jpegQuality` and provenance, and preserve both ranges in resolved presets. Use Lossless for pixel identity rather than assuming an ordinary lossy preset promises it.
+
 Precedence is built-in defaults, per-user configuration, nearest project `.smolpng.toml`, inherited named preset, then explicit CLI fields. Inspect `config show --effective --provenance` instead of guessing why an output path or option differs.
 
 A reusable recipe:

@@ -15,6 +15,7 @@ const MaxDocumentBytes = 1 << 20
 type Fields struct {
 	Background    *string `toml:"background,omitempty" json:"background,omitempty"`
 	Quality       *string `toml:"quality,omitempty" json:"quality,omitempty"`
+	JPEGQuality   *string `toml:"jpeg_quality,omitempty" json:"jpeg_quality,omitempty"`
 	MinQuality    *int    `toml:"min_quality,omitempty" json:"min_quality,omitempty"`
 	Colors        *int    `toml:"colors,omitempty" json:"colors,omitempty"`
 	Speed         *int    `toml:"speed,omitempty" json:"speed,omitempty"`

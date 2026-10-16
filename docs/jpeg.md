@@ -10,11 +10,16 @@ JPEG is implemented through the existing input, recipe, output and result flow. 
 smolpng compress photo.jpg --json
 smolpng compress photo.jpeg --preset lossless --json
 smolpng compress photo.jpg --target-size 100KiB --quality 55-85 --json
+smolpng compress photo.jpg --jpeg-quality 55-80 --json
 smolpng compress photo.jpg --resize 1024x768 --json
 smolpng deps configure jpegoptim /path/to/jpegoptim --apply
 ```
 
 Explicit `--jpegoptim-path` overrides configured and system discovery. Output remains JPEG with the original `.jpg` or `.jpeg` extension. Directories discover PNG and JPEG; a preset's formats are enforced before optimization. Numerical JPEG quality is the encoder's requested quality ceiling, not a perceptual score or the same metric as pngquant. The wrapper checks actual bytes rather than trusting jpegoptim's approximate target-size switch.
+
+Auto uses JPEG quality **85**, Web balanced **80**, and Maximum squeeze **70**. Their target-search floors are 70, 70 and 55 respectively. These are original-derived lossy choices aimed at useful file-size reduction; choose Lossless when decoded pixel identity is required. JPEG quality does not change the existing PNG settings.
+
+`--quality MIN-MAX` remains a shared explicit override. `--jpeg-quality MIN-MAX` overrides JPEG only, and wins when both are supplied. The same settings are `quality`, `min_quality` and `jpeg_quality` in user/project defaults and named presets; a more specific JPEG range wins within one layer, while a later shared override still applies to both formats. `config show --effective --provenance` exposes `recipe.jpegQuality` and the JPEG bounds' sources. Custom and Settings offer separate PNG/JPEG controls. Resolved preset export retains both ranges.
 
 Every lossy attempt begins from the original. Explicit resize uses Go's JPEG encoder directly from the original decoded, oriented image and permits only a lossless optimizer tail. This is functional JPEG support, not a quality-equivalence claim with jpegli. Local entropy-only candidates must match decoded pixels exactly. No-growth and target-missed/accept-nearest semantics are shared with PNG.
 

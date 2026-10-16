@@ -176,13 +176,14 @@ func (e Engine) optimizeJPEG(ctx context.Context, data []byte, r domain.Recipe) 
 			dims[0] = original.Info.Dimensions
 		}
 	}
-	qualities := []int{r.QualityMax}
+	quality := r.JPEGQualityRange()
+	qualities := []int{quality.Max}
 	if r.TargetBytes > 0 {
-		for q := r.QualityMax - 5; q > r.QualityMin; q -= 5 {
+		for q := quality.Max - 5; q > quality.Min; q -= 5 {
 			qualities = append(qualities, q)
 		}
-		if r.QualityMin != r.QualityMax {
-			qualities = append(qualities, r.QualityMin)
+		if quality.Min != quality.Max {
+			qualities = append(qualities, quality.Min)
 		}
 	}
 	if !r.Lossless {

@@ -43,6 +43,7 @@ func (f inputFlags) limits() (domain.Limits, error) {
 
 type compressFlags struct {
 	Background                                                                                               string
+	JPEGQuality                                                                                              string
 	CopyMode                                                                                                 string
 	ClipboardHold                                                                                            time.Duration
 	Input                                                                                                    inputFlags
@@ -59,7 +60,8 @@ func (f *compressFlags) bind(c *cobra.Command) {
 	f.Input.bind(c)
 	p := c.Flags()
 	p.StringVar(&f.Preset, "preset", "auto", "Built-in or saved recipe")
-	p.StringVar(&f.Quality, "quality", "", "pngquant MIN-MAX quality")
+	p.StringVar(&f.Quality, "quality", "", "Shared MIN-MAX quality override; encoder-specific")
+	p.StringVar(&f.JPEGQuality, "jpeg-quality", "", "JPEG-only MIN-MAX quality override")
 	p.IntVar(&f.MinQuality, "min-quality", 70, "Minimum acceptable quantization quality")
 	p.IntVar(&f.Colors, "colors", 256, "Palette limit, 2..256")
 	p.IntVar(&f.Speed, "speed", 1, "pngquant speed, 1..11")
@@ -106,13 +108,22 @@ func (f *compressFlags) apply(c *cobra.Command, r domain.Recipe) (domain.Recipe,
 	changed := c.Flags().Changed
 	var e error
 	if changed("quality") {
-		r.QualityMin, r.QualityMax, e = domain.ParseQuality(f.Quality)
+		var lo, hi int
+		lo, hi, e = domain.ParseQuality(f.Quality)
 		if e != nil {
 			return r, e
 		}
+		r.SetQuality(lo, hi)
 	}
 	if changed("min-quality") {
-		r.QualityMin = f.MinQuality
+		r.SetMinQuality(f.MinQuality)
+	}
+	if changed("jpeg-quality") {
+		lo, hi, err := domain.ParseQuality(f.JPEGQuality)
+		if err != nil {
+			return r, err
+		}
+		r.JPEGQuality = &domain.QualityRange{Min: lo, Max: hi}
 	}
 	if changed("colors") {
 		r.Colors = f.Colors

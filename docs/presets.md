@@ -23,6 +23,7 @@ config_version = 1
 preset = "auto"
 remote_policy = "never"
 quality = "70-95"
+jpeg_quality = "70-85"
 recursive = false
 jobs = 2
 
@@ -62,8 +63,9 @@ Each `[presets.NAME]` requires `schema = 1`. Names use lowercase letters, digits
 | --- | --- |
 | `label`, `description`, `author`, `source` | Display/provenance text, retained during normal export |
 | `extends` | One built-in or named parent; absent means Auto |
-| `formats` | `['png']` or an accepted future JPEG restriction |
-| `quality`, `min_quality` | MIN-MAX and optional minimum override |
+| `formats` | `['png']`, `['jpeg']` or both; checked against actual input |
+| `quality`, `min_quality` | Shared MIN-MAX and optional minimum override; encoder-specific |
+| `jpeg_quality` | JPEG-only MIN-MAX, applied after shared quality in the same layer |
 | `colors`, `speed`, `dither`, `oxipng_level` | Palette 2..256, speed 1..11, auto/none/0..1, level 0..6 |
 | `metadata`, `quantize`, `optimize_alpha` | keep/safe/all, lossy permission, hidden-RGB tail cleanup |
 | `target_size`, `accept_nearest` | Exact byte target; empty target string clears inheritance |
@@ -75,6 +77,8 @@ Each `[presets.NAME]` requires `schema = 1`. Names use lowercase letters, digits
 | `[presets.NAME.menu]` | `pinned`, `position` 1..1000, and `hidden` |
 
 Cycles, unknown parents and chains deeper than 64 are rejected. Project definitions replace same-named user definitions as a whole; they do not silently merge two independently authored recipes. Parent menu/display metadata is not inherited. Pinned entries use deterministic name tie-breaking; Auto always stays first. Unpinned recipes remain in the saved-recipe list.
+
+JPEG built-ins use ceilings 85 (Auto), 80 (Web balanced) and 70 (Maximum squeeze), independently of the PNG ranges. Later `quality` or `min_quality` overrides apply to both formats; `jpeg_quality` can then specialize JPEG within that layer. The `[png.auto]` quality settings affect PNG only. CLI equivalents are `--quality`, `--min-quality` and `--jpeg-quality`. See [JPEG](jpeg.md) for target-search floors and Lossless behavior.
 
 The examples directory contains [MCP icons](../presets/examples/mcp-icon.toml), [pixel art](../presets/examples/pixel-art.toml), [screenshots](../presets/examples/screenshot.toml) and [archival cleanup](../presets/examples/archive.toml). They are CC0 and parsed/resolved by the tests.
 

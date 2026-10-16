@@ -48,6 +48,9 @@ func Parse(data []byte) (Document, error) {
 	if e := validateFields(d.PNG.Auto, false); e != nil {
 		return d, fmt.Errorf("png.auto: %w", e)
 	}
+	if d.PNG.Auto.JPEGQuality != nil {
+		return d, fmt.Errorf("png.auto cannot set jpeg_quality; use defaults.jpeg_quality or a preset")
+	}
 	for _, s := range []*string{d.Output.Template} {
 		if s != nil {
 			if e := output.ValidateTemplate(*s); e != nil {
@@ -90,6 +93,11 @@ func validCopy(s string) bool {
 	return slices.Contains([]string{"none", "smart", "path", "image", "file", "files", "directory"}, s)
 }
 func validateFields(f Fields, shared bool) error {
+	if f.JPEGQuality != nil {
+		if _, _, err := domain.ParseQuality(*f.JPEGQuality); err != nil {
+			return fmt.Errorf("jpeg_quality: %w", err)
+		}
+	}
 	if f.Background != nil && *f.Background != "" {
 		if _, err := domain.ParseBackground(*f.Background); err != nil {
 			return err

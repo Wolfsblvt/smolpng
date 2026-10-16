@@ -208,6 +208,9 @@ func (w *Workspace) Resolve(name string, overrides Fields) (Effective, error) {
 	for _, key := range []string{"quality_min", "quality_max", "colors", "speed", "dither", "oxipng_level", "metadata", "quantize", "optimize_alpha", "target_size", "allow_resize", "resize", "max_dimensions", "min_dimensions", "accept_nearest", "force_output", "engine", "remote", "timeout", "output.template", "output.directory", "output.detached", "output.collision", "output.overwrite", "recursive", "jobs", "clipboard", "clipboard.batch", "drop.mode", "drop.preset", "drop.notify", "ui.header", "ui.animations", "updates.check", "updates.channel", "remote_permission"} {
 		eff.Provenance[key] = Origin{File: "builtin:" + base, Key: key}
 	}
+	for _, key := range []string{"jpeg_quality_min", "jpeg_quality_max"} {
+		eff.Provenance[key] = Origin{File: "builtin:" + base, Key: "jpeg_quality"}
+	}
 	for _, l := range []Layer{w.User, w.Project} {
 		if !l.Exists {
 			continue
@@ -216,9 +219,14 @@ func (w *Workspace) Resolve(name string, overrides Fields) (Effective, error) {
 			return eff, e
 		}
 		if base == "auto" {
+			// The existing PNG namespace must not replace the JPEG quality policy.
+			jpegQuality := eff.Recipe.JPEGQuality
+			jpegMinOrigin, jpegMaxOrigin := eff.Provenance["jpeg_quality_min"], eff.Provenance["jpeg_quality_max"]
 			if e = eff.apply(l.Document.PNG.Auto, Origin{l.Path, "png.auto"}, filepath.Dir(l.Path)); e != nil {
 				return eff, e
 			}
+			eff.Recipe.JPEGQuality = jpegQuality
+			eff.Provenance["jpeg_quality_min"], eff.Provenance["jpeg_quality_max"] = jpegMinOrigin, jpegMaxOrigin
 		}
 		if e = eff.applyDocument(l, w.Paths.Downloads); e != nil {
 			return eff, e
@@ -316,14 +324,25 @@ func (e *Effective) apply(f Fields, o Origin, base string) error {
 		if err != nil {
 			return err
 		}
-		r.QualityMin = lo
-		r.QualityMax = hi
+		r.SetQuality(lo, hi)
 		mark("quality_min", "quality")
 		mark("quality_max", "quality")
+		mark("jpeg_quality_min", "quality")
+		mark("jpeg_quality_max", "quality")
 	}
 	if f.MinQuality != nil {
-		r.QualityMin = *f.MinQuality
+		r.SetMinQuality(*f.MinQuality)
 		mark("quality_min", "min_quality")
+		mark("jpeg_quality_min", "min_quality")
+	}
+	if f.JPEGQuality != nil {
+		lo, hi, err := domain.ParseQuality(*f.JPEGQuality)
+		if err != nil {
+			return err
+		}
+		r.JPEGQuality = &domain.QualityRange{Min: lo, Max: hi}
+		mark("jpeg_quality_min", "jpeg_quality")
+		mark("jpeg_quality_max", "jpeg_quality")
 	}
 	if f.Colors != nil {
 		r.Colors = *f.Colors
