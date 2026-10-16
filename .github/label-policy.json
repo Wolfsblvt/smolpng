@@ -428,7 +428,8 @@
           "internal/integration/**",
           "internal/shellmenu/**",
           "native/**",
-          "internal/desktop/**"
+          "internal/desktop/**",
+          "cmd/smolpngw/**"
         ],
         "exclude": []
       }
