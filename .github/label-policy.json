@@ -427,7 +427,8 @@
         "include": [
           "internal/integration/**",
           "internal/shellmenu/**",
-          "native/**"
+          "native/**",
+          "internal/desktop/**"
         ],
         "exclude": []
       }
@@ -447,10 +448,15 @@
       },
       "paths": {
         "include": [
-          ".github/**",
+          ".github/workflows/**",
+          ".github/dependabot.yml",
+          ".github/automation/**",
+          ".github/label-policy.json",
           "tools/release/**",
           "tools/sign-update/**",
-          "internal/packaging/**"
+          "internal/packaging/**",
+          "native/windows-shell/CMakeLists.txt",
+          "native/windows-shell/build.ps1"
         ],
         "exclude": []
       }
@@ -473,7 +479,9 @@
           "docs/**",
           "README.md",
           "SECURITY.md",
-          "skills/**"
+          "skills/**",
+          ".github/ISSUE_TEMPLATE/**",
+          ".github/pull_request_template.md"
         ],
         "exclude": []
       }

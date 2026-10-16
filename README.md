@@ -1,5 +1,6 @@
 # smolpng
 
+[![Verify](https://github.com/Wolfsblvt/smolpng/actions/workflows/verify.yml/badge.svg)](https://github.com/Wolfsblvt/smolpng/actions/workflows/verify.yml)
 [![Inputs: PNG + JPEG](https://img.shields.io/badge/inputs-PNG_%2B_JPEG-566C86)](docs/cli.md)
 [![Targets: exact bytes](https://img.shields.io/badge/targets-exact_bytes-39756A)](docs/cli.md)
 [![Recipes: shareable TOML](https://img.shields.io/badge/recipes-shareable_TOML-8A668C)](docs/presets.md)

@@ -29,3 +29,7 @@ A timeout in the three-second version probe is a hypothesis, not an established 
 ## Unobserved boundaries
 
 No complete real-optimizer pass, native JPEG optimization, perceptual/photo/ICC calibration, graphical clipboard/paste, shortcut/Explorer/Dolphin activation, keyring login, signed package, production update-feed transaction or public binary release is claimed. Local full-suite Go 1.27 execution was cancelled during its initial compilation without a verdict; a focused domain test passed. Hosted platform suites provide the complete source-test evidence above.
+
+## Bounded repeat on the native Go 1.27.2 build
+
+A second run against the local `f70486ce...` executable used the existing helper flag `-timeout 10m`. Provenance and dependency preflight passed, Auto alpha-gradient failed, and Auto alpha16/flat-icon/gray16/hidden-rgb passed. The broad rerun was deliberately cancelled after those observations; no complete result or cause is claimed. Partial stdout/stderr remain in `artifacts/validation/png-f70486c.*`. The helper did not checkpoint its in-memory per-check JSON before cancellation. Future diagnosis should focus on the failed cases and retain probe reasons/timing rather than purchase another full-suite repeat first.
