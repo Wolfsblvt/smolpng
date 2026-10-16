@@ -51,6 +51,8 @@ The original Web authoring host used a transported checksum-verified Go/module c
 
 `go test ./internal/skill ./internal/fsutil ./internal/cli` exercises actual temporary directories, native process-scoped locking, no-replace moves, installed hashes, custom-path consent, modified-file protection, replacement prompt conditions, interrupted swaps and deterministic ZIP entries. It does not install to the developer's actual harness folders. `skills/smolpng/` is the source of the embedded artifact; its content hash changes automatically when any resource changes. A rebuilt binary with unchanged resources retains the same bundle version.
 
+The [native Windows post-update Skill record](reference/2026-10-17-windows-update-skill-sync.md) separately qualifies a real signed-fixture update with managed, edited and custom installations in a disposable user profile. It proves filesystem synchronization and preservation, not an agent client's reload.
+
 
 ## Keyboard and desktop verification
 
