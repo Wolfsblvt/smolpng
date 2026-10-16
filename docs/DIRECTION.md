@@ -20,6 +20,8 @@ Right-click configuration/dispatch and Dolphin service generation are implemente
 
 Final JPEG backend/quality calibration remains evidence-led; jpegoptim is the reversible first backend and Go encodes explicit original-derived geometry changes. Remote geometry/keep-all metadata combinations intentionally refuse unsupported promises. Richer macOS Finder integration, a final installer/MSIX/signing composition and package-manager submission refinements remain after corresponding host/publisher decisions. The website, final art and hosted sibling retain separate writer boundaries.
 
+The [first two-photo preset comparison](reference/2026-10-16-jpeg-photographic-comparison.md) now has independently decoded outputs and bounded visual inspection. Auto/Web coincide on the camera image; Maximum squeeze is smaller with slight texture simplification. All four landscape outputs preserve full decoded pixels and the original 560-byte ICC profile. These samples support retaining the current choices while expanding calibration; they do not settle final quality or color-managed behavior.
+
 Native Windows PNG/JPEG compression and application-created shortcut activation now have direct observations, with the exact boundaries recorded below. Windows/Linux/macOS graphical clipboard, physical file dragging and paste, rendered notifications, running-program update replacement and keyring availability still need direct observations. The repository is now public under its existing licenses. Public releases, package registration, signing/feed operation, Store submission and legal brand qualification have not occurred. These limits are not substitutes for implemented source or grounds to describe cross-builds as desktop tests.
 
 ## Continuation
