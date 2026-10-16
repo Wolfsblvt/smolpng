@@ -34,7 +34,7 @@ func (e Engine) optimizeJPEG(ctx context.Context, data []byte, r domain.Recipe) 
 				return out, domain.E(2, "JPEG geometry changes with keep metadata are unsupported; choose safe or all", nil)
 			}
 			out.Candidate = Candidate{Data: data, Info: original.Info, Rank: 100000000, Pipeline: []domain.Step{}}
-			out.Warnings = append(out.Warnings, fmt.Sprintf("Kept complete JPEG unchanged to preserve %d attached bytes; compression and resizing cannot preserve opaque camera attachments", len(original.Trailer)))
+			out.Warnings = append(out.Warnings, fmt.Sprintf("JPEG contains %d attached bytes; keep metadata requires the complete file unchanged because compression and resizing cannot preserve opaque camera attachments", len(original.Trailer)))
 			if r.TargetBytes > 0 && int64(len(data)) > r.TargetBytes {
 				return out, domain.E(6, "JPEG target was not met; keep metadata preserves the complete file unchanged", nil)
 			}
@@ -239,5 +239,5 @@ func (e Engine) optimizeJPEG(ctx context.Context, data []byte, r domain.Recipe) 
 }
 
 func jpegAttachmentWarning(n int64) string {
-	return fmt.Sprintf("Removed %d attached bytes after the primary JPEG; output is a still image without attached depth, refocus, motion or other auxiliary content; use keep metadata to preserve the complete file unchanged", n)
+	return fmt.Sprintf("Detected %d attached bytes after the primary JPEG; Safe/all outputs omit attached depth, refocus, motion or other auxiliary content; use keep metadata to preserve the complete file unchanged", n)
 }

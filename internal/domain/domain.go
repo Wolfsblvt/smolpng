@@ -262,27 +262,36 @@ type RemoteUsage struct {
 	Selected         bool   `json:"selected"`
 	CompressionCount *int   `json:"compressionCount,omitempty"`
 }
+
+// JPEGAttachment describes detected auxiliary data and the selected preservation
+// policy. Output and Status establish whether a corresponding file was committed.
+type JPEGAttachment struct {
+	Bytes int64 `json:"bytes"`
+	Keep  bool  `json:"keep"`
+}
+
 type Result struct {
-	SchemaVersion int             `json:"schemaVersion"`
-	Status        string          `json:"status"`
-	Input         string          `json:"input"`
-	Output        string          `json:"output,omitempty"`
-	OriginalBytes int64           `json:"originalBytes"`
-	OutputBytes   int64           `json:"outputBytes"`
-	SavedBytes    int64           `json:"savedBytes"`
-	SavingPercent float64         `json:"savingPercent"`
-	Format        string          `json:"format"`
-	Recipe        string          `json:"recipe"`
-	Dimensions    DimensionChange `json:"dimensions"`
-	Pipeline      []Step          `json:"pipeline"`
-	Target        *Target         `json:"target,omitempty"`
-	ResizeUsed    bool            `json:"resizeUsed"`
-	Remote        *RemoteUsage    `json:"remote,omitempty"`
-	RemoteUsed    bool            `json:"remoteUsed"`
-	Warnings      []string        `json:"warnings"`
-	Error         string          `json:"error,omitempty"`
-	ExitCode      int             `json:"exitCode"`
-	Bytes         []byte          `json:"-"`
+	SchemaVersion  int             `json:"schemaVersion"`
+	Status         string          `json:"status"`
+	Input          string          `json:"input"`
+	Output         string          `json:"output,omitempty"`
+	OriginalBytes  int64           `json:"originalBytes"`
+	OutputBytes    int64           `json:"outputBytes"`
+	SavedBytes     int64           `json:"savedBytes"`
+	SavingPercent  float64         `json:"savingPercent"`
+	Format         string          `json:"format"`
+	Recipe         string          `json:"recipe"`
+	Dimensions     DimensionChange `json:"dimensions"`
+	Pipeline       []Step          `json:"pipeline"`
+	Target         *Target         `json:"target,omitempty"`
+	ResizeUsed     bool            `json:"resizeUsed"`
+	Remote         *RemoteUsage    `json:"remote,omitempty"`
+	RemoteUsed     bool            `json:"remoteUsed"`
+	Warnings       []string        `json:"warnings"`
+	JPEGAttachment *JPEGAttachment `json:"jpegAttachment,omitempty"`
+	Error          string          `json:"error,omitempty"`
+	ExitCode       int             `json:"exitCode"`
+	Bytes          []byte          `json:"-"`
 }
 
 func NewResult(input, recipe string) Result {

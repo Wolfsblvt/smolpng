@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"unicode/utf16"
 
 	"github.com/Wolfsblvt/smolpng/internal/config"
 	"github.com/Wolfsblvt/smolpng/internal/desktop"
@@ -372,9 +373,12 @@ func TestDropCameraAttachmentWarningReachesNotificationAndLast(t *testing.T) {
 	if err != nil || len(last.Report.Results) != 1 || len(last.Report.Results[0].Warnings) != 1 {
 		t.Fatal(last, err)
 	}
-	warning := last.Report.Results[0].Warnings[0]
-	if len(actions.notificationBodies) != 1 || !strings.Contains(actions.notificationBodies[0], warning) {
+	if len(actions.notificationBodies) != 1 || !strings.Contains(actions.notificationBodies[0], "camera data omitted") || len(actions.notificationBodies[0]) > 200 {
 		t.Fatal("drop notification omitted attachment warning", actions.notificationBodies)
+	}
+	item := last.Report.Results[0]
+	if item.JPEGAttachment == nil || item.JPEGAttachment.Bytes != 22 || item.JPEGAttachment.Keep || !strings.Contains(item.Warnings[0], "22 attached bytes") {
+		t.Fatal("typed attachment or complete warning lost", item)
 	}
 	result, err := os.ReadFile(last.Report.Results[0].Output)
 	if err != nil || !bytes.Equal(result, primary) {
@@ -383,6 +387,69 @@ func TestDropCameraAttachmentWarningReachesNotificationAndLast(t *testing.T) {
 	unchanged, err := os.ReadFile(source)
 	if err != nil || !bytes.Equal(unchanged, data) {
 		t.Fatal("drop changed original camera file", err)
+	}
+}
+func TestDropNotificationBoundAndCommittedStatus(t *testing.T) {
+	attachment := &domain.JPEGAttachment{Bytes: 1799549}
+	saved := domain.Result{Status: "optimized", Output: "camera.smol.jpg", JPEGAttachment: attachment}
+	missed := domain.Result{Status: "target-missed", JPEGAttachment: attachment}
+	nearest := saved
+	nearest.Status = "target-missed"
+	kept := saved
+	kept.JPEGAttachment = &domain.JPEGAttachment{Bytes: 1799549, Keep: true}
+	for _, tc := range []struct {
+		name  string
+		items []domain.Result
+		code  int
+		want  string
+	}{
+		{"saved", []domain.Result{saved}, 0, "camera data omitted"},
+		{"missed", []domain.Result{missed}, 6, "camera data detected"},
+		{"nearest committed", []domain.Result{nearest}, 6, "camera data omitted"},
+		{"keep", []domain.Result{kept}, 0, "camera data kept"},
+		{"mixed", []domain.Result{saved, kept, missed}, 8, "detected in unsaved inputs"},
+		{"keep and miss", []domain.Result{kept, missed}, 8, "detected in unsaved inputs"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			for i := range tc.items {
+				tc.items[i].Warnings = []string{strings.Repeat("long arbitrary warning 🐺", 100)}
+			}
+			body := dropNotification(domain.Report{Results: tc.items, ExitCode: tc.code})
+			if len(utf16.Encode([]rune(body))) > 200 || !strings.Contains(body, tc.want) || !strings.Contains(body, "smolpng last") || strings.Contains(body, "arbitrary") {
+				t.Fatal("notification contract", body)
+			}
+		})
+	}
+}
+func TestDropCameraTargetMissDoesNotClaimRemoval(t *testing.T) {
+	h, p, _, actions := humanSetup(t)
+	primary := testutil.JPEG(testutil.Pattern(16, 16, "flat"), 90)
+	data := append(bytes.Clone(primary), []byte("DualShot_Meta_InfoSEFT")...)
+	source := filepath.Join(h.dir, "camera.jpg")
+	if err := os.WriteFile(source, data, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if code := h.run("drop", source, "--strip", "safe", "--resize", "8x8", "--target-size", "1B", "--json"); code != 6 {
+		t.Fatal(code, h.out, h.err)
+	}
+	p.done()
+	last, err := state.ReadLast(filepath.Join(h.Paths.State, "last-result.json"))
+	if err != nil || len(last.Report.Results) != 1 || len(state.Outputs(last.Report)) != 0 {
+		t.Fatal(last, err)
+	}
+	warnings := last.Report.Results[0].Warnings
+	if len(warnings) == 0 || strings.Contains(strings.Join(warnings, " "), "Removed") {
+		t.Fatal("warning claims a completed removal without an output", warnings)
+	}
+	if len(actions.notificationBodies) != 1 {
+		t.Fatal(actions.notificationBodies)
+	}
+	body := actions.notificationBodies[0]
+	if len(body) > 200 || !strings.Contains(body, "0 file(s) saved") || !strings.Contains(body, "camera data detected") || strings.Contains(body, "omitted") {
+		t.Fatal("notification misrepresents target miss", body)
+	}
+	if _, err := os.Stat(filepath.Join(h.dir, "camera.smol.jpg")); !os.IsNotExist(err) {
+		t.Fatal("target miss committed output", err)
 	}
 }
 func TestSettingsFormWritesOnlyChangesAndShowsBuiltins(t *testing.T) {

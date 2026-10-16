@@ -154,6 +154,9 @@
             "type": "string"
           }
         },
+        "jpegAttachment": {
+          "$ref": "#/$defs/jpegAttachment"
+        },
         "error": {
           "type": "string"
         },
@@ -265,6 +268,23 @@
         "results",
         "summary",
         "exitCode"
+      ]
+    },
+    "jpegAttachment": {
+      "type": "object",
+      "description": "Detected JPEG auxiliary bytes and selected preservation policy; output/status establish whether a file was committed.",
+      "properties": {
+        "bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "keep": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "bytes",
+        "keep"
       ]
     },
     "remoteUsage": {

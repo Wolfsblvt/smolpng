@@ -118,13 +118,7 @@ func (a *app) dropCommand() *cobra.Command {
 			}
 			receipt, warnings = a.finishHuman(c.Context(), result, effective, mode)
 			if effective.Notify && a.env.Desktop != nil {
-				body := fmt.Sprintf("%d result(s), exit %d. Recover files with smolpng last.", len(result.Results), result.ExitCode)
-				for _, item := range result.Results {
-					if len(item.Warnings) > 0 {
-						body = "Warning: " + item.Warnings[0] + " " + body
-						break
-					}
-				}
+				body := dropNotification(result)
 				if er := a.env.Desktop.Notify(c.Context(), "smolpng", body); er != nil {
 					warnings = append(warnings, "Desktop notification unavailable: "+er.Error())
 				}
@@ -164,6 +158,43 @@ func (a *app) dropCommand() *cobra.Command {
 		return nil
 	}
 	return c
+}
+
+// dropNotification uses bounded English summaries instead of arbitrary warnings,
+// paths or errors. Windows balloon text should stay within 200 characters.
+func dropNotification(report domain.Report) string {
+	omitted, kept, detected, warnings := false, false, false, false
+	for _, item := range report.Results {
+		warnings = warnings || len(item.Warnings) > 0
+		if item.JPEGAttachment == nil {
+			continue
+		}
+		saved := item.Output != "" && item.Output != "-" && item.Status != "planned"
+		if !saved {
+			detected = true
+		} else if item.JPEGAttachment.Keep {
+			kept = true
+		} else {
+			omitted = true
+		}
+	}
+	body := fmt.Sprintf("%d file(s) saved; exit %d. ", len(state.Outputs(report)), report.ExitCode)
+	switch {
+	case omitted && detected:
+		body += "JPEG camera data omitted in saved files; also detected in unsaved inputs. "
+	case omitted:
+		body += "JPEG camera data omitted from some saved files. "
+	case kept && detected:
+		body += "JPEG camera data kept in saved files; also detected in unsaved inputs. "
+	case kept:
+		body += "JPEG camera data kept in saved files. "
+	case detected:
+		body += "JPEG camera data detected; no removal committed. "
+	}
+	if warnings {
+		body += "Warnings reported. "
+	}
+	return body + "Details: smolpng last."
 }
 func (a *app) lastCommand() *cobra.Command {
 	var copyMode string

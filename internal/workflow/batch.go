@@ -103,6 +103,9 @@ func (b Batch) one(ctx context.Context, j output.Job, o Options) domain.Result {
 	r.RemoteUsed = out.RemoteUsed
 	r.OriginalBytes = int64(len(data))
 	r.Format = out.Original.Format
+	if out.Original.AppendedBytes > 0 {
+		r.JPEGAttachment = &domain.JPEGAttachment{Bytes: out.Original.AppendedBytes, Keep: o.Recipe.Metadata == "keep"}
+	}
 	r.Dimensions.Before = out.Original.Dimensions
 	r.Warnings = append(r.Warnings, out.Warnings...)
 	if er != nil && domain.Code(er) != 6 {
