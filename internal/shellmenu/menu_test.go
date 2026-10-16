@@ -9,9 +9,20 @@ import (
 	"testing"
 )
 
+func canonicalTempDir(t *testing.T) string {
+	t.Helper()
+	// macOS's temporary root traverses /var -> /private/var. Fixtures that
+	// exercise symlink-free storage use its physical location.
+	dir, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return dir
+}
+
 func testSpec(t *testing.T, mode string) Spec {
 	t.Helper()
-	dir := t.TempDir()
+	dir := canonicalTempDir(t)
 	s, e := New(mode, filepath.Join(dir, "smolpng.exe"), filepath.Join(dir, "config.toml"), "", nil)
 	if e != nil {
 		t.Fatal(e)
@@ -93,7 +104,7 @@ func TestNativeCPlusPlusHandoffMatchesGo(t *testing.T) {
 	}
 }
 func TestHandoffConsumeValidatesLocationAndPreservesUnrelatedFiles(t *testing.T) {
-	dir := t.TempDir()
+	dir := canonicalTempDir(t)
 	s := testSpec(t, "single")
 	source := filepath.Join(dir, "photo.jpg")
 	_ = os.WriteFile(source, []byte("original"), 0600)

@@ -25,7 +25,7 @@ func tinyPE(machine uint16, dll bool) []byte {
 }
 func packageFixture(t *testing.T) (string, string, string) {
 	t.Helper()
-	d := t.TempDir()
+	d := canonicalTempDir(t)
 	commit := strings.Repeat("1", 40)
 	files := map[string]string{}
 	for _, n := range []string{"smolpng.exe", "smolpngw.exe", "SmolpngShell.dll"} {

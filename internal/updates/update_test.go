@@ -116,7 +116,7 @@ func fixture(t *testing.T) (Manager, Plan, *fakeRunner) {
 	os.WriteFile(filepath.Join(dir, "config.toml"), []byte("preserve user config"), 0600)
 	b, a := archive(t, map[string][]byte{"smolpng": []byte("new-binary"), "LICENSE": []byte("MIT")})
 	data, keys := signed(t, manifest(a))
-	archivePath := filepath.Join(t.TempDir(), "update.zip")
+	archivePath := filepath.Join(dir, "update.zip")
 	os.WriteFile(archivePath, b, 0600)
 	runner := &fakeRunner{}
 	m := Manager{Executable: exe, Version: "0.1.0-dev", Distribution: "standalone", Platform: "linux/amd64", Trust: keys, Runner: runner, SkillState: filepath.Join(dir, "state", "skill-installations.json")}

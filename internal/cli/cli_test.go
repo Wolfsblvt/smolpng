@@ -24,7 +24,10 @@ type harness struct {
 
 func setup(t *testing.T) *harness {
 	t.Helper()
-	d := t.TempDir()
+	d, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
 	out, er := &bytes.Buffer{}, &bytes.Buffer{}
 	p := &paths.Paths{Config: filepath.Join(d, "config.toml"), Data: filepath.Join(d, "data"), State: filepath.Join(d, "state"), Cache: filepath.Join(d, "cache"), Downloads: filepath.Join(d, "Downloads")}
 	r := &testutil.Runner{}
