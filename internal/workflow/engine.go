@@ -82,6 +82,10 @@ func (e Engine) optimizePNG(ctx context.Context, data []byte, r domain.Recipe) (
 		return out, nil
 	}
 	if !flattened && !e.Tools.OxiPNG.Available && (r.Lossless || !e.Tools.PNGQuant.Available) {
+		out.Warnings = append(out.Warnings, "oxipng: "+e.Tools.OxiPNG.Error)
+		if !r.Lossless {
+			out.Warnings = append(out.Warnings, "pngquant: "+e.Tools.PNGQuant.Error)
+		}
 		return out, domain.E(4, "no suitable local optimizer; run deps status or configure executable paths", nil)
 	}
 	if !e.Tools.PNGQuant.Available && !r.Lossless {

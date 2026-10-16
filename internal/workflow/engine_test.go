@@ -11,9 +11,45 @@ import (
 	"github.com/Wolfsblvt/smolpng/internal/testutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
+
+func TestUnavailableOptimizerReasonsReachFailedImageReport(t *testing.T) {
+	for _, preset := range []string{"auto", "lossless"} {
+		t.Run(preset, func(t *testing.T) {
+			tools := testutil.Tools()
+			tools.OxiPNG.Available = false
+			tools.OxiPNG.Error = "version probe failed: context deadline exceeded"
+			tools.PNGQuant.Available = false
+			tools.PNGQuant.Error = "version probe failed: exit code 9"
+			recipe, _ := domain.Builtin(preset)
+			dir := t.TempDir()
+			path := filepath.Join(dir, "image.png")
+			if err := os.WriteFile(path, testutil.Corpus()["flat-icon.png"], 0600); err != nil {
+				t.Fatal(err)
+			}
+			jobs, err := output.Plan([]input.Source{{Kind: "file", Path: path, Display: path, Name: "image.png"}}, output.Options{}, time.Now())
+			if err != nil {
+				t.Fatal(err)
+			}
+			batch := Batch{Engine: Engine{Tools: tools, Limits: domain.DefaultLimits()}}
+			report := batch.Run(context.Background(), jobs, Options{Recipe: recipe})
+			if report.ExitCode != 4 || len(report.Results) != 1 {
+				t.Fatal(report)
+			}
+			result := report.Results[0]
+			warnings := strings.Join(result.Warnings, "; ")
+			if result.Output != "" || !strings.Contains(warnings, "oxipng: "+tools.OxiPNG.Error) {
+				t.Fatal(result)
+			}
+			if preset == "auto" && !strings.Contains(warnings, "pngquant: "+tools.PNGQuant.Error) {
+				t.Fatal(result)
+			}
+		})
+	}
+}
 
 func TestAutoUsesOriginalForEveryQuantization(t *testing.T) {
 	r, _ := domain.Builtin("auto")

@@ -125,8 +125,12 @@ func probe(ctx context.Context, r process.Runner, name, explicit, configured str
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 	v, e := r.Run(ctx, process.Invocation{Executable: p, Args: []string{"--version"}})
-	if e != nil || v.ExitCode != 0 {
-		t.Error = "version probe failed"
+	if e != nil {
+		t.Error = fmt.Sprintf("version probe failed: %v", e)
+		return t
+	}
+	if v.ExitCode != 0 {
+		t.Error = fmt.Sprintf("version probe failed: exit code %d", v.ExitCode)
 		return t
 	}
 	m := version.FindStringSubmatch(v.Stdout + " " + v.Stderr)
