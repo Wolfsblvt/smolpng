@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -30,7 +31,7 @@ type Set struct {
 }
 type Paths struct{ PNGQuant, OxiPNG, JPEGOptim, ManagedRoot, Preference string }
 
-var version = regexp.MustCompile(`\b([0-9]+)\.([0-9]+)(?:\.([0-9]+))?\b`)
+var version = regexp.MustCompile(`\bv?([0-9]+)\.([0-9]+)(?:\.([0-9]+))?\b`)
 
 // Allow slow process startup before declaring a configured tool unavailable.
 // Keep a bounded probe while allowing an earlier caller deadline to win.
@@ -142,7 +143,7 @@ func probe(ctx context.Context, r process.Runner, name, explicit, configured str
 		t.Error = "version probe returned no recognized version"
 		return t
 	}
-	t.Version = m[0]
+	t.Version = strings.TrimPrefix(m[0], "v")
 	major, _ := strconv.Atoi(m[1])
 	minor, _ := strconv.Atoi(m[2])
 	if !(name == "pngquant" && (major == 3 || major == 2 && minor >= 12) || name == "oxipng" && (major == 9 || major == 10) || name == "jpegoptim" && major == 1 && (minor == 4 || minor == 5)) {

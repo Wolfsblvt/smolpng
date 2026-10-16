@@ -74,6 +74,30 @@ func (f failedVersion) Run(context.Context, process.Invocation) (process.Result,
 	return f.result, f.err
 }
 
+func TestJPEGOptimVersionBanner(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "jpegoptim")
+	if err := os.WriteFile(p, nil, 0700); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		banner    string
+		version   string
+		available bool
+	}{
+		{"jpegoptim v1.5.6  Win64 (Sep 15 2025)\nlibjpeg version: 6b  27-Mar-1998", "1.5.6", true},
+		{"jpegoptim 1.4.7", "1.4.7", true},
+		{"jpegoptim v2.0.1", "2.0.1", false},
+	} {
+		t.Run(tc.version, func(t *testing.T) {
+			runner := failedVersion{result: process.Result{Stdout: tc.banner}}
+			tool := probe(context.Background(), runner, "jpegoptim", p, "")
+			if tool.Version != tc.version || tool.Available != tc.available {
+				t.Fatalf("wrong version or compatibility from banner %q: %+v", tc.banner, tool)
+			}
+		})
+	}
+}
+
 func TestVersionProbePreservesFailureReason(t *testing.T) {
 	p := filepath.Join(t.TempDir(), "optimizer")
 	if err := os.WriteFile(p, nil, 0700); err != nil {
