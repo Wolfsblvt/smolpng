@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"io"
 	"os"
 	"os/signal"
 	"time"
@@ -19,7 +20,10 @@ func main() {
 	if len(args) == 0 || args[0] != "_shell-run" {
 		args = append([]string{"drop"}, args...)
 	}
-	code := cli.Run(ctx, args, cli.Environment{OpenTerminal: desktop.OpenConsole})
+	// Explorer starts this GUI executable without terminal handles. Keep the
+	// background report in last-result state instead of failing a successful job
+	// while printing to an invalid stdout. Interactive mode opens its own console.
+	code := cli.Run(ctx, args, cli.Environment{Out: io.Discard, Err: io.Discard, OpenTerminal: desktop.OpenConsole})
 	if code != 0 {
 		notice, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 		_ = (desktop.NativeActions{}).Notify(notice, "smolpng could not finish", "Use smolpng last or smolpng doctor in a terminal for details.")
