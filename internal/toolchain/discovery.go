@@ -32,6 +32,10 @@ type Paths struct{ PNGQuant, OxiPNG, JPEGOptim, ManagedRoot, Preference string }
 
 var version = regexp.MustCompile(`\b([0-9]+)\.([0-9]+)(?:\.([0-9]+))?\b`)
 
+// Allow slow process startup before declaring a configured tool unavailable.
+// Keep a bounded probe while allowing an earlier caller deadline to win.
+const versionProbeTimeout = 15 * time.Second
+
 func Discover(ctx context.Context, r process.Runner, explicit, config Paths) Set {
 	if r == nil {
 		r = process.OSRunner{}
@@ -122,7 +126,7 @@ func probe(ctx context.Context, r process.Runner, name, explicit, configured str
 		t.Error = "executable path is unavailable or not a regular file"
 		return t
 	}
-	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, versionProbeTimeout)
 	defer cancel()
 	v, e := r.Run(ctx, process.Invocation{Executable: p, Args: []string{"--version"}})
 	if e != nil {

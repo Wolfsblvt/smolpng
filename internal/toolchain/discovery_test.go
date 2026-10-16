@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"testing/synctest"
+	"time"
 )
 
 type fakeVersion struct{}
@@ -19,6 +21,53 @@ func (fakeVersion) Run(context.Context, process.Invocation) (process.Result, err
 type failedVersion struct {
 	result process.Result
 	err    error
+}
+
+type delayedVersion struct{ delay time.Duration }
+
+func (f delayedVersion) Run(ctx context.Context, _ process.Invocation) (process.Result, error) {
+	select {
+	case <-time.After(f.delay):
+		return process.Result{Stdout: "oxipng 10.2.1"}, nil
+	case <-ctx.Done():
+		return process.Result{}, ctx.Err()
+	}
+}
+
+func TestSlowCompatibleVersionProbeRemainsAvailable(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "optimizer")
+	if err := os.WriteFile(p, nil, 0700); err != nil {
+		t.Fatal(err)
+	}
+	synctest.Test(t, func(t *testing.T) {
+		tool := probe(context.Background(), delayedVersion{5 * time.Second}, "oxipng", p, "")
+		if !tool.Available || tool.Version != "10.2.1" {
+			t.Fatalf("slow compatible optimizer was refused: %+v", tool)
+		}
+	})
+}
+
+func TestVersionProbeHonorsCallerBudgetAndBoundsHungTools(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "optimizer")
+	if err := os.WriteFile(p, nil, 0700); err != nil {
+		t.Fatal(err)
+	}
+	for _, callerBudget := range []time.Duration{time.Second, time.Hour} {
+		t.Run(callerBudget.String(), func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				ctx, cancel := context.WithTimeout(context.Background(), callerBudget)
+				defer cancel()
+				started := time.Now()
+				tool := probe(ctx, delayedVersion{time.Hour}, "oxipng", p, "")
+				if tool.Available || !strings.Contains(tool.Error, "context deadline exceeded") {
+					t.Fatalf("hung probe did not preserve its deadline: %+v", tool)
+				}
+				if elapsed := time.Since(started); elapsed > min(callerBudget, 30*time.Second) {
+					t.Fatalf("probe exceeded its bounded wait: %s", elapsed)
+				}
+			})
+		})
+	}
 }
 
 func (f failedVersion) Run(context.Context, process.Invocation) (process.Result, error) {
