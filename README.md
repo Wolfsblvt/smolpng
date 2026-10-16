@@ -6,11 +6,15 @@
 
 **Make images smol.** Local-first image compression for humans, scripts, and agents.
 
-The current private source candidate provides a keyboard-driven PNG/JPEG utility and deterministic CLI over separately installed pngquant, OxiPNG and jpegoptim. It preserves originals, compares original-derived candidates and treats upload limits as exact byte targets. The full PNG/JPEG, desktop and agent destination is retained in [Vision](docs/VISION.md); unimplemented pieces are not advertised as working features.
+An icon, a screenshot, a photo. A very unreasonable upload limit. smolpng helps the image fit, keeps the original, and reports a missed target instead of pretending it fits. One engine serves the keyboard interface, background drop workflow, and deterministic CLI.
 
-## Quick start
+**Private source candidate, not a published release.** Build this source branch to try it. Windows, Linux, and macOS are build targets; native desktop behavior still needs host-specific qualification.
 
-Use Go 1.26.6 or a compatible newer toolchain. From the repository root:
+**[Build and try it](#make-one-image-smol)** · [User guides](docs/README.md) · [Full product vision](docs/VISION.md)
+
+## Make one image smol
+
+Use **Go 1.26.6 or a compatible newer toolchain**. From a checkout of this source branch:
 
 ```sh
 go mod download
@@ -18,69 +22,71 @@ go build -o artifacts/bin/ ./cmd/smolpng
 ./artifacts/bin/smolpng deps status
 ```
 
-Install pngquant separately. For OxiPNG, `./artifacts/bin/smolpng deps install oxipng` previews a pinned upstream archive; add `--apply` to download, verify and install it per-user. Or use existing tools with `--pngquant-path` and `--oxipng-path`. JPEG uses separately installed jpegoptim. See [dependency setup](docs/dependencies.md).
+On Windows, use `.\artifacts\bin\smolpng.exe` for the executable commands. Go is needed to build, not to run the binary.
 
-With the PNG tools available:
+**Optimizers are separate, not bundled.** Install pngquant and OxiPNG for the full local PNG pipeline, or jpegoptim for JPEG. The [dependency guide](docs/dependencies.md) covers compatible versions, explicit paths, and the optional, preview-first managed OxiPNG download.
+
+With those tools available, replace `icon.png` with your image:
 
 ```sh
 ./artifacts/bin/smolpng compress icon.png --target-size 10KiB --json
 ```
 
-The result defaults to `icon.smol.png` beside `icon.png`; existing outputs get a collision number. A target is `outputBytes <= requestedBytes`, so `10KB` is 10,000 bytes and `10KiB` is 10,240. Missing a target exits `6`; `--accept-nearest` may write the best result but does not pretend the target was met. The examples below use `smolpng` as shorthand for the built executable.
+Success gives you `icon.smol.png` beside the original and `target.met: true` in the report. Collisions increment to `icon.smol-2.png`. An already-fitting image can return unchanged; a missed target exits **6** without writing an over-limit result by default.
+
+Below, `smolpng` means that built executable, or the same binary placed on your PATH.
+
+## A little utility, not a control panel
+
+The actual terminal header, still a replaceable placeholder rather than final mascot art:
+
+```text
+  ( . . )~
+   smolpng
+```
 
 ```sh
-smolpng compress icon.png --preset lossless
+smolpng icon.png                    # Keyboard menu, Auto selected
+smolpng                            # Detect clipboard image/file/path
+smolpng drop icon.png               # Configured recipe, copy and notify
+smolpng last --json                 # Recover the previous human/drop result
+```
+
+Use arrows and Enter, or `--accessible` for typed choices; `--plain` and `--no-header` remove decoration. Clipboard and notification behavior depends on the host. On Linux, keep the result screen open until you paste. [Desktop guide and limitations](docs/desktop.md).
+
+Scripts use `compress`, which never prompts or infers clipboard input. Files, directories, globs, HTTP(S) URLs, stdin (`-`), and explicit `--clipboard` input are supported. Preview a batch before running it:
+
+```sh
 smolpng compress images --recursive --output-dir optimized --dry-run --json
 smolpng compress images --recursive --output-dir optimized --jobs 2 --jsonl
-smolpng inspect icon.png --json
 ```
 
-Detached clipboard/URL/stdin output uses the operating-system Downloads folder under `smolpng/`. `--in-place` is the explicit destructive exception. `--output -` streams clean image bytes; use `--report-file` instead of JSON on that same stream.
+Directories are shallow by default. Local outputs sit beside originals; detached inputs use OS Downloads/smolpng. Binary stdout and separate report files are also supported. [Inputs, outputs, and exit codes](docs/cli.md).
 
-Built-ins: `auto`, `web`, `smallest`, `lossless`. Auto is local under the initial `never` policy. The TUI, native clipboard adapter, background/drop workflow, last-result recovery and tracked Agent Skill are implemented. Actual graphical clipboard/notification behavior still needs real-host qualification; TinyPNG is available only under explicit upload permission; native keyring login is separate from permission. Managed OxiPNG uses pinned 10.2.1 archives on Linux/macOS x64/arm64 and Windows x64; pngquant and native Windows arm64 OxiPNG remain manual. [Dependency setup](docs/dependencies.md). [CLI reference](docs/cli.md) · [Development](docs/DEVELOPMENT.md) · [Current boundary](docs/DIRECTION.md).
+## Smaller files, explicit trade-offs
 
-## One action for a human
+| Input → output | Local processing |
+| --- | --- |
+| Static PNG → PNG | pngquant reduces colors; OxiPNG optimizes losslessly. Transparency is preserved by default. |
+| JPEG (`.jpg`, `.jpeg`) → JPEG | jpegoptim supplies lossless/lossy candidates; explicit resizing encodes from the original upright image. |
 
-```sh
-smolpng icon.png                   # Keyboard menu, Auto selected
-smolpng                            # Detect image/file/path in clipboard
-smolpng drop icon.png              # Configured background recipe, copy and notify
-smolpng last --json                # Recover a dismissed notification's result
-smolpng settings                   # Edit user defaults without erasing comments
-```
+Animated PNG compression is refused, not flattened. GIF, WebP, AVIF, and SVG are unsupported; this is not a format converter.
 
-Use arrows/Enter, `S` for source, `,` for settings, `D` for setup, and result shortcuts for copying or opening the folder. First use checks local tools and offers explicit paths, a separately confirmed managed OxiPNG download, or the optional Agent Skill. It neither downloads before that confirmation nor requires an API key. Copy a valid preset block before launch to preview/import it. The header is a two-line replaceable placeholder, not final commissioned art.
+Built-ins are `auto`, `web`, `smallest`, and `lossless`. Auto may be lossy. Choose `--preset lossless` for identical decoded pixels, including hidden RGB in transparent PNGs. Every lossy attempt starts from the original. Quality numbers are encoder-specific, not percentages of visual fidelity. [PNG invariants](docs/ARCHITECTURE.md#image-invariants) · [JPEG details](docs/jpeg.md).
 
-`--plain` removes decorative styling; `--accessible` uses typed choice names rather than arrow keys or numbered menus. `--no-header` removes the header. Scripts should use `compress`; a redirected interactive invocation refuses rather than hanging for input.
+Targets mean **bytes ≤ requested bytes**: `10KB` is 10,000; `10KiB` is 10,240. Resizing requires explicit permission. `--accept-nearest` saves a best over-limit result but still exits 6; size growth requires `--force-output`.
 
-Windows builds also include an optional `smolpngw.exe` drop launcher compiled without a console. Linux clipboard ownership can need a living process: keep the result screen open until paste, or let `drop` serve it for a bounded period. Read the [desktop workflow guide](docs/desktop.md) for exact limits and qualification status.
+**Lossless pixels do not mean untouched metadata.** PNG `safe` removes text/time chunks but retains other metadata, including EXIF: it is not a complete privacy scrub. JPEG `safe` removes GPS/private EXIF while retaining ICC and display orientation. `--strip keep|safe|all` selects the policy; incompatible preservation/transform combinations are refused. [PNG metadata implementation](internal/pngimage/png.go) · [JPEG metadata](docs/jpeg.md#metadata-and-orientation).
 
-## JPEG, optional TinyPNG, and native launchers
-
-```sh
-smolpng compress photo.jpg --quality 65-85 --json
-smolpng compress photo.jpg --preset lossless --json
-smolpng providers login tinypng
-smolpng compress icon.png --engine tinypng --remote-policy always --json
-smolpng integrate install --desktop              # preview native launchers
-smolpng integrate install --desktop --apply      # explicitly install
-smolpng update status --json
-```
-
-[JPEG](docs/jpeg.md) preserves display orientation and ICC under the safe default while removing GPS/private metadata. Geometry changes come directly from the original decode, not repeated lossy output. jpegoptim is installed separately; use `--jpegoptim-path` or `deps configure jpegoptim PATH --apply`.
-
-[TinyPNG](docs/remote.md) reads the process environment before the native keyring, never from a secret command-line argument. Its reports disclose upload attempts and service counts even when local output wins. Ordinary tests never call the service. A key does not enable Auto upload.
-
-[Desktop integrations](docs/integration.md) create per-user menu, optional desktop and Windows Send To shortcuts. Modified or unrelated files are preserved. [Standalone updates](docs/updates.md) require an independently trusted signed manifest, use guarded backups and rollback, and synchronize only unmodified managed Skills. Package-manager installations are never self-overwritten. This candidate has no production signing key/feed, package registration, or public deployment.
+Judge pixels as well as bytes with `smolpng compare images --recursive --output-dir artifacts/review --json`, which exports candidates and an offline visual report. [Comparison guide](docs/comparison.md).
 
 ## Share a recipe, not a script
 
-Place this in your project's `.smolpng.toml`, or copy it to a file and preview/import it with `smolpng preset import recipe.toml` and then `--apply`:
+Add this to your project's `.smolpng.toml` for a local PNG target with explicit resize permission:
 
 ```toml
 [presets.mcp-icon]
 schema = 1
-label = "MCP icon · ≤10 KiB"
 extends = "auto"
 formats = ["png"]
 target_size = "10KiB"
@@ -88,57 +94,35 @@ min_quality = 55
 allow_resize = true
 min_dimensions = "64x64"
 remote = "never"
-clipboard = "smart"
-
-[presets.mcp-icon.menu]
-pinned = true
-position = 2
 ```
 
-```sh
-smolpng compress icon.png --preset mcp-icon --json
-smolpng config show --effective --preset mcp-icon --provenance
-smolpng preset export mcp-icon --resolved
-```
+Run `smolpng compress icon.png --preset mcp-icon --json`. Recipes inherit and export as data only, never scripts, credentials, executable paths, or permission to bypass the user's upload policy. [Configuration and presets](docs/presets.md) · [CC0 examples](presets/examples/).
 
-User settings, the nearest project config, inherited presets and explicit flags combine predictably. Imports cannot contain commands, secrets, executable paths or a global upload permission. A preview shows collision renames or replacements before an import is committed. Export preserves parents, or freezes effective recipe values. Clipboard preference and pinned placement drive the keyboard/drop workflows. Deterministic compression copies only when `--copy` was explicitly requested, and never writes last-result history implicitly.
+Local agents use the same CLI with a version-bound [Agent Skill](docs/agent-skill.md). Instructions do not supply a runtime; a ChatGPT Skill package is not an MCP server or hosted compressor.
 
-[Preset and configuration reference](docs/presets.md) · [Copyable CC0 examples](presets/examples/)
+## Local by default
 
-## Regression corpus
+Auto starts with remote policy `never`; a TinyPNG key is **not upload permission**. With local tools installed, local-file compression works offline. `--offline` rejects URLs and remote processing. Explicit URLs download from their source; [optional TinyPNG](docs/remote.md) requires a permitting policy and reports attempted uploads even when local output wins. Dependency downloads and configured update checks are separate network operations.
 
-The [classified corpus](testdata/corpus/README.md) contains 24 CC0 structural PNG/JPEG specimens, including 16-bit alpha, all EXIF orientations, real synthetic GPS metadata, and a true progressive JPEG. Run `go run ./tools/corpus --check` to verify byte and provenance integrity. Use `--recursive` to compare the whole corpus; photographs and full ICC color-managed evaluation remain explicit admission gaps, not quality claims derived from synthetic patterns.
+There is no telemetry or analytics. Human/drop workflows retain local last-result metadata; ordinary `compress` does not silently create history. Reports and clipboard history can expose paths, and forced termination can leave temporary cache files. [Privacy and data](docs/PRIVACY-AND-DATA.md).
 
-## Verify
+Originals stay intact unless you choose `--in-place`; completed writes are atomic. Optimizers run as your user, not in a sandbox. Do not expose this trusted-user CLI directly as a public upload service. [Security boundaries](docs/SECURITY.md).
+
+## Development and the fuller destination
 
 ```sh
+go mod verify
 go test ./...
 go vet ./...
+go run ./tools/corpus --check
 ```
 
-Tests exercise real filesystem/process boundaries and fake optimizer/HTTP boundaries using original CC0 specimens. Cross-compilation and fake processes do not qualify a real desktop or optimizer version. Standard packages do not bundle optimizer executables.
+Tests substitute optimizer/HTTP/desktop boundaries. The [24-image CC0 corpus](testdata/corpus/README.md) checks structure, not photographic quality or full ICC fidelity. Cross-builds and native bridge compilation do not prove graphical behavior or signed Explorer activation. [Development and qualification](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [Source map](docs/PROJECT-MAP.md).
+
+Desktop integration and standalone-update source exist; production signing/feed operation, installers, and package publication remain separate work. The website, final mascot art, self-hosted `smolpng-web`, authenticated MCP integration, and hosting are future surfaces, not deployable services here. [Current direction](docs/DIRECTION.md) distinguishes implemented source from the [complete vision](docs/VISION.md).
 
 An open-source project from Wolfsblvt Works.
 
-## Local agent integration
-
-```sh
-smolpng skill install --target agents       # preview only
-smolpng skill install --target agents --apply
-smolpng skill status --json
-smolpng skill package --target chatgpt --output smolpng-skill.zip
-```
-
-The embedded instructions follow the installed CLI. Destinations and exact hashes are tracked; synchronization never silently overwrites local edits. Custom paths and instruction-only ChatGPT packaging are supported. See the [Agent Skill guide](docs/agent-skill.md) for version replacement, safe updates and the local-runtime boundary.
-
-## Compare before changing defaults
-
-`smolpng compare images --recursive --output-dir artifacts/review --json` measures the same original through local presets and exports candidates with an offline visual report. See [comparison](docs/comparison.md) for tool isolation, repeats, targets and metric limits; [explicit background](docs/background.md) explains optional PNG alpha flattening.
-
-### Right-click images
-
-`smolpng integrate shell install --apply` selects a single preserve-original **Make smol** action; `--mode submenu --preset mcp-icon` exposes labelled replacement, interactive and custom-user recipes. Windows 11 uses an original native COM bridge and signed sparse package, **not** a legacy registry verb. Settings can be authored here; the native SDK build and signed activation remain a separate host qualification. Linux installation targets KDE Dolphin only. See [context-menu setup and boundaries](docs/context-menu.md).
-
 ## License
 
-The application and ordinary documentation use the [MIT license](LICENSE), allowing use, modification and redistribution; corpus, dependency and future website/brand rights are identified separately in the [license map](license-map.md).
+The application and ordinary documentation use [MIT](LICENSE), allowing use, modification, and redistribution, with CC0 examples/corpus, third-party terms, and separate future website/brand rights identified in the [license map](license-map.md).
