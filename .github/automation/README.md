@@ -10,7 +10,7 @@ This is smolpng’s repository-owned Forgehand configuration and canonical label
 
 The product profile selects 90 days without non-bot replies plus 7 days after a delivered warning, a separate 14+7-day necessary-response request, and deliberate `still relevant` reopening. No hard metadata gate or automatic merge is selected. The one durable line is `main`; there is no `next` branch. The complete message files preserve these consequences.
 
-Compression includes workflow/PNG/JPEG/toolchain source, not every CLI edit. Desktop includes native integration and shell menus; CLI interaction belongs to User Interface. Build includes CI/packaging, while a routine source file does not make Build true. Dependency recognition includes `go.sum` even though review sizing excludes that resolved checksum file. Original upstream license texts are excluded from sizing; authored notice integration stays counted.
+Compression includes workflow/PNG/JPEG/toolchain source and the image corpus, not every CLI edit. Desktop includes native integration and shell menus; CLI interaction belongs to User Interface. Build includes CI, packaging and corpus generation tooling, while a routine source file does not make Build true. Documentation includes the corpus guide and license map; photographic binaries remain authored fixture material rather than generated size exclusions. Dependency recognition includes `go.sum` even though review sizing excludes that resolved checksum file. Original upstream license texts are excluded from sizing; authored notice integration stays counted.
 
 ## Activation and recovery
 

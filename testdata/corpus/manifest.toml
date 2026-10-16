@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: CC0-1.0
 schema = 1
-# Synthetic behavior corpus, not perceptual calibration or natural photographs.
+# Generated structural specimens and explicitly admitted original media.
 
 [[image]]
 path = "png/alpha-gradient/alpha-gradient.png"
@@ -433,3 +433,42 @@ bit_depth = 8
 orientation = 0
 progressive = false
 sha256 = "40b27d05a27ae41c2983b2a17aa488bce4e08c39ecf13a00bbc7ea869ee60a34"
+
+[[image]]
+path = "jpeg/photographic/food-refocus.jpg"
+format = "jpeg"
+class = "photographic"
+creator = "Santhosh annakili"
+source = "https://commons.wikimedia.org/w/index.php?title=File:Food_photography_image.jpg&oldid=1256263239"
+method = "unmodified publisher original"
+license = "CC0-1.0"
+redistributable = true
+purpose = "real camera detail, orientation 3, private EXIF and appended DualShot/refocus data; warned still-image compression versus byte-exact Keep"
+width = 3264
+height = 1472
+alpha = false
+bit_depth = 8
+orientation = 3
+progressive = false
+sha256 = "62842b3086bb8ec0ddd119b87a9c64055a28f0dcf3d890af7b0c4891248bcb8b"
+download_url = "https://upload.wikimedia.org/wikipedia/commons/c/c5/Food_photography_image.jpg"
+appended_bytes = 1799549
+
+[[image]]
+path = "jpeg/photographic/landscape-clouds.jpg"
+format = "jpeg"
+class = "photographic"
+creator = "Aammell"
+source = "https://commons.wikimedia.org/w/index.php?title=File:Landscape_with_clouds.jpg&oldid=1048543422"
+method = "unmodified publisher original"
+license = "CC0-1.0"
+redistributable = true
+purpose = "natural landscape texture and cloud gradients, already-compressed camera JPEG; no-growth and photographic recipe comparison"
+width = 4000
+height = 3000
+alpha = false
+bit_depth = 8
+orientation = 1
+progressive = false
+sha256 = "d266b5bfa1179a6298f1c084e8c539ef81698643f7c45d9adb34d43a30ed2758"
+download_url = "https://upload.wikimedia.org/wikipedia/commons/8/83/Landscape_with_clouds.jpg"

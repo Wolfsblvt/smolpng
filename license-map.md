@@ -2,12 +2,12 @@
 
 ## Meaning
 
-The application, data-only examples, generated test media and future website/brand work have separate rights. This map identifies current material and the already-selected future boundaries; no custom brand policy is presented as reviewed legal text.
+The application, data-only examples, generated and admitted test media, and future website/brand work have separate rights. This map identifies current material and the already-selected future boundaries; no custom brand policy is presented as reviewed legal text.
 
 | Path/material | License |
 | --- | --- |
 | Project Go code, generator, ordinary docs and repository tooling | MIT, root `LICENSE` |
-| `testdata/corpus/**` generated PNG/JPEG images, inventory documentation and manifest | CC0-1.0, local `LICENSE` |
+| `testdata/corpus/**` generated PNG/JPEG images, admitted original CC0 photographs, inventory documentation and manifest | CC0-1.0, local `LICENSE`; imported originals retain their publishers' CC0 dedications recorded in `manifest.toml` |
 | `LICENSES/**` and third-party source notices | Their own unchanged terms |
 
 Standard MIT, CC0-1.0 and AGPL-3.0-or-later texts are installed in `LICENSES/`. Compiled dependency notices are in `third-party-notices.md`.

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"fmt"
+	"image/jpeg"
 	"image/png"
 	"os"
 	"path/filepath"
@@ -40,6 +42,13 @@ func TestCorpusCheckAcceptsPNGEncodingChangesButRejectsChangedSpecimens(t *testi
 		t.Fatal("changed bytes without a matching manifest digest admitted")
 	}
 	replaceManifestedFixture(t, root, path, original, encoded)
+	if err := generate(root, false); err != nil {
+		t.Fatal(err)
+	}
+	retained, err := os.ReadFile(path)
+	if err != nil || !bytes.Equal(retained, encoded) {
+		t.Fatal("regeneration rewrote an equivalent stored PNG", err)
+	}
 	if err := generate(root, true); err != nil {
 		t.Fatal("equivalent PNG encoding refused:", err)
 	}
@@ -89,30 +98,41 @@ func TestCheckedInCorpusHasExactLicensedStructuralManifest(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	var m struct {
-		Schema int
-		Image  []struct {
-			Path, Format, Class, Source, License, SHA256 string
-			Width, Height, Orientation                   int
-			BitDepth                                     int `toml:"bit_depth"`
-			Alpha, Progressive, Redistributable          bool
-		}
-	}
+	var m corpusManifest
 	if e = toml.Unmarshal(b, &m); e != nil {
 		t.Fatal(e)
 	}
-	if m.Schema != 1 || len(m.Image) != 24 {
+	if m.Schema != 1 || len(m.Image) != 26 {
 		t.Fatalf("unexpected inventory: %d", len(m.Image))
 	}
 	classes := map[string]bool{}
+	generated, photographic := 0, 0
 	for _, item := range m.Image {
-		if !filepath.IsLocal(item.Path) || item.Source != "project-generated" || item.License != "CC0-1.0" || !item.Redistributable {
+		if !filepath.IsLocal(item.Path) || item.License != "CC0-1.0" || !item.Redistributable {
 			t.Fatalf("unlicensed/unscoped entry: %+v", item)
 		}
 		b, e := os.ReadFile(filepath.Join(root, filepath.FromSlash(item.Path)))
 		if e != nil {
 			t.Fatal(e)
 		}
+		if fmt.Sprintf("%x", sha256.Sum256(b)) != item.SHA256 {
+			t.Fatal("fixture digest differs", item.Path)
+		}
+		classes[item.Format+"/"+item.Class] = true
+		if item.Source != "project-generated" {
+			photographic++
+			// generate/check above fully validates the photographs. An independent
+			// header read checks dimensions here without decoding them a second time.
+			config, err := jpeg.DecodeConfig(bytes.NewReader(b))
+			if err != nil || item.Class != "photographic" || item.Creator == "" || item.DownloadURL == "" || config.Width != item.Width || config.Height != item.Height {
+				t.Fatal("incomplete photographic admission", item.Path, err)
+			}
+			if strings.HasSuffix(item.Path, "food-refocus.jpg") && (item.Orientation != 3 || item.AppendedBytes != 1799549) {
+				t.Fatal("camera attachment specimen lost its original structure", item)
+			}
+			continue
+		}
+		generated++
 		a, e := imagefile.Inspect(b, 1_000_000)
 		if e != nil {
 			t.Fatal(item.Path, e)
@@ -120,12 +140,125 @@ func TestCheckedInCorpusHasExactLicensedStructuralManifest(t *testing.T) {
 		if fmt.Sprintf("%x", sha256.Sum256(b)) != item.SHA256 || a.Format != item.Format || a.Dimensions.Width != item.Width || a.Dimensions.Height != item.Height || a.Transparency != item.Alpha || a.Orientation != item.Orientation || a.BitDepth != item.BitDepth || a.Progressive != item.Progressive {
 			t.Fatalf("lying fixture manifest: %s", item.Path)
 		}
-		classes[item.Format+"/"+item.Class] = true
 	}
-	for _, class := range []string{"png/flat-icon", "png/alpha-16", "png/transparent-hidden-rgb", "png/interlaced", "jpeg/exif-orientation", "jpeg/metadata", "jpeg/progressive"} {
+	if generated != 24 || photographic != 2 {
+		t.Fatal("incorrect generated/imported inventory", generated, photographic)
+	}
+	for _, class := range []string{"png/flat-icon", "png/alpha-16", "png/transparent-hidden-rgb", "png/interlaced", "jpeg/exif-orientation", "jpeg/metadata", "jpeg/progressive", "jpeg/photographic"} {
 		if !classes[class] {
 			t.Fatal("missing class", class)
 		}
+	}
+}
+
+func addImportedSpecimen(t *testing.T, root string, item corpusImage, data []byte) {
+	t.Helper()
+	path := filepath.Join(root, filepath.FromSlash(item.Path))
+	if filepath.IsLocal(item.Path) {
+		if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, data, 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	encoded, err := toml.Marshal(struct{ Image []corpusImage }{[]corpusImage{item}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	f, err := os.OpenFile(filepath.Join(root, "manifest.toml"), os.O_APPEND|os.O_WRONLY, 0600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = f.Write(append([]byte("\n"), encoded...))
+	closeErr := f.Close()
+	if err != nil || closeErr != nil {
+		t.Fatal(err, closeErr)
+	}
+}
+
+func importedSpecimen(data []byte) corpusImage {
+	return corpusImage{Path: "jpeg/photographic/imported.jpg", Creator: "Fixture contributor", Source: "https://example.org/source", DownloadURL: "https://example.org/original.jpg", Method: "unmodified publisher original", License: "CC0-1.0", Redistributable: true, Purpose: "camera attachment preservation", SHA256: fmt.Sprintf("%x", sha256.Sum256(data))}
+}
+
+func TestImportedMediaRegenerationPreservesAdmissionAndExactBytes(t *testing.T) {
+	root := t.TempDir()
+	if err := generate(root, false); err != nil {
+		t.Fatal(err)
+	}
+	data := append(testutil.JPEG(testutil.Pattern(7, 5, "flat"), 90), []byte("opaque camera data")...)
+	item := importedSpecimen(data)
+	addImportedSpecimen(t, root, item, data)
+	if err := generate(root, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := generate(root, true); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(root, filepath.FromSlash(item.Path))
+	kept, err := os.ReadFile(path)
+	if err != nil || !bytes.Equal(kept, data) {
+		t.Fatal("regenerated an imported file", err)
+	}
+	manifestPath := filepath.Join(root, "manifest.toml")
+	originalManifest, err := os.ReadFile(manifestPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var manifest corpusManifest
+	if err := toml.Unmarshal(originalManifest, &manifest); err != nil {
+		t.Fatal(err)
+	}
+	last := manifest.Image[len(manifest.Image)-1]
+	if last.Path != item.Path || last.Creator != item.Creator || last.Source != item.Source || last.SHA256 != item.SHA256 || last.Width != 7 || last.Height != 5 || last.AppendedBytes != int64(len("opaque camera data")) {
+		t.Fatal("lost imported provenance/properties", last)
+	}
+	changed := append(bytes.Clone(data), 0)
+	if err := os.WriteFile(path, changed, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := generate(root, false); err == nil {
+		t.Fatal("regeneration silently adopted modified imported bytes")
+	}
+	after, _ := os.ReadFile(manifestPath)
+	kept, _ = os.ReadFile(path)
+	if !bytes.Equal(after, originalManifest) || !bytes.Equal(kept, changed) {
+		t.Fatal("failed regeneration modified the imported specimen or its admission")
+	}
+}
+
+func TestImportedMediaNeedsRightsAndUniqueLocalPath(t *testing.T) {
+	data := testutil.JPEG(testutil.Pattern(7, 5, "flat"), 90)
+	for _, failure := range []string{"license", "source", "download", "path", "duplicate", "missing"} {
+		t.Run(failure, func(t *testing.T) {
+			root := t.TempDir()
+			if err := os.WriteFile(filepath.Join(root, "manifest.toml"), []byte("schema = 1\n"), 0600); err != nil {
+				t.Fatal(err)
+			}
+			item := importedSpecimen(data)
+			switch failure {
+			case "license":
+				item.License = ""
+			case "source":
+				item.Source = ""
+			case "download":
+				item.DownloadURL = ""
+			case "path":
+				item.Path = "../outside.jpg"
+			}
+			addImportedSpecimen(t, root, item, data)
+			if failure == "duplicate" {
+				addImportedSpecimen(t, root, item, data)
+			}
+			if failure == "missing" {
+				if err := os.Remove(filepath.Join(root, filepath.FromSlash(item.Path))); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := generate(root, false); err == nil {
+				t.Fatal("invalid import admitted", failure)
+			}
+		})
 	}
 }
 func TestCorpusCheckRejectsExtraOrModifiedImages(t *testing.T) {

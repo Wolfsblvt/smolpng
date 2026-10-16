@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/Wolfsblvt/smolpng/internal/domain"
 	"github.com/Wolfsblvt/smolpng/internal/imagefile"
 	"github.com/Wolfsblvt/smolpng/internal/pngimage"
 	"github.com/Wolfsblvt/smolpng/internal/testutil"
@@ -26,6 +27,10 @@ func main() {
 	}
 }
 func generate(root string, check bool) error {
+	imports, err := importedImages(root)
+	if err != nil {
+		return err
+	}
 	specimens := testutil.Corpus()
 	for n, b := range testutil.JPEGCorpus() {
 		specimens[n] = b
@@ -36,30 +41,30 @@ func generate(root string, check bool) error {
 	}
 	sort.Strings(names)
 	var manifest strings.Builder
-	manifest.WriteString("# SPDX-License-Identifier: CC0-1.0\nschema = 1\n# Synthetic behavior corpus, not perceptual calibration or natural photographs.\n")
+	manifest.WriteString("# SPDX-License-Identifier: CC0-1.0\nschema = 1\n# Generated structural specimens and explicitly admitted original media.\n")
 	expected := map[string]bool{}
 	for _, name := range names {
 		data := specimens[name]
 		relative := testutil.CorpusPath(name)
 		path := filepath.Join(root, filepath.FromSlash(relative))
-		if check {
-			stored, err := os.ReadFile(path)
-			if err != nil {
-				return err
-			}
-			if !equivalentFixture(data, stored) {
+		needsWrite := !check
+		if stored, err := os.ReadFile(path); err == nil {
+			if equivalentFixture(data, stored) {
+				// Retain valid checked-in encodings across Go versions, including
+				// during regeneration. The manifest binds these exact stored bytes.
+				data = stored
+				needsWrite = false
+			} else if check {
 				return fmt.Errorf("fixture changed: %s", path)
 			}
-			// The manifest binds the checked-in bytes. PNG encoder output can
-			// change across Go versions without changing the specimen itself.
-			data = stored
+		} else if check || !os.IsNotExist(err) {
+			return err
 		}
 		a, e := imagefile.Inspect(data, 1_000_000)
 		if e != nil {
 			return e
 		}
 		expected[filepath.FromSlash(relative)] = true
-		class := strings.Split(relative, "/")[1]
 		method := "internal/testutil/testutil.go"
 		if a.Format == "jpeg" {
 			method = "internal/testutil/jpeg.go"
@@ -67,8 +72,8 @@ func generate(root string, check bool) error {
 		if name == "alpha16.png" || name == "jpeg-progressive-flat.jpg" || name == "jpeg-private-exif.jpg" {
 			method += " + internal/testutil/corpus.go"
 		}
-		fmt.Fprintf(&manifest, "\n[[image]]\npath = %q\nformat = %q\nclass = %q\ncreator = \"Wolfsblvt Works contributors\"\nsource = \"project-generated\"\nmethod = %q\nlicense = \"CC0-1.0\"\nredistributable = true\npurpose = %q\nwidth = %d\nheight = %d\nalpha = %t\nbit_depth = %d\norientation = %d\nprogressive = %t\nsha256 = \"%x\"\n", relative, a.Format, class, method, strings.TrimSuffix(name, filepath.Ext(name)), a.Dimensions.Width, a.Dimensions.Height, a.Transparency, a.BitDepth, a.Orientation, a.Progressive, sha256.Sum256(data))
-		if !check {
+		writeImage(&manifest, corpusImage{Path: relative, Creator: "Wolfsblvt Works contributors", Source: "project-generated", Method: method, License: "CC0-1.0", Redistributable: true, Purpose: strings.TrimSuffix(name, filepath.Ext(name)), SHA256: fmt.Sprintf("%x", sha256.Sum256(data))}, a)
+		if needsWrite {
 			if e = os.MkdirAll(filepath.Dir(path), 0755); e != nil {
 				return e
 			}
@@ -76,6 +81,28 @@ func generate(root string, check bool) error {
 				return e
 			}
 		}
+	}
+	for _, item := range imports {
+		relative := filepath.FromSlash(item.Path)
+		if expected[relative] {
+			return fmt.Errorf("duplicate corpus path: %s", item.Path)
+		}
+		data, err := os.ReadFile(filepath.Join(root, relative))
+		if err != nil {
+			return err
+		}
+		if fmt.Sprintf("%x", sha256.Sum256(data)) != item.SHA256 {
+			return fmt.Errorf("imported fixture changed: %s; restore the admitted original instead of regenerating its hash", item.Path)
+		}
+		info, err := imagefile.Inspect(data, domain.DefaultLimits().MaxPixels)
+		if err != nil {
+			return fmt.Errorf("imported fixture %s: %w", item.Path, err)
+		}
+		if info.Format != strings.Split(item.Path, "/")[0] {
+			return fmt.Errorf("imported fixture format/path mismatch: %s", item.Path)
+		}
+		expected[relative] = true
+		writeImage(&manifest, item, info)
 	}
 	path := filepath.Join(root, "manifest.toml")
 	if check {

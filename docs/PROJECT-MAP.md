@@ -15,7 +15,7 @@ This map locates the current executable, image contracts, tests and documentatio
 | `internal/workflow` | Candidate and batch execution |
 | `internal/process`, `internal/toolchain` | Direct invocation and executable discovery |
 | `internal/paths` | Native user and portable locations |
-| `internal/testutil`, `tools/corpus`, `testdata/corpus` | Original fixtures and boundary doubles |
+| `internal/testutil`, `tools/corpus`, `testdata/corpus` | Generated/photographic fixtures, their admission and boundary doubles |
 | `docs`, `LICENSES` | Maintained behavior/destination and rights |
 
 Start with Development for commands, Architecture for invariants, and Vision for the complete destination. Generated output belongs under ignored `artifacts/`.
@@ -35,4 +35,4 @@ Start with Development for commands, Architecture for invariants, and Vision for
 
 `internal/shellmenu/` owns the data-only menu/wire protocol and native package validation; `native/windows-shell/` contains the minimal C++ COM bridge and its SDK/package builder. Both feed the Go engine rather than creating another compression path.
 
-`internal/comparison` and the `compare` command use the existing engine for bounded local experiments. `internal/shellmenu` owns portable menu data, native request format and addon package checks; `native/windows-shell` owns the small C++ Explorer ABI bridge and Windows SDK staging script. This native addon is separate from the six Go builds and requires its own compilation/activation proof. `testdata/corpus` now groups admitted generated media by format/class; photographic/ICC gaps are documented, not represented by fake media.
+`internal/comparison` and the `compare` command use the existing engine for bounded local experiments. `internal/shellmenu` owns portable menu data, native request format and addon package checks; `native/windows-shell` owns the small C++ Explorer ABI bridge and Windows SDK staging script. This native addon is separate from the six Go builds and requires its own compilation/activation proof. `testdata/corpus` groups generated specimens and two publisher-original CC0 photographs by format/class. Its existing manifest owns imported admission/provenance and derived image properties; broader photographic/ICC gaps remain documented rather than represented by fake media.

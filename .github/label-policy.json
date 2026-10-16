@@ -383,7 +383,8 @@
           "internal/workflow/**",
           "internal/pngimage/**",
           "internal/jpegimage/**",
-          "internal/toolchain/**"
+          "internal/toolchain/**",
+          "testdata/corpus/**"
         ],
         "exclude": []
       }
@@ -455,6 +456,7 @@
           ".github/label-policy.json",
           "tools/release/**",
           "tools/sign-update/**",
+          "tools/corpus/**",
           "internal/packaging/**",
           "native/windows-shell/CMakeLists.txt",
           "native/windows-shell/build.ps1"
@@ -480,6 +482,8 @@
           "docs/**",
           "README.md",
           "SECURITY.md",
+          "license-map.md",
+          "testdata/corpus/README.md",
           "skills/**",
           ".github/ISSUE_TEMPLATE/**",
           ".github/pull_request_template.md"
