@@ -16,6 +16,8 @@ smolpng update recover --stage /exact/transaction/folder --trust-key release-pub
 
 Check verifies the signed manifest and reports version/platform availability without changing installed files. Apply is explicit authorization to stage and replace the selected application files. Its return says **scheduled**, not completed. A trusted copy of the old executable waits for the invoking process to exit, then performs replacement. `update status` and the exact journal/result path expose completion or recovery state.
 
+`recover` previews the recorded stage. Explicit `recover --apply` also returns **scheduled**, with the recovery helper PID, log path and journal path; it does not restore files inside the running installed executable. A verified copy of the invoking old or new application waits for that process to exit, then performs the guarded rollback. Each recovery owns a fresh worker directory so the earlier update helper and logs remain intact. The journal moves through `rolling-back` to `rolled-back` on success; `recovery-required` plus an error records an unsuccessful restore. A prior `complete` phase describes the earlier update, not a completed rollback. Preserve the returned paths and inspect the journal or `update status` before claiming recovery finished.
+
 The trust file contains public keys, never signing secrets:
 
 ```json
@@ -36,7 +38,7 @@ Source and unknown builds cannot self-update. Recognized Winget, Scoop, Chocolat
 
 An OS lock serializes commit/rollback. Before and during publication, each installed file must match this transaction's old or new recorded hash. Complete sibling writes replace files without pre-deleting originals. The main executable is replaced last; its exact version, source commit, platform and standalone ownership are then probed. Failure restores the old files when hashes still agree. Locally modified or later-version files stop recovery rather than being deleted. Journals/backups remain available for explicit recovery instead of being silently discarded.
 
-On Windows the helper can still encounter another running instance, locked file, antivirus scanner or denied directory. It does not kill unrelated processes or elevate. Timeout/failure leaves the journal and may need a later retry. File visibility is atomic; the transaction is recoverable, not a guarantee against power loss or a malicious same-user writer. Native Windows/macOS replacement remains to be exercised.
+On Windows the helper can still encounter another running instance, locked file, antivirus scanner or denied directory. It does not kill unrelated processes or elevate. Timeout/failure leaves the journal and may need a later retry. File visibility is atomic; the transaction is recoverable, not a guarantee against power loss or a malicious same-user writer. The first native Windows experiment successfully applied an update but exposed the in-process explicit-rollback failure tracked in [#15](https://github.com/Wolfsblvt/smolpng/issues/15). Qualification of the repaired recovery path and native macOS replacement remain separate evidence.
 
 After a successful app update, the new binary uses its own embedded Skill bundle to synchronize only untouched app-managed installations. Custom paths are offered later by the normal manual-replacement/Skill startup workflow. Modified installations are preserved. A Skill-sync failure is reported without undoing a verified app or overwriting local Skill edits.
 

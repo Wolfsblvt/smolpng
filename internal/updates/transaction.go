@@ -370,12 +370,19 @@ func (m Manager) Apply(ctx context.Context, stage string) error {
 	}
 	return nil
 }
-func rollbackFiles(ctx context.Context, stage string, j *Journal, a Asset) error {
+func checkRollbackFiles(j Journal, a Asset) error {
 	for _, f := range a.Files {
 		h, _, e := fileHash(filepath.Join(j.Directory, filepath.FromSlash(f.Name)))
 		if e != nil || h != j.Previous[f.Name].SHA256 && h != f.SHA256 {
 			return fmt.Errorf("cannot restore changed file %s", f.Name)
 		}
+	}
+	return nil
+}
+
+func rollbackFiles(ctx context.Context, stage string, j *Journal, a Asset) error {
+	if e := checkRollbackFiles(*j, a); e != nil {
+		return e
 	}
 	for _, f := range a.Files {
 		old := j.Previous[f.Name]
@@ -413,8 +420,15 @@ func (m Manager) Rollback(ctx context.Context, stage string) error {
 		return e
 	}
 	defer lock.Close()
-	if e = rollbackFiles(ctx, stage, &j, a); e != nil {
+	j.Phase = "rolling-back"
+	j.Error = ""
+	if e = writeJournal(ctx, stage, j); e != nil {
 		return e
+	}
+	if e = rollbackFiles(ctx, stage, &j, a); e != nil {
+		j.Phase = "recovery-required"
+		j.Error = e.Error()
+		return errors.Join(e, writeJournal(ctx, stage, j))
 	}
 	j.Phase = "rolled-back"
 	j.Error = ""

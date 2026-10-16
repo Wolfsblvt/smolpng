@@ -158,6 +158,68 @@ func TestUpdatePrepareApplyAndExplicitRollback(t *testing.T) {
 		t.Fatal("new file not rolled back")
 	}
 }
+
+func TestRollbackWorkerCopiesVerifiedInvokerWithoutReplacingInstalledFiles(t *testing.T) {
+	m, p, _ := fixture(t)
+	for _, installed := range []string{"old-binary", "new-binary"} {
+		if installed == "new-binary" {
+			if err := m.Apply(context.Background(), p.Stage); err != nil {
+				t.Fatal(err)
+			}
+		}
+		first, err := m.prepareRollbackWorker(context.Background(), p.Stage)
+		if err != nil {
+			t.Fatal(err)
+		}
+		second, err := m.prepareRollbackWorker(context.Background(), p.Stage)
+		if err != nil || first == second || filepath.Dir(first) == filepath.Dir(second) {
+			t.Fatal("recovery overwrote an earlier worker", first, second, err)
+		}
+		for _, file := range []string{m.Executable, first, second} {
+			data, err := os.ReadFile(file)
+			if err != nil || string(data) != installed {
+				t.Fatal("worker preparation changed verified bytes", file, err)
+			}
+		}
+		j, err := ReadJournal(p.Stage)
+		if err != nil || j.Phase == "rolled-back" {
+			t.Fatal("preparation claimed rollback completion", j, err)
+		}
+	}
+}
+
+func TestRollbackWorkerRefusesUntrustedOrModifiedStateBeforeCreatingAHelper(t *testing.T) {
+	for _, failure := range []string{"installed edit", "snapshot edit", "untrusted invoker", "wrong trust"} {
+		t.Run(failure, func(t *testing.T) {
+			m, p, _ := fixture(t)
+			if err := m.Apply(context.Background(), p.Stage); err != nil {
+				t.Fatal(err)
+			}
+			switch failure {
+			case "installed edit":
+				os.WriteFile(m.Executable, []byte("user edit"), 0755)
+			case "snapshot edit":
+				os.WriteFile(filepath.Join(p.Stage, "old", "smolpng"), []byte("changed backup"), 0755)
+			case "untrusted invoker":
+				m.Executable = filepath.Join(filepath.Dir(m.Executable), "unknown")
+				os.WriteFile(m.Executable, []byte("unknown executable"), 0755)
+			case "wrong trust":
+				m.Trust = Trust{}
+			}
+			before, err := os.ReadDir(p.Stage)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := m.prepareRollbackWorker(context.Background(), p.Stage); err == nil {
+				t.Fatal("unsafe recovery helper prepared")
+			}
+			after, err := os.ReadDir(p.Stage)
+			if err != nil || len(after) != len(before) {
+				t.Fatal("rejected recovery created a worker", err)
+			}
+		})
+	}
+}
 func TestFailedIdentityProbeRestoresOldApplication(t *testing.T) {
 	m, p, r := fixture(t)
 	r.fail = true
@@ -253,5 +315,9 @@ func TestRollbackNeverOverwritesPostUpdateEdits(t *testing.T) {
 	b, _ := os.ReadFile(m.Executable)
 	if string(b) != "later version" {
 		t.Fatal("lost new bytes")
+	}
+	j, err := ReadJournal(p.Stage)
+	if err != nil || j.Phase != "recovery-required" || j.Error == "" {
+		t.Fatal("failed recovery retained a misleading completion state", j, err)
 	}
 }

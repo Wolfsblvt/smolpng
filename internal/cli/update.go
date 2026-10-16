@@ -173,9 +173,19 @@ func (a *app) updateCommand() *cobra.Command {
 			if e != nil {
 				return e
 			}
-			if e = m.Rollback(c.Context(), path); e != nil {
+			p, e := a.dirs()
+			if e != nil {
+				return e
+			}
+			pid, logPath, e := m.LaunchRollback(c.Context(), path, keyFile, filepath.Join(p.State, "update-last.txt"))
+			if e != nil && pid == 0 {
 				return domain.E(5, e.Error(), e)
 			}
+			result := map[string]any{"schemaVersion": 1, "status": "scheduled", "helperPid": pid, "helperLog": logPath, "stage": path, "resultPath": filepath.Join(path, "journal.json"), "completed": false, "instruction": "The verified recovery helper waits for this process to exit before restoring guarded prior files. Inspect update status or the journal for completion."}
+			if e != nil {
+				result["warning"] = e.Error()
+			}
+			return a.emit(result)
 		}
 		j, e := updates.ReadJournal(path)
 		if e != nil {
@@ -185,13 +195,14 @@ func (a *app) updateCommand() *cobra.Command {
 	}}
 	recover.Flags().StringVar(&stage, "stage", "", "Exact transaction folder")
 	recover.Flags().StringVar(&key, "trust-key", "", "Same public-key trust selected for the update")
-	recover.Flags().BoolVar(&apply, "apply", false, "Roll back only when installed and backup hashes agree")
+	recover.Flags().BoolVar(&apply, "apply", false, "Schedule rollback after exit, only when installed and backup hashes agree")
 	root.AddCommand(recover)
 	return root
 }
 func (a *app) updateInternalCommands() []*cobra.Command {
 	var stage, key string
 	var pid int
+	var rollback bool
 	worker := &cobra.Command{Use: "__update-worker", Hidden: true, Args: cobra.NoArgs, RunE: func(c *cobra.Command, _ []string) error {
 		if stage == "" {
 			return fmt.Errorf("missing update stage")
@@ -206,11 +217,15 @@ func (a *app) updateInternalCommands() []*cobra.Command {
 		m := updates.Manager{Trust: trust, Platform: runtime.GOOS + "/" + runtime.GOARCH, Runner: a.env.Runner}
 		ctx, cancel := context.WithTimeout(c.Context(), 5*time.Minute)
 		defer cancel()
+		if rollback {
+			return m.Rollback(ctx, stage)
+		}
 		return m.Apply(ctx, stage)
 	}}
 	worker.Flags().StringVar(&stage, "stage", "", "Internal stage")
 	worker.Flags().StringVar(&key, "trust-key", "", "Selected public key")
 	worker.Flags().IntVar(&pid, "wait-pid", 0, "Invoking process")
+	worker.Flags().BoolVar(&rollback, "rollback", false, "Restore the verified prior files")
 	var registry string
 	sync := &cobra.Command{Use: "__update-skill-sync", Hidden: true, Args: cobra.NoArgs, RunE: func(c *cobra.Command, _ []string) error {
 		if !filepath.IsAbs(registry) {
