@@ -3,13 +3,82 @@ package main
 import (
 	"crypto/sha256"
 	"fmt"
+	"image/png"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/Wolfsblvt/smolpng/internal/imagefile"
+	"github.com/Wolfsblvt/smolpng/internal/pngimage"
+	"github.com/Wolfsblvt/smolpng/internal/testutil"
 	"github.com/pelletier/go-toml/v2"
 )
+
+func TestCorpusCheckAcceptsPNGEncodingChangesButRejectsChangedSpecimens(t *testing.T) {
+	root := t.TempDir()
+	if err := generate(root, false); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(root, "png", "flat-icon", "flat-icon.png")
+	original, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	asset, err := pngimage.Decode(original, 1_000_000)
+	if err != nil {
+		t.Fatal(err)
+	}
+	encoded := testutil.PNG(asset.Image, png.BestCompression)
+	if string(original) == string(encoded) {
+		t.Fatal("test requires different encodings of identical pixels")
+	}
+	if err := os.WriteFile(path, encoded, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := generate(root, true); err == nil {
+		t.Fatal("changed bytes without a matching manifest digest admitted")
+	}
+	replaceManifestedFixture(t, root, path, original, encoded)
+	if err := generate(root, true); err != nil {
+		t.Fatal("equivalent PNG encoding refused:", err)
+	}
+	changed := testutil.PNG(testutil.Pattern(asset.Image.Bounds().Dx(), asset.Image.Bounds().Dy(), "noise"), png.BestCompression)
+	replaceManifestedFixture(t, root, path, encoded, changed)
+	if err := generate(root, true); err == nil {
+		t.Fatal("manifested pixel change admitted")
+	}
+	replaceManifestedFixture(t, root, path, changed, original)
+	chunks, err := pngimage.Chunks(original)
+	if err != nil {
+		t.Fatal(err)
+	}
+	chunks = append(chunks[:len(chunks)-1], pngimage.Chunk{Type: "tEXt", Data: []byte("Comment\x00changed metadata")}, chunks[len(chunks)-1])
+	changed = pngimage.EncodeChunks(chunks)
+	replaceManifestedFixture(t, root, path, original, changed)
+	if err := generate(root, true); err == nil {
+		t.Fatal("manifested metadata change admitted")
+	}
+}
+
+func replaceManifestedFixture(t *testing.T, root, path string, old, replacement []byte) {
+	t.Helper()
+	manifestPath := filepath.Join(root, "manifest.toml")
+	manifest, err := os.ReadFile(manifestPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updated := strings.Replace(string(manifest), fmt.Sprintf("%x", sha256.Sum256(old)), fmt.Sprintf("%x", sha256.Sum256(replacement)), 1)
+	if updated == string(manifest) {
+		t.Fatal("fixture digest was not in manifest")
+	}
+	if err := os.WriteFile(path, replacement, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(manifestPath, []byte(updated), 0600); err != nil {
+		t.Fatal(err)
+	}
+}
 
 func TestCheckedInCorpusHasExactLicensedStructuralManifest(t *testing.T) {
 	root := filepath.Join("..", "..", "testdata", "corpus")

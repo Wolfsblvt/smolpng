@@ -35,7 +35,7 @@ go run ./tools/corpus
 go run ./tools/corpus --check
 ```
 
-The generator owns 24 project-original CC0 PNG/JPEG structural specimens and a hash/structure/source manifest. Ordinary tests generate temporary specimens, not source-tree output. No lossy byte snapshots are asserted across optimizer versions. The [corpus guide](../testdata/corpus/README.md) records the admitted classes and remaining photographic/ICC gaps.
+The generator owns 24 project-original CC0 PNG/JPEG structural specimens and a hash/structure/source manifest. Check mode binds stored bytes to that manifest and compares generated PNG pixels and non-image-data chunks, allowing different Go versions to encode equivalent PNG data. JPEG remains byte-exact. Ordinary tests generate temporary specimens, not source-tree output. No lossy byte snapshots are asserted across optimizer versions. The [corpus guide](../testdata/corpus/README.md) records the admitted classes and remaining photographic/ICC gaps.
 
 ## Real-host qualification
 

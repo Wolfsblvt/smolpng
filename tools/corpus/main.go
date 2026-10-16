@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/Wolfsblvt/smolpng/internal/imagefile"
+	"github.com/Wolfsblvt/smolpng/internal/pngimage"
 	"github.com/Wolfsblvt/smolpng/internal/testutil"
 )
 
@@ -39,11 +40,24 @@ func generate(root string, check bool) error {
 	expected := map[string]bool{}
 	for _, name := range names {
 		data := specimens[name]
+		relative := testutil.CorpusPath(name)
+		path := filepath.Join(root, filepath.FromSlash(relative))
+		if check {
+			stored, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			if !equivalentFixture(data, stored) {
+				return fmt.Errorf("fixture changed: %s", path)
+			}
+			// The manifest binds the checked-in bytes. PNG encoder output can
+			// change across Go versions without changing the specimen itself.
+			data = stored
+		}
 		a, e := imagefile.Inspect(data, 1_000_000)
 		if e != nil {
 			return e
 		}
-		relative := testutil.CorpusPath(name)
 		expected[filepath.FromSlash(relative)] = true
 		class := strings.Split(relative, "/")[1]
 		method := "internal/testutil/testutil.go"
@@ -54,16 +68,7 @@ func generate(root string, check bool) error {
 			method += " + internal/testutil/corpus.go"
 		}
 		fmt.Fprintf(&manifest, "\n[[image]]\npath = %q\nformat = %q\nclass = %q\ncreator = \"Wolfsblvt Works contributors\"\nsource = \"project-generated\"\nmethod = %q\nlicense = \"CC0-1.0\"\nredistributable = true\npurpose = %q\nwidth = %d\nheight = %d\nalpha = %t\nbit_depth = %d\norientation = %d\nprogressive = %t\nsha256 = \"%x\"\n", relative, a.Format, class, method, strings.TrimSuffix(name, filepath.Ext(name)), a.Dimensions.Width, a.Dimensions.Height, a.Transparency, a.BitDepth, a.Orientation, a.Progressive, sha256.Sum256(data))
-		path := filepath.Join(root, filepath.FromSlash(relative))
-		if check {
-			b, e := os.ReadFile(path)
-			if e != nil {
-				return e
-			}
-			if !bytes.Equal(b, data) {
-				return fmt.Errorf("fixture changed: %s", path)
-			}
-		} else {
+		if !check {
 			if e = os.MkdirAll(filepath.Dir(path), 0755); e != nil {
 				return e
 			}
@@ -103,4 +108,30 @@ func generate(root string, check bool) error {
 		})
 	}
 	return os.WriteFile(path, []byte(manifest.String()), 0644)
+}
+
+func equivalentFixture(generated, stored []byte) bool {
+	if bytes.Equal(generated, stored) {
+		return true
+	}
+	a, err := pngimage.Decode(generated, 1_000_000)
+	if err != nil {
+		return false
+	}
+	b, err := pngimage.Decode(stored, 1_000_000)
+	if err != nil || !pngimage.PixelEqual(a.Image, b.Image) {
+		return false
+	}
+	// Preserve exact headers, palette, metadata, interlacing and chunk order.
+	// Only compression and subdivision of the image-data stream may differ.
+	withoutImageData := func(chunks []pngimage.Chunk) []byte {
+		retained := []pngimage.Chunk{}
+		for _, chunk := range chunks {
+			if chunk.Type != "IDAT" {
+				retained = append(retained, chunk)
+			}
+		}
+		return pngimage.EncodeChunks(retained)
+	}
+	return bytes.Equal(withoutImageData(a.Chunks), withoutImageData(b.Chunks))
 }
