@@ -119,6 +119,12 @@ func (a *app) dropCommand() *cobra.Command {
 			receipt, warnings = a.finishHuman(c.Context(), result, effective, mode)
 			if effective.Notify && a.env.Desktop != nil {
 				body := fmt.Sprintf("%d result(s), exit %d. Recover files with smolpng last.", len(result.Results), result.ExitCode)
+				for _, item := range result.Results {
+					if len(item.Warnings) > 0 {
+						body = "Warning: " + item.Warnings[0] + " " + body
+						break
+					}
+				}
 				if er := a.env.Desktop.Notify(c.Context(), "smolpng", body); er != nil {
 					warnings = append(warnings, "Desktop notification unavailable: "+er.Error())
 				}

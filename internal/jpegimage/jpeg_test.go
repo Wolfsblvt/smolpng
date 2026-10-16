@@ -79,7 +79,7 @@ func TestAllEightOrientationMappings(t *testing.T) {
 	}
 }
 func TestMalformedJPEGAndMetadataAreBounded(t *testing.T) {
-	for _, b := range [][]byte{nil, {0xff, 0xd8}, {0xff, 0xd8, 0xff, 0xe1, 0xff, 0xff}, append(specimen(), 0)} {
+	for _, b := range [][]byte{nil, {0xff, 0xd8}, {0xff, 0xd8, 0xff, 0xe1, 0xff, 0xff}, specimen()[:len(specimen())-2]} {
 		if _, e := Decode(b, 1000); e == nil {
 			t.Fatal("malformed JPEG accepted")
 		}
@@ -91,6 +91,39 @@ func TestMalformedJPEGAndMetadataAreBounded(t *testing.T) {
 	bad[10] = 255
 	if _, e := Orientation(bad); e == nil {
 		t.Fatal("invalid offset accepted")
+	}
+}
+
+func TestAppendedDataIsOutsidePrimaryJPEGAndMetadataPolicy(t *testing.T) {
+	// EOI-like bytes inside an APP segment must not end the primary image.
+	primary := specimen()
+	primary = append(append(bytes.Clone(primary[:2]), Marker(0xfe, []byte{1, 0xff, 0xd9, 2})...), primary[2:]...)
+	trailer := []byte("DualShot_Meta_Info\x00\xff\xd8\xff\xd9SEFT")
+	source := append(bytes.Clone(primary), trailer...)
+	a, err := Decode(source, 1000)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(a.Trailer, trailer) || a.Info.AppendedBytes != int64(len(trailer)) || a.Info.Bytes != int64(len(source)) {
+		t.Fatal("incorrect primary/attachment boundary", a.Info)
+	}
+	kept, err := Filter(a, "keep")
+	if err != nil || !bytes.Equal(kept, source) {
+		t.Fatal("keep lost appended data", err)
+	}
+	for _, policy := range []string{"safe", "all"} {
+		b, err := Filter(a, policy)
+		if err != nil {
+			t.Fatal(err)
+		}
+		decoded, err := Decode(b, 1000)
+		if err != nil || !pngimage.PixelEqual(a.Image, decoded.Image) || len(decoded.Trailer) != 0 || bytes.Contains(b, trailer) || !bytes.HasSuffix(b, []byte{0xff, 0xd9}) {
+			t.Fatal(policy, "did not produce the primary still image", err)
+		}
+	}
+	reconciled, err := Reconcile(a, a, "keep", false)
+	if err != nil || !bytes.Equal(reconciled, source) {
+		t.Fatal("reconciliation lost appended data", err)
 	}
 }
 func TestResizeNormalizesOrientationAndICCIsPreserved(t *testing.T) {

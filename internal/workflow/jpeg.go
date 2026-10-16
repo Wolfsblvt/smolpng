@@ -28,6 +28,20 @@ func (e Engine) optimizeJPEG(ctx context.Context, data []byte, r domain.Recipe) 
 	if r.Lossless && transform {
 		return out, domain.E(2, "strict JPEG lossless cannot normalize orientation or resize; use safe metadata", nil)
 	}
+	if len(original.Trailer) > 0 {
+		if r.Metadata == "keep" {
+			if transform {
+				return out, domain.E(2, "JPEG geometry changes with keep metadata are unsupported; choose safe or all", nil)
+			}
+			out.Candidate = Candidate{Data: data, Info: original.Info, Rank: 100000000, Pipeline: []domain.Step{}}
+			out.Warnings = append(out.Warnings, fmt.Sprintf("Kept complete JPEG unchanged to preserve %d attached bytes; compression and resizing cannot preserve opaque camera attachments", len(original.Trailer)))
+			if r.TargetBytes > 0 && int64(len(data)) > r.TargetBytes {
+				return out, domain.E(6, "JPEG target was not met; keep metadata preserves the complete file unchanged", nil)
+			}
+			return out, nil
+		}
+		out.Warnings = append(out.Warnings, jpegAttachmentWarning(original.Info.AppendedBytes))
+	}
 	normalized := data
 	if !transform {
 		normalized, err = jpegimage.Filter(original, r.Metadata)
@@ -46,7 +60,10 @@ func (e Engine) optimizeJPEG(ctx context.Context, data []byte, r domain.Recipe) 
 		}
 	}
 	if !transform {
-		retain(Candidate{Data: normalized, Info: original.Info, Rank: 100000000, Pipeline: []domain.Step{{Tool: "smolpng-jpeg-metadata", Version: "1"}}})
+		info := original.Info
+		info.Bytes = int64(len(normalized))
+		info.AppendedBytes = 0
+		retain(Candidate{Data: normalized, Info: info, Rank: 100000000, Pipeline: []domain.Step{{Tool: "smolpng-jpeg-metadata", Version: "1"}}})
 	}
 	fits := func() bool { return best != nil && r.TargetBytes > 0 && int64(len(best.Data)) <= r.TargetBytes }
 	if fits() {
@@ -133,6 +150,8 @@ func (e Engine) optimizeJPEG(ctx context.Context, data []byte, r domain.Recipe) 
 			return
 		}
 		valid++
+		after.Info.Bytes = int64(len(b))
+		after.Info.AppendedBytes = 0
 		rank := quality * 100000
 		if strict && len(prefix) == 0 {
 			rank = 100000000
@@ -217,4 +236,8 @@ func (e Engine) optimizeJPEG(ctx context.Context, data []byte, r domain.Recipe) 
 		return out, domain.E(6, "JPEG target was not met within the selected quality and dimension bounds", nil)
 	}
 	return out, nil
+}
+
+func jpegAttachmentWarning(n int64) string {
+	return fmt.Sprintf("Removed %d attached bytes after the primary JPEG; output is a still image without attached depth, refocus, motion or other auxiliary content; use keep metadata to preserve the complete file unchanged", n)
 }

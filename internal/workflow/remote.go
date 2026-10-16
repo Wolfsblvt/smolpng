@@ -60,6 +60,9 @@ func (e Engine) Optimize(ctx context.Context, data []byte, r domain.Recipe) (Out
 		return out, domain.E(3, err.Error(), err)
 	}
 	out.Original = info
+	if remoteOnly && info.AppendedBytes > 0 {
+		out.Warnings = append(out.Warnings, jpegAttachmentWarning(info.AppendedBytes))
+	}
 	if e.Remote == nil {
 		return out, domain.E(7, "TinyPNG adapter or credentials unavailable; use providers login tinypng", nil)
 	}
@@ -148,6 +151,8 @@ func remoteCandidate(source, data []byte, r domain.Recipe, before domain.ImageIn
 		if err != nil {
 			return Candidate{}, err
 		}
+		a.Info.Bytes = int64(len(b))
+		a.Info.AppendedBytes = 0
 		return Candidate{Data: b, Info: a.Info, Rank: 0, Pipeline: []domain.Step{{Tool: "tinypng", Version: "HTTP API"}}}, nil
 	}
 	a, err := pngimage.Decode(data, maxPixels)

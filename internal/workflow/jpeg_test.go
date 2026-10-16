@@ -82,3 +82,50 @@ func TestJPEGExplicitResizeWorksWithoutAnExternalEncoder(t *testing.T) {
 		t.Fatal(out, e)
 	}
 }
+
+func TestJPEGAttachedDataKeepPreservesWholeFileWithoutOptimizer(t *testing.T) {
+	data := append(jpegData(), []byte("DualShot_Meta_Info\x00SEFT")...)
+	for _, target := range []int64{0, int64(len(data)), 1} {
+		runner := &jpegRunner{}
+		engine := Engine{Runner: runner, Tools: toolchain.Set{JPEGOptim: toolchain.Tool{Name: "jpegoptim", Path: "jpegoptim", Available: true}}, Limits: domain.DefaultLimits()}
+		r, _ := domain.Builtin("auto")
+		r.Metadata, r.TargetBytes, r.AllowResize = "keep", target, target > 0
+		out, err := engine.Optimize(context.Background(), data, r)
+		wantCode := 0
+		if target == 1 {
+			wantCode = 6
+		}
+		if domain.Code(err) != wantCode || !bytes.Equal(out.Candidate.Data, data) || len(runner.sources) != 0 || len(out.Warnings) == 0 {
+			t.Fatalf("target %d: code %d, calls %d, warnings %v", target, domain.Code(err), len(runner.sources), out.Warnings)
+		}
+		r.Resize = domain.Dimensions{Width: 16, Height: 16}
+		if _, err := engine.Optimize(context.Background(), data, r); domain.Code(err) != 2 {
+			t.Fatal("keep accepted geometry change", err)
+		}
+	}
+}
+
+func TestJPEGAttachedDataSafeAndAllProduceWarnedStillImage(t *testing.T) {
+	primary := jpegData()
+	trailer := []byte("DualShot_Meta_Info\x00SEFT")
+	data := append(bytes.Clone(primary), trailer...)
+	snapshot := bytes.Clone(data)
+	for _, policy := range []string{"safe", "all"} {
+		runner := &jpegRunner{}
+		engine := Engine{Runner: runner, Tools: toolchain.Set{JPEGOptim: toolchain.Tool{Name: "jpegoptim", Path: "jpegoptim", Available: true}}, Limits: domain.DefaultLimits()}
+		r, _ := domain.Builtin("lossless")
+		r.Metadata = policy
+		out, err := engine.Optimize(context.Background(), data, r)
+		if err != nil || !bytes.Equal(out.Candidate.Data, primary) || len(out.Warnings) == 0 {
+			t.Fatal(policy, out.Warnings, err)
+		}
+		for _, source := range runner.sources {
+			if !bytes.Equal(source, primary) {
+				t.Fatal("attachment sent to optimizer")
+			}
+		}
+	}
+	if !bytes.Equal(data, snapshot) {
+		t.Fatal("source bytes changed")
+	}
+}

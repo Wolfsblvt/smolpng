@@ -225,18 +225,19 @@ func (l Limits) Validate() error {
 }
 
 type ImageInfo struct {
-	Orientation  int        `json:"orientation,omitempty"`
-	Progressive  bool       `json:"progressive,omitempty"`
-	Format       string     `json:"format"`
-	Bytes        int64      `json:"bytes"`
-	Dimensions   Dimensions `json:"dimensions"`
-	BitDepth     int        `json:"bitDepth"`
-	ColorType    int        `json:"colorType"`
-	Alpha        bool       `json:"alpha"`
-	Transparency bool       `json:"transparency"`
-	Interlaced   bool       `json:"interlaced"`
-	Animated     bool       `json:"animated"`
-	Chunks       []string   `json:"chunks"`
+	AppendedBytes int64      `json:"appendedBytes,omitempty"`
+	Orientation   int        `json:"orientation,omitempty"`
+	Progressive   bool       `json:"progressive,omitempty"`
+	Format        string     `json:"format"`
+	Bytes         int64      `json:"bytes"`
+	Dimensions    Dimensions `json:"dimensions"`
+	BitDepth      int        `json:"bitDepth"`
+	ColorType     int        `json:"colorType"`
+	Alpha         bool       `json:"alpha"`
+	Transparency  bool       `json:"transparency"`
+	Interlaced    bool       `json:"interlaced"`
+	Animated      bool       `json:"animated"`
+	Chunks        []string   `json:"chunks"`
 }
 type Step struct {
 	Tool      string   `json:"tool"`

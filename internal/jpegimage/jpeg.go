@@ -19,7 +19,11 @@ type Segment struct {
 	Data, Raw []byte
 }
 type Asset struct {
-	Data        []byte
+	Data []byte
+	// Trailer is opaque attached content after the primary JPEG's EOI. Camera
+	// formats may contain offsets into the original file, so copying it after
+	// rewriting the primary image does not guarantee preservation.
+	Trailer     []byte
 	Image       image.Image
 	Info        domain.ImageInfo
 	Segments    []Segment
@@ -30,7 +34,8 @@ type Asset struct {
 func Is(data []byte) bool { return len(data) >= 2 && data[0] == 0xff && data[1] == 0xd8 }
 
 // Segments retains entropy bytes verbatim, including byte stuffing and restart
-// markers, and handles multiple scans. It never interprets JPEG coefficients.
+// markers, and handles multiple scans. It stops at the primary EOI, excluding
+// opaque appended content, and never interprets JPEG coefficients.
 func Segments(data []byte) ([]Segment, error) {
 	if !Is(data) {
 		return nil, fmt.Errorf("not a JPEG image")
@@ -54,9 +59,6 @@ func Segments(data []byte) ([]Segment, error) {
 		marker := data[pos]
 		pos++
 		if marker == 0xd9 {
-			if pos != len(data) {
-				return nil, fmt.Errorf("trailing bytes after JPEG EOI")
-			}
 			return append(out, Segment{Marker: marker, Raw: data[start:pos]}), nil
 		}
 		if marker == 0 || marker == 0xd8 || marker >= 0xd0 && marker <= 0xd7 {
@@ -109,7 +111,12 @@ func Decode(data []byte, maxPixels int64) (*Asset, error) {
 	if e != nil {
 		return nil, e
 	}
-	config, e := jpeg.DecodeConfig(bytes.NewReader(data))
+	primaryEnd := 0
+	for _, s := range cs {
+		primaryEnd += len(s.Raw)
+	}
+	primary := data[:primaryEnd]
+	config, e := jpeg.DecodeConfig(bytes.NewReader(primary))
 	if e != nil {
 		return nil, fmt.Errorf("invalid JPEG header")
 	}
@@ -118,6 +125,8 @@ func Decode(data []byte, maxPixels int64) (*Asset, error) {
 		return nil, fmt.Errorf("JPEG exceeds the decoded pixel limit")
 	}
 	a := &Asset{Data: data, Segments: cs, Orientation: 1, Info: domain.ImageInfo{Format: "jpeg", Bytes: int64(len(data)), Dimensions: d, BitDepth: 8, ColorType: 3, Chunks: []string{}}}
+	a.Trailer = data[primaryEnd:]
+	a.Info.AppendedBytes = int64(len(a.Trailer))
 	seenOrientation := false
 	for _, s := range cs {
 		if s.Marker == 0 {
@@ -145,7 +154,7 @@ func Decode(data []byte, maxPixels int64) (*Asset, error) {
 		}
 	}
 	a.Info.Orientation = a.Orientation
-	m, e := jpeg.Decode(bytes.NewReader(data))
+	m, e := jpeg.Decode(bytes.NewReader(primary))
 	if e != nil {
 		return nil, fmt.Errorf("invalid or truncated JPEG scan")
 	}
@@ -329,6 +338,12 @@ func EncodeOriginal(a *Asset, d domain.Dimensions, quality int, policy string) (
 	return data, nil
 }
 func Reconcile(source, candidate *Asset, policy string, remote bool) ([]byte, error) {
+	if policy == "keep" && len(source.Trailer) > 0 {
+		if remote {
+			return nil, fmt.Errorf("cannot preserve attached JPEG data through remote processing")
+		}
+		return source.Data, nil
+	}
 	if source.Orientation != candidate.Orientation {
 		return nil, fmt.Errorf("JPEG orientation changed unexpectedly")
 	}

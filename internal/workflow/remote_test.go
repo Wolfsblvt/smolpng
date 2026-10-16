@@ -63,3 +63,19 @@ func TestRemoteCannotBypassLosslessOrKeep(t *testing.T) {
 		t.Fatal(er)
 	}
 }
+
+func TestRemoteJPEGAttachmentIsRemovedBeforeUploadAndWarned(t *testing.T) {
+	primary := jpegData()
+	data := append(bytes.Clone(primary), []byte("private attached camera content")...)
+	stub := &remoteStub{data: primary}
+	r, _ := domain.Builtin("auto")
+	r.RemotePolicy = "always"
+	out, err := (Engine{Limits: domain.DefaultLimits(), Remote: stub}).Optimize(context.Background(), data, r)
+	if err != nil || stub.calls != 1 || !bytes.Equal(stub.input, primary) || !bytes.Equal(out.Candidate.Data, primary) || len(out.Warnings) != 1 || out.Original.AppendedBytes == 0 || out.Candidate.Info.AppendedBytes != 0 {
+		t.Fatal("remote still-image contract", stub.calls, out, err)
+	}
+	r.Metadata = "keep"
+	if _, err := (Engine{Limits: domain.DefaultLimits(), Remote: stub}).Optimize(context.Background(), data, r); domain.Code(err) != 2 || stub.calls != 1 {
+		t.Fatal("keep attachment uploaded", err, stub.calls)
+	}
+}

@@ -99,9 +99,10 @@ func edit(title string, values map[string]string) promptStep {
 }
 
 type desktopFake struct {
-	opened, urls  []string
-	notifications int
-	fail          bool
+	opened, urls       []string
+	notifications      int
+	notificationBodies []string
+	fail               bool
 }
 
 func (d *desktopFake) OpenFolder(_ context.Context, p string) error {
@@ -112,8 +113,9 @@ func (d *desktopFake) OpenURL(_ context.Context, u string) error {
 	d.urls = append(d.urls, u)
 	return nil
 }
-func (d *desktopFake) Notify(context.Context, string, string) error {
+func (d *desktopFake) Notify(_ context.Context, _ string, body string) error {
 	d.notifications++
+	d.notificationBodies = append(d.notificationBodies, body)
 	if d.fail {
 		return fmt.Errorf("no notification service")
 	}
@@ -351,6 +353,36 @@ func TestDropFailureAndDesktopWarningRemainRecoverable(t *testing.T) {
 	}
 	if len(state.Outputs(last.Report)) != 0 {
 		t.Fatal("target miss output invented")
+	}
+}
+
+func TestDropCameraAttachmentWarningReachesNotificationAndLast(t *testing.T) {
+	h, p, _, actions := humanSetup(t)
+	primary := testutil.JPEG(testutil.Pattern(16, 16, "flat"), 90)
+	data := append(bytes.Clone(primary), []byte("DualShot_Meta_InfoSEFT")...)
+	source := filepath.Join(h.dir, "camera.jpg")
+	if err := os.WriteFile(source, data, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if code := h.run("drop", source, "--strip", "safe", "--target-size", fmt.Sprintf("%dB", len(data)), "--json"); code != 0 {
+		t.Fatal(code, h.out, h.err)
+	}
+	p.done()
+	last, err := state.ReadLast(filepath.Join(h.Paths.State, "last-result.json"))
+	if err != nil || len(last.Report.Results) != 1 || len(last.Report.Results[0].Warnings) != 1 {
+		t.Fatal(last, err)
+	}
+	warning := last.Report.Results[0].Warnings[0]
+	if len(actions.notificationBodies) != 1 || !strings.Contains(actions.notificationBodies[0], warning) {
+		t.Fatal("drop notification omitted attachment warning", actions.notificationBodies)
+	}
+	result, err := os.ReadFile(last.Report.Results[0].Output)
+	if err != nil || !bytes.Equal(result, primary) {
+		t.Fatal("drop did not commit primary still image", err)
+	}
+	unchanged, err := os.ReadFile(source)
+	if err != nil || !bytes.Equal(unchanged, data) {
+		t.Fatal("drop changed original camera file", err)
 	}
 }
 func TestSettingsFormWritesOnlyChangesAndShowsBuiltins(t *testing.T) {
