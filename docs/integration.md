@@ -13,6 +13,40 @@ smolpng integrate status --json
 smolpng integrate remove --id preset-mcp-icon --apply
 ```
 
+## Windows: drop files onto an Auto shortcut
+
+Extract a development candidate into the folder you intend to keep. Keep `smolpng.exe` and `smolpngw.exe` together; source builds need both [Windows entry points](DEVELOPMENT.md#keyboard-and-desktop-verification). Candidate archives are currently local builds, not a signed public installer. See [Packaging](packaging.md#candidate-builds).
+
+Open PowerShell in that folder and inspect your separate local optimizers:
+
+```powershell
+.\smolpng.exe deps status --json
+```
+
+PNG Auto uses pngquant; OxiPNG can improve its result. JPEG Auto uses jpegoptim. If a needed program is missing, run `.\smolpng.exe setup` to select existing programs or follow [Dependency setup](dependencies.md). The standard archive contains none of those optimizers. A TinyPNG key is unnecessary for this local workflow.
+
+Create just one desktop drop target, first previewing its destination and arguments:
+
+```powershell
+.\smolpng.exe integrate shortcut create auto --preset auto
+.\smolpng.exe integrate shortcut create auto --preset auto --apply
+.\smolpng.exe integrate status --json
+```
+
+The desktop file is `smolpng-preset-auto.lnk` (Explorer may hide `.lnk`). Drop one or more PNG/JPEG files onto it. It runs Auto through the background executable. By default, each result appears beside its original as `name.smol.png` or `name.smol.jpg`; another run creates `name.smol-2.png` or `name.smol-2.jpg`. Originals stay in place. Explicit user/preset output and clipboard preferences still apply. Launchers ignore project settings, and Auto stays local unless user settings explicitly permit remote processing.
+
+If the notification disappears or nothing obvious happens, inspect the saved result before trying again:
+
+```powershell
+.\smolpng.exe last --json
+```
+
+That report preserves per-file outcomes, warnings and output paths; it can expose a missing optimizer or a partial batch. Drag the original files again when trying another recipe, rather than compressing the previous outputs. To remove this shortcut, preview `.\smolpng.exe integrate remove --id preset-auto`, then repeat with `--apply`. Move the application by removing its old launchers and recreating them from its new folder.
+
+Native shortcut creation and Windows activation with file arguments have passed. Physical Explorer dragging, rendered notifications and clipboard/paste still need ordinary desktop observation; this guide does not promote the activation check into those claims.
+
+## Launcher variants
+
 `--send-to` is Windows-specific. Ordinary installation creates a menu entry opening the TUI and an Auto entry running the background workflow. Optional desktop targets provide both variants. A custom preset shortcut can use `--interactive` to start the recipe picker instead. The preset must exist in built-ins or installed user settings when created; project-only definitions must first be imported into user storage. It is resolved by name when the launcher runs. No preset definition or credential is embedded.
 
 ## Native behavior
