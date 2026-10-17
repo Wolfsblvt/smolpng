@@ -97,5 +97,5 @@ jobs:
           config: .diffdevil.yml
           rule: ${{ steps.target.outputs.rule }}
           definitions: none
-          comment-author: wolfsblvt-automaton[bot]
-          comment-author-id: '319117825'
+          comment-author: ${{ (github.event_name != 'workflow_dispatch' || inputs.apply) && 'wolfsblvt-automaton[bot]' || '' }}
+          comment-author-id: ${{ (github.event_name != 'workflow_dispatch' || inputs.apply) && '319117825' || '' }}
