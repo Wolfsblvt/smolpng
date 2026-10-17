@@ -43,3 +43,5 @@ A public release requires separate exact authority for repository visibility, re
 ## Executable local builder
 
 `go run ./tools/release --version 0.2.0-dev.1 --out artifacts/candidate` now creates the exact platform packages and checksum/index files described here. `--base-url` plus a stable version additionally authors package-manager inputs and a narrow standalone update payload. A separate `tools/sign-update` command requires an already held protected key; normal candidate builds do not sign. See [Packaging](packaging.md) for the implemented invocation and strict publication boundary.
+
+The builder uses the application's direct process constructor for Git and Go. On Windows those children start without a console window; build output, explicit cross-compilation environment and exit-status handling remain available. The native process tests check both a direct child and inherited console behavior. This process qualification does not establish graphical application or desktop-integration behavior.

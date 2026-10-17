@@ -4,19 +4,21 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/Wolfsblvt/smolpng/internal/packaging"
-	"github.com/Wolfsblvt/smolpng/internal/updates"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Wolfsblvt/smolpng/internal/packaging"
+	"github.com/Wolfsblvt/smolpng/internal/process"
+	"github.com/Wolfsblvt/smolpng/internal/updates"
 )
 
 func main() {
@@ -51,7 +53,7 @@ func run() error {
 		}
 	}
 	git := func(args ...string) (string, error) {
-		c := exec.Command("git", args...)
+		c := process.CommandContext(context.Background(), "git", args...)
 		b, e := c.Output()
 		return strings.TrimSpace(string(b)), e
 	}
@@ -134,7 +136,7 @@ func run() error {
 		}
 		build := func(pkg, name, extra string) error {
 			flags := "-X github.com/Wolfsblvt/smolpng/internal/cli.Version=" + *version + " -X github.com/Wolfsblvt/smolpng/internal/cli.Commit=" + sha + " -X github.com/Wolfsblvt/smolpng/internal/cli.Distribution=standalone -X main.Commit=" + sha + " " + extra
-			cmd := exec.Command("go", "build", "-trimpath", "-buildvcs=false", "-ldflags", flags, "-o", filepath.Join(stage, name), pkg)
+			cmd := process.CommandContext(context.Background(), "go", "build", "-trimpath", "-buildvcs=false", "-ldflags", flags, "-o", filepath.Join(stage, name), pkg)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 			env := []string{}
