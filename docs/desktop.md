@@ -2,7 +2,7 @@
 
 ## Meaning
 
-The keyboard UI, native clipboard adapter, settings, background/drop command and last-result recovery are implemented. This guide owns their usage and explicit native-host limitations. It does not claim a signed installer, functioning browser-paste behavior on every desktop, or installed shortcuts.
+The keyboard UI, native clipboard adapter, settings, background/drop command and last-result recovery are implemented. This guide owns their usage and explicit native-host limitations. [Desktop integration](integration.md) owns opt-in shortcut installation; a signed installer and browser-paste behavior on every desktop remain unqualified.
 
 ## Ordinary path
 
@@ -33,7 +33,7 @@ Smart single-result copy offers PNG bytes, file references and absolute path tex
 
 On Linux an owning process may need to stay alive. Keep the result menu open until paste. `smolpng drop` retains ownership for up to five minutes, ending early if replaced or cancelled. `--clipboard-hold` can choose a shorter/longer bounded duration, including zero; JSON drop defaults to zero unless explicitly selected. It is a transient owner, not an installed daemon or background service. Windows/macOS clipboard persistence remains native API behavior to qualify.
 
-`drop` applies the configured preset and tries the copy/notification without asking questions. A project deliberately configured for interactive drop opens the UI outside JSON mode. Windows `smolpngw.exe` selects drop with no console when built with `-H=windowsgui`; selecting interactive drop allocates a console deliberately. Ordinary dragging onto `smolpng.exe` opens the interactive root. Start-menu/Desktop/Send To entries are not installed by this cut.
+`drop` applies the configured preset and tries the copy/notification without asking questions. A project deliberately configured for interactive drop opens the UI outside JSON mode. Windows `smolpngw.exe` selects drop with no console when built with `-H=windowsgui`; selecting interactive drop allocates a console deliberately. Ordinary dragging onto `smolpng.exe` opens the interactive root. Use the [Windows Auto-shortcut guide](integration.md#windows-drop-files-onto-an-auto-shortcut) for a background drop target, or `integrate install` for opt-in Start-menu/Desktop/Send To entries.
 
 A missing notification is recoverable with `smolpng last`. `last --clear` removes the metadata only. Report images remain normal files, not temporary hidden downloads.
 
