@@ -21,11 +21,12 @@ func (a *app) depsCommand() *cobra.Command {
 	root.AddCommand(&cobra.Command{Use: "status", Args: cobra.NoArgs, RunE: a.doctor}, &cobra.Command{Use: "doctor", Args: cobra.NoArgs, RunE: a.doctor})
 	root.AddCommand(&cobra.Command{Use: "licenses", Args: cobra.NoArgs, Short: "Show separate optimizer source and license boundaries", RunE: func(c *cobra.Command, _ []string) error {
 		oxi, e := toolchain.ArtifactFor("oxipng", runtime.GOOS, runtime.GOARCH)
-		return a.emit(map[string]any{"schemaVersion": 1, "bundledExecutables": false, "pngquant": map[string]any{"license": "GPL-3.0-or-later with upstream notices OR commercial", "source": "https://pngquant.org/licensing.html", "managedDownload": false, "reason": "no qualified artifact/checksum selected"}, "oxipng": map[string]any{"license": "MIT", "source": "https://github.com/oxipng/oxipng/tree/v10.2.1", "managedArtifact": oxi, "available": e == nil, "reason": errorText(e)}})
+		jpeg, jpegErr := toolchain.ArtifactFor("jpegoptim", runtime.GOOS, runtime.GOARCH)
+		return a.emit(map[string]any{"schemaVersion": 1, "bundledExecutables": false, "pngquant": map[string]any{"license": "GPL-3.0-or-later with upstream notices OR commercial", "source": "https://pngquant.org/licensing.html", "managedDownload": false, "reason": "no qualified artifact/checksum selected"}, "oxipng": map[string]any{"license": "MIT", "source": "https://github.com/oxipng/oxipng/tree/v10.2.1", "managedArtifact": oxi, "available": e == nil, "reason": errorText(e)}, "jpegoptim": map[string]any{"license": "GPL-3.0-or-later", "source": "https://github.com/tjko/jpegoptim/tree/v1.5.6", "managedArtifact": jpeg, "available": jpegErr == nil, "reason": errorText(jpegErr)}})
 	}})
 	for _, operation := range []string{"install", "update"} {
 		var apply bool
-		command := &cobra.Command{Use: operation + " [oxipng]", Args: cobra.MaximumNArgs(1), Short: "Preview a pinned optimizer archive; --apply downloads, verifies and activates it"}
+		command := &cobra.Command{Use: operation + " [oxipng|jpegoptim]", Args: cobra.MaximumNArgs(1), Short: "Preview a pinned optimizer archive; --apply downloads, verifies and activates it"}
 		command.Flags().BoolVar(&apply, "apply", false, "Accept the displayed upstream source/license and install the pinned artifact")
 		command.RunE = func(c *cobra.Command, args []string) error {
 			name := "oxipng"

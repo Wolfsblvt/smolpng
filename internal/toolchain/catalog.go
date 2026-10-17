@@ -21,6 +21,9 @@ type Artifact struct {
 }
 
 func ArtifactFor(tool, goos, arch string) (Artifact, error) {
+	if tool == "jpegoptim" {
+		return jpegoptimArtifact(goos, arch)
+	}
 	if tool != "oxipng" {
 		return Artifact{}, fmt.Errorf("managed %s download has no qualified artifact/checksum in this build; install it separately and configure its path", tool)
 	}
@@ -40,6 +43,31 @@ func ArtifactFor(tool, goos, arch string) (Artifact, error) {
 		exe += ".exe"
 	}
 	return Artifact{Tool: tool, Version: "10.2.1", OS: goos, Arch: arch, URL: "https://github.com/oxipng/oxipng/releases/download/v10.2.1/oxipng-10.2.1-" + v[0], SHA256: v[1], Archive: v[2], Executable: exe, License: "MIT", Source: "https://github.com/oxipng/oxipng/tree/v10.2.1", Qualification: "upstream version/archive digest pinned; installer probes exact version locally; real-host corpus qualification is separate"}, nil
+}
+
+func jpegoptimArtifact(goos, arch string) (Artifact, error) {
+	if arch != "amd64" {
+		return Artifact{}, fmt.Errorf("no native jpegoptim artifact is qualified for %s/%s in this build; configure an independently installed executable", goos, arch)
+	}
+	// Digests from the upstream v1.5.6 release, checked 2026-10-17.
+	targets := map[string][2]string{
+		"windows": {"windows", "db2d8caee88f2665b772c4591cba223b8b729500b88266dc06d4bf79d28fe11a"},
+		"linux":   {"linux", "f480db3bdda996cb1ed366f0877f2fe9e0d8708487f7d00e4c7166b52a9e2c1a"},
+		"darwin":  {"osx", "5ca21c2f8f02ed815b00e453b0ea235d84ac6a99704d15bb587f952f700d6d44"},
+	}
+	target, ok := targets[goos]
+	if !ok {
+		return Artifact{}, fmt.Errorf("no native jpegoptim artifact is qualified for %s/%s in this build; configure an independently installed executable", goos, arch)
+	}
+	executable := "jpegoptim"
+	if goos == "windows" {
+		executable += ".exe"
+	}
+	return Artifact{Tool: "jpegoptim", Version: "1.5.6", OS: goos, Arch: arch,
+		URL:    "https://github.com/tjko/jpegoptim/releases/download/v1.5.6/jpegoptim-1.5.6-x64-" + target[0] + ".zip",
+		SHA256: target[1], Archive: "zip", Executable: executable, License: "GPL-3.0-or-later",
+		Source:        "https://github.com/tjko/jpegoptim/tree/v1.5.6",
+		Qualification: "upstream version/archive digest pinned; installer retains upstream copyright/license and probes exact version locally; real-host corpus qualification is separate"}, nil
 }
 
 const oxipngLicense = `The MIT License (MIT)

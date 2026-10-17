@@ -58,6 +58,10 @@ func Discover(ctx context.Context, r process.Runner, explicit, config Paths) Set
 				t.License = "GPL-3.0-or-later with upstream notices OR commercial"
 				t.Upstream = "https://pngquant.org/"
 			}
+			if name == "jpegoptim" {
+				t.License = "GPL (exact terms depend on the installed jpegoptim release)"
+				t.Upstream = "https://github.com/tjko/jpegoptim"
+			}
 			t.Error = "managed dependency " + state.State
 			if state.Reason != "" {
 				t.Error += ": " + state.Reason
@@ -87,7 +91,7 @@ func Discover(ctx context.Context, r process.Runner, explicit, config Paths) Set
 		}
 		return system
 	}
-	return Set{PNGQuant: selectTool("pngquant", explicit.PNGQuant, config.PNGQuant), OxiPNG: selectTool("oxipng", explicit.OxiPNG, config.OxiPNG), JPEGOptim: probe(ctx, r, "jpegoptim", explicit.JPEGOptim, config.JPEGOptim)}
+	return Set{PNGQuant: selectTool("pngquant", explicit.PNGQuant, config.PNGQuant), OxiPNG: selectTool("oxipng", explicit.OxiPNG, config.OxiPNG), JPEGOptim: selectTool("jpegoptim", explicit.JPEGOptim, config.JPEGOptim)}
 }
 func probe(ctx context.Context, r process.Runner, name, explicit, configured string) Tool {
 	t := Tool{Name: name, Source: "none", License: "MIT", Upstream: "https://github.com/oxipng/oxipng"}
