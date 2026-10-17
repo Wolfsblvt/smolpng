@@ -65,3 +65,5 @@ Update means the catalog shipped by the installed smolpng build, not whatever up
 Removal checks every recorded version and refuses user edits, extra files or untracked content. It removes only the managed tool tree, never a system program, config, presets, Skill or image. Removal renames the verified tree out of discovery before cleanup. Locked files can cause a refusal or a clearly reported cleanup residue, not a falsely successful half-active executable.
 
 A hard crash can leave a staging or removal directory. Inspect its bytes before manual cleanup; this cut does not sweep unknown directories or overwrite an installation merely to make a green check appear. The local owner is trusted, and these checks do not defend against a malicious simultaneous writer with the same account permissions.
+
+The [Windows managed JPEG record](reference/2026-10-17-windows-managed-jpegoptim.md) qualifies a real download/install/discovery/compression/removal journey in a disposable application home. Other-host execution and graphical setup remain separate observations.
