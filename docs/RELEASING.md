@@ -6,7 +6,7 @@ smolpng currently produces private development candidates, not a public release.
 
 ## Exact provenance
 
-Build a clean source commit with Go 1.26.6 or a separately qualified compatible toolchain. Bind the application version report to that complete SHA, not just a friendly version label. The native qualification helper must be bound to the same SHA.
+Build a clean source commit with Go 1.26.6 or a separately qualified compatible toolchain. Bind the application version report to that complete SHA, not just a friendly version label. A packaged native qualification helper is built from that same SHA. A separately built helper may exercise an existing candidate with explicit `-expected-commit SHA`; record both source identities and executable hashes rather than claiming the helper and application share a build.
 
 PowerShell, from the source root on Windows:
 
