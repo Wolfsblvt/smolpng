@@ -139,14 +139,7 @@ func run() error {
 			cmd := process.CommandContext(context.Background(), "go", "build", "-trimpath", "-buildvcs=false", "-ldflags", flags, "-o", filepath.Join(stage, name), pkg)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
-			env := []string{}
-			for _, v := range os.Environ() {
-				if strings.HasPrefix(v, "GOOS=") || strings.HasPrefix(v, "GOARCH=") || strings.HasPrefix(v, "CGO_ENABLED=") || strings.HasPrefix(v, "TINIFY_API_KEY=") {
-					continue
-				}
-				env = append(env, v)
-			}
-			cmd.Env = append(env, "GOOS="+goos, "GOARCH="+arch, "CGO_ENABLED=0")
+			cmd.Env = releaseBuildEnvironment(os.Environ(), goos, arch)
 			if e := cmd.Run(); e != nil {
 				return e
 			}
