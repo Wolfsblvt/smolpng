@@ -7,6 +7,7 @@ import (
 	"github.com/Wolfsblvt/smolpng/internal/updates"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -127,5 +128,34 @@ func TestMetadataRejectsDuplicateUnknownAndMalformedArtifactIdentity(t *testing.
 	bad.Platform = "linux/mips"
 	if _, e := Metadata("1.0.0", []Artifact{bad}); e == nil {
 		t.Fatal("unknown platform silently ignored")
+	}
+}
+
+func TestNFPMPermissionsExcludeGroupAndOtherWrites(t *testing.T) {
+	for _, arch := range []string{"amd64", "arm64"} {
+		t.Run(arch, func(t *testing.T) {
+			files, err := Metadata("1.0.0", []Artifact{{
+				Platform: "linux/" + arch,
+				URL:      "https://example.test/smolpng.tar.gz",
+				SHA256:   strings.Repeat("a", 64),
+			}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, value, ok := strings.Cut(string(files["nfpm/"+arch+".yaml"]), "\numask: ")
+			if !ok {
+				t.Fatal("package must declare its permissions independently of staging host defaults")
+			}
+			value, _, _ = strings.Cut(value, "\n")
+			mask, err := strconv.ParseUint(strings.TrimSpace(value), 0, 32)
+			if err != nil {
+				t.Fatal("invalid package umask:", err)
+			}
+			for _, entry := range []struct{ staged, want uint64 }{{0666, 0644}, {0777, 0755}} {
+				if got := entry.staged &^ mask; got != entry.want {
+					t.Errorf("staged mode %#o becomes %#o, want %#o", entry.staged, got, entry.want)
+				}
+			}
+		})
 	}
 }
