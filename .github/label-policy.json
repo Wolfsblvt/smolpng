@@ -458,6 +458,7 @@
           "tools/release/**",
           "tools/sign-update/**",
           "tools/corpus/**",
+          "tools/qualify/**",
           "internal/packaging/**",
           "native/windows-shell/CMakeLists.txt",
           "native/windows-shell/build.ps1"

@@ -8,8 +8,10 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
+	"image"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -19,6 +21,7 @@ import (
 
 	"github.com/Wolfsblvt/smolpng/internal/domain"
 	"github.com/Wolfsblvt/smolpng/internal/fsutil"
+	"github.com/Wolfsblvt/smolpng/internal/jpegimage"
 	"github.com/Wolfsblvt/smolpng/internal/pngimage"
 	"github.com/Wolfsblvt/smolpng/internal/process"
 	"github.com/Wolfsblvt/smolpng/internal/testutil"
@@ -38,6 +41,7 @@ type check struct {
 }
 type evidence struct {
 	SchemaVersion    int             `json:"schemaVersion"`
+	QualifierCommit  string          `json:"qualifierCommit"`
 	ExpectedCommit   string          `json:"expectedCommit"`
 	Platform         string          `json:"platform"`
 	Started          time.Time       `json:"started"`
@@ -45,12 +49,14 @@ type evidence struct {
 	ExecutableSHA256 string          `json:"executableSHA256"`
 	Tools            json.RawMessage `json:"tools,omitempty"`
 	Checks           []check         `json:"checks"`
+	Formats          []string        `json:"formats"`
+	Complete         bool            `json:"complete"`
 	Passed           bool            `json:"passed"`
 	Qualification    string          `json:"qualification"`
 }
 type options struct {
-	Executable, Directory, PNGQuant, OxiPNG, Expected string
-	Timeout                                           time.Duration
+	Executable, Directory, PNGQuant, OxiPNG, JPEGOptim, Expected, Formats string
+	Timeout                                                               time.Duration
 }
 type suite struct {
 	opt    options
@@ -66,6 +72,8 @@ func main() {
 	flag.StringVar(&o.Directory, "output", "", "New directory for qualification fixtures, outputs and report")
 	flag.StringVar(&o.PNGQuant, "pngquant", "", "Optional explicit pngquant executable")
 	flag.StringVar(&o.OxiPNG, "oxipng", "", "Optional explicit OxiPNG executable")
+	flag.StringVar(&o.JPEGOptim, "jpegoptim", "", "Optional explicit jpegoptim executable")
+	flag.StringVar(&o.Formats, "formats", "png,jpeg", "Formats to exercise: png, jpeg, or png,jpeg")
 	flag.StringVar(&o.Expected, "expected-commit", Commit, "Require this exact smolpng version-report commit")
 	flag.DurationVar(&o.Timeout, "timeout", 2*time.Minute, "Deadline per invocation")
 	flag.Parse()
@@ -80,7 +88,11 @@ func main() {
 		os.Exit(1)
 	}
 }
-func run(ctx context.Context, o options) error {
+func run(ctx context.Context, o options) (err error) {
+	formats, e := parseFormats(o.Formats)
+	if e != nil {
+		return e
+	}
 	exe, e := filepath.Abs(o.Executable)
 	if e != nil {
 		return e
@@ -101,7 +113,14 @@ func run(ctx context.Context, o options) error {
 	o.Executable = exe
 	o.Directory = dir
 	s := suite{opt: o, root: dir, runner: process.OSRunner{}, common: []string{"--home", filepath.Join(dir, "home"), "--no-project"}, data: evidence{SchemaVersion: 1, ExpectedCommit: o.Expected, Platform: runtime.GOOS + "/" + runtime.GOARCH, Started: time.Now().UTC(), Executable: exe, Checks: []check{}, Qualification: "real local executable/optimizer and filesystem checks; does not qualify graphical clipboard, drag/drop, notifications, signing or remote providers"}}
-	for _, p := range []struct{ name, path string }{{"--pngquant-path", o.PNGQuant}, {"--oxipng-path", o.OxiPNG}} {
+	s.data.Formats = formats
+	s.data.QualifierCommit = Commit
+	defer func() {
+		if !s.data.Complete {
+			err = errors.Join(err, s.save())
+		}
+	}()
+	for _, p := range []struct{ name, path string }{{"--pngquant-path", o.PNGQuant}, {"--oxipng-path", o.OxiPNG}, {"--jpegoptim-path", o.JPEGOptim}} {
 		if p.path != "" {
 			a, e := filepath.Abs(p.path)
 			if e != nil {
@@ -127,26 +146,29 @@ func run(ctx context.Context, o options) error {
 	}
 	s.add(v)
 	d := s.invoke(ctx, "dependency-preflight", 0, nil, "deps", "status", "--json")
-	var health struct {
-		Tools struct {
-			PNGQuant struct {
-				Available bool `json:"available"`
-			} `json:"pngquant"`
-			OxiPNG struct {
-				Available bool `json:"available"`
-			} `json:"oxipng"`
-		} `json:"tools"`
-	}
-	if e = json.Unmarshal(d.Report, &health); e != nil || !health.Tools.PNGQuant.Available || !health.Tools.OxiPNG.Available {
-		d.Errors = append(d.Errors, "both real compatible optimizers are required; install separately or supply explicit paths")
-	}
+	d.Errors = append(d.Errors, dependencyErrors(d.Report, formats)...)
 	s.data.Tools = d.Report
 	s.add(d)
 	if !s.data.Passed {
-		_ = s.save()
 		return fmt.Errorf("qualification preflight failed; inspect %s", filepath.Join(dir, "report.json"))
 	}
-	fixtures := testutil.Corpus()
+	fixtures := map[string][]byte{}
+	samples := []string{}
+	for _, format := range formats {
+		var corpus map[string][]byte
+		var sample string
+		if format == "png" {
+			corpus = testutil.Corpus()
+			sample = "flat-icon.png"
+		} else {
+			corpus = testutil.JPEGCorpus()
+			sample = "jpeg-baseline.jpg"
+		}
+		for name, data := range corpus {
+			fixtures[name] = data
+		}
+		samples = append(samples, sample)
+	}
 	names := []string{}
 	for n := range fixtures {
 		names = append(names, n)
@@ -164,7 +186,6 @@ func run(ctx context.Context, o options) error {
 	for _, preset := range []string{"auto", "lossless"} {
 		for _, name := range names {
 			if ctx.Err() != nil {
-				_ = s.save()
 				return ctx.Err()
 			}
 			source := filepath.Join(sourceDir, name)
@@ -195,24 +216,61 @@ func run(ctx context.Context, o options) error {
 			}
 		}
 	}
-	source := filepath.Join(sourceDir, "flat-icon.png")
+	for _, sample := range samples {
+		s.exerciseOutputs(ctx, sourceDir, sample, fixtures)
+		if e = s.save(); e != nil {
+			return e
+		}
+	}
+	if len(samples) > 1 {
+		s.exerciseMixedBatch(ctx, sourceDir, samples, fixtures)
+	}
+	for name, original := range fixtures {
+		current, e := os.ReadFile(filepath.Join(sourceDir, name))
+		if e != nil || !bytes.Equal(current, original) {
+			s.add(check{Name: "final-original/" + name, Errors: []string{"source bytes changed"}})
+		}
+	}
+	if e = ctx.Err(); e != nil {
+		return e
+	}
+	s.data.Complete = true
+	if e = s.save(); e != nil {
+		return e
+	}
+	if !s.data.Passed {
+		return fmt.Errorf("qualification found failures; see %s", filepath.Join(dir, "report.json"))
+	}
+	fmt.Printf("Passed %d local checks; evidence: %s\n", len(s.data.Checks), filepath.Join(dir, "report.json"))
+	return nil
+}
+
+func (s *suite) exerciseOutputs(ctx context.Context, sourceDir, name string, fixtures map[string][]byte) {
+	dir := s.root
+	source := filepath.Join(sourceDir, name)
+	ext := filepath.Ext(name)
+	prefix := ""
+	if ext == ".jpg" {
+		prefix = "jpeg/"
+	}
 	for _, target := range []struct {
 		name, size string
+		bytes      int64
 		code       int
 		nearest    bool
-	}{{"target-met", "10KiB", 0, false}, {"target-missed", "1B", 6, false}, {"target-nearest", "1B", 6, true}} {
-		dest := filepath.Join(dir, "outputs", target.name+".png")
+	}{{"target-met", "10KiB", 10 << 10, 0, false}, {"target-missed", "1B", 1, 6, false}, {"target-nearest", "1B", 1, 6, true}} {
+		dest := filepath.Join(dir, "outputs", prefix+target.name+ext)
 		args := []string{"compress", source, "--target-size", target.size, "--output", dest, "--json"}
 		if target.nearest {
 			args = append(args, "--accept-nearest")
 		}
-		c := s.invoke(ctx, target.name, target.code, nil, args...)
+		c := s.invoke(ctx, prefix+target.name, target.code, nil, args...)
 		var report domain.Report
-		if e = json.Unmarshal(c.Report, &report); e != nil || len(report.Results) != 1 {
+		if e := json.Unmarshal(c.Report, &report); e != nil || len(report.Results) != 1 {
 			c.Errors = append(c.Errors, "missing target result")
 		} else {
 			result := report.Results[0]
-			if result.ExitCode != target.code || report.ExitCode != target.code || result.Target == nil || result.Target.Met != (target.code == 0) {
+			if result.ExitCode != target.code || report.ExitCode != target.code || result.Target == nil || result.Target.RequestedBytes != target.bytes || result.Target.Met != (target.code == 0) {
 				c.Errors = append(c.Errors, "target status/exit mismatch")
 			}
 			if target.code == 6 && !target.nearest {
@@ -224,40 +282,68 @@ func run(ctx context.Context, o options) error {
 				if e != nil {
 					c.Errors = append(c.Errors, "accepted target result lacks an artifact")
 				} else {
-					c.Errors = append(c.Errors, validateImage(fixtures["flat-icon.png"], output, result, false)...)
+					c.Errors = append(c.Errors, validateImage(fixtures[name], output, result, false)...)
 				}
 			}
 		}
 		s.add(c)
 	}
-	binary := s.invoke(ctx, "binary-stdout", 0, nil, "compress", source, "--output", "-", "--quiet")
+	binary := s.invoke(ctx, prefix+"binary-stdout", 0, nil, "compress", source, "--output", "-", "--quiet")
 	// invoke leaves binary bytes in Report only until this assertion; they are never
 	// embedded in report.json, which is evidence metadata, not another image copy.
-	if output, e := pngimage.Decode(binary.Report, 1_000_000); e != nil || output.Info.Dimensions != (domain.Dimensions{Width: 64, Height: 64}) {
-		binary.Errors = append(binary.Errors, "stdout is not a clean PNG with expected dimensions")
+	_, original, sourceErr := decodeImage(fixtures[name])
+	_, output, outputErr := decodeImage(binary.Report)
+	if sourceErr != nil || outputErr != nil || output.Format != original.Format || output.Dimensions != original.Dimensions {
+		binary.Errors = append(binary.Errors, "stdout is not a clean image with the expected format and dimensions")
 	}
 	binary.Report = nil
 	s.add(binary)
-	partial := s.invoke(ctx, "partial-batch", 8, nil, "compress", source, filepath.Join(sourceDir, "missing.png"), "--output-dir", filepath.Join(dir, "partial"), "--json")
+	partial := s.invoke(ctx, prefix+"partial-batch", 8, nil, "compress", source, filepath.Join(sourceDir, "missing"+ext), "--output-dir", filepath.Join(dir, "partial", prefix), "--json")
 	var report domain.Report
-	if e = json.Unmarshal(partial.Report, &report); e != nil || len(report.Results) != 2 || report.ExitCode != 8 || report.Results[0].Output == "" || report.Results[1].ExitCode != 3 {
+	if e := json.Unmarshal(partial.Report, &report); e != nil || len(report.Results) != 2 || report.ExitCode != 8 || report.Results[0].Output == "" || report.Results[1].ExitCode != 3 {
 		partial.Errors = append(partial.Errors, "partial batch did not preserve successful output and failed item")
+	} else if data, err := os.ReadFile(report.Results[0].Output); err != nil {
+		partial.Errors = append(partial.Errors, "successful partial item lacks its artifact")
+	} else {
+		partial.Errors = append(partial.Errors, validateImage(fixtures[name], data, report.Results[0], false)...)
 	}
 	s.add(partial)
-	for name, original := range fixtures {
-		current, e := os.ReadFile(filepath.Join(sourceDir, name))
-		if e != nil || !bytes.Equal(current, original) {
-			s.add(check{Name: "final-original/" + name, Errors: []string{"source bytes changed"}})
+}
+
+func (s *suite) exerciseMixedBatch(ctx context.Context, sourceDir string, names []string, fixtures map[string][]byte) {
+	dir := filepath.Join(s.root, "mixed")
+	args := []string{"compress"}
+	pending := map[string][]byte{}
+	for _, name := range names {
+		source := filepath.Join(sourceDir, name)
+		args = append(args, source)
+		pending[source] = fixtures[name]
+	}
+	args = append(args, "--output-dir", dir, "--json")
+	c := s.invoke(ctx, "mixed-batch", 0, nil, args...)
+	var report domain.Report
+	if err := json.Unmarshal(c.Report, &report); err != nil || len(report.Results) != len(names) || report.ExitCode != 0 {
+		c.Errors = append(c.Errors, "mixed batch lacks all successful results")
+	} else {
+		for _, result := range report.Results {
+			original, expected := pending[result.Input]
+			if !expected {
+				c.Errors = append(c.Errors, "mixed batch returned an unexpected or duplicate input")
+				continue
+			}
+			delete(pending, result.Input)
+			data, err := os.ReadFile(result.Output)
+			if err != nil || filepath.Dir(result.Output) != dir || result.ExitCode != 0 {
+				c.Errors = append(c.Errors, "mixed batch lacks a successful artifact in its output directory")
+				continue
+			}
+			c.Errors = append(c.Errors, validateImage(original, data, result, false)...)
+		}
+		if len(pending) != 0 {
+			c.Errors = append(c.Errors, "mixed batch omitted a requested input")
 		}
 	}
-	if e = s.save(); e != nil {
-		return e
-	}
-	if !s.data.Passed {
-		return fmt.Errorf("qualification found failures; see %s", filepath.Join(dir, "report.json"))
-	}
-	fmt.Printf("Passed %d local checks; evidence: %s\n", len(s.data.Checks), filepath.Join(dir, "report.json"))
-	return nil
+	s.add(c)
 }
 func (s *suite) invoke(ctx context.Context, name string, want int, stdin []byte, args ...string) check {
 	if len(args) > 0 && args[0] == "compress" {
@@ -299,7 +385,9 @@ func (s *suite) save() error {
 	if len(s.data.Tools) > 0 && !json.Valid(s.data.Tools) {
 		s.data.Tools = nil
 	}
-	b, e := json.MarshalIndent(s.data, "", "  ")
+	snapshot := s.data
+	snapshot.Passed = snapshot.Complete && snapshot.Passed
+	b, e := json.MarshalIndent(snapshot, "", "  ")
 	if e != nil {
 		return e
 	}
@@ -307,21 +395,27 @@ func (s *suite) save() error {
 }
 func validateImage(original, output []byte, r domain.Result, strict bool) []string {
 	failures := []string{}
-	a, e := pngimage.Decode(original, 1_000_000)
+	a, before, e := decodeImage(original)
 	if e != nil {
 		return []string{"invalid original specimen"}
 	}
-	b, e := pngimage.Decode(output, 1_000_000)
+	b, after, e := decodeImage(output)
 	if e != nil {
-		return []string{"optimizer output is not a valid static PNG"}
+		return []string{"optimizer output is not a valid supported image"}
 	}
-	if b.Info.Animated || b.Info.Dimensions != a.Info.Dimensions || r.Dimensions.Before != a.Info.Dimensions || r.Dimensions.After != b.Info.Dimensions {
+	if after.Format != before.Format || r.Format != before.Format {
+		failures = append(failures, "artifact/report format differs from source")
+	}
+	if after.Animated || after.Dimensions != before.Dimensions || r.Dimensions.Before != before.Dimensions || r.Dimensions.After != after.Dimensions {
 		failures = append(failures, "dimensions/animation differ from the promised source")
 	}
-	if a.Info.Transparency && !b.Info.Transparency {
+	if before.Orientation != after.Orientation {
+		failures = append(failures, "orientation changed without a requested geometry change")
+	}
+	if before.Transparency && !after.Transparency {
 		failures = append(failures, "transparency was discarded")
 	}
-	if strict && !pngimage.PixelEqual(a.Image, b.Image) {
+	if strict && !pngimage.PixelEqual(a, b) {
 		failures = append(failures, "strict lossless changed decoded pixels, including hidden RGB")
 	}
 	if len(output) > len(original) {
@@ -337,4 +431,19 @@ func validateImage(original, output []byte, r domain.Result, strict bool) []stri
 		failures = append(failures, "local recipe reports remote use")
 	}
 	return failures
+}
+
+func decodeImage(data []byte) (image.Image, domain.ImageInfo, error) {
+	if jpegimage.Is(data) {
+		a, err := jpegimage.Decode(data, 1_000_000)
+		if err != nil {
+			return nil, domain.ImageInfo{}, err
+		}
+		return a.Image, a.Info, nil
+	}
+	a, err := pngimage.Decode(data, 1_000_000)
+	if err != nil {
+		return nil, domain.ImageInfo{}, err
+	}
+	return a.Image, a.Info, nil
 }
