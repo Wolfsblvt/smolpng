@@ -30,6 +30,25 @@ Winget receives a multi-file portable ZIP manifest for x64/ARM64. Scoop receives
 
 These files need the destination ecosystem's actual schema validation/install tests and submission review. The [native Winget validation record](reference/2026-10-17-winget-manifest-validation.md) now qualifies the generated three-file portable manifest shape with Windows Package Manager 1.29.380, using explicit synthetic URLs/hashes. It repaired an unsupported `Scope` field; real assets, installation and submission are not established by that metadata check. Other ecosystem schema/install checks remain separate. MSIX/Store and signed native installers remain separate packaging decisions requiring native and publication qualification.
 
+## Linux package files
+
+Provide a separately qualified nFPM binary, then run it from the generated output root where `stage/` and `nfpm/` live. The following examples use fresh output filenames:
+
+```sh
+nfpm package --config nfpm/amd64.yaml --packager deb --target smolpng-amd64.deb
+nfpm package --config nfpm/amd64.yaml --packager rpm --target smolpng-amd64.rpm
+nfpm package --config nfpm/amd64.yaml --packager apk --target smolpng-amd64.apk
+nfpm package --config nfpm/amd64.yaml --packager archlinux --target smolpng-amd64.pkg.tar.zst
+```
+
+Use `nfpm/arm64.yaml` and distinct arm64 output names for the other architecture. These commands produce local files; they do not install them, submit them to a registry or sign them. nFPM is a build tool, not an application dependency.
+
+The definitions set `umask: 0o022` to remove group/world write permissions inherited from staging, including Windows staging. The CLI retains its explicit `0755` mode. Regular license and notice files use `0644`, and the dependency-license directory uses `0755` with the maintained builder's staging. The package contains the CLI, primary license, complete dependency-license tree and third-party notices; it does not bundle optimizers, the qualification helper, user configuration or images.
+
+Inspect actual package headers, executable architecture, paths, modes and extracted file hashes before treating package production as qualified. Format/payload inspection does not establish installation, package-manager ownership or runtime behavior on a Linux host.
+
+The [Windows-built Linux package record](reference/2026-10-17-linux-package-artifacts.md) qualifies all eight amd64/arm64 format combinations with nFPM 2.48.0 and independent payload/header readers. It records the staging-permission repair, exact source and artifact identities, all 61 payload files per package, and the remaining host/publication limits.
+
 ## Standalone update archive and signing
 
 The update archive is deliberately different from the full development package. It contains only allowlisted application executables and license obligations. User config, presets, images, Skills and managed tools cannot appear as replacement targets. The builder verifies its generated member list against the same runtime update validation contract.
