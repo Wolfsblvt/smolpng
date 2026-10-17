@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"compress/zlib"
 	"crypto/sha256"
 	"fmt"
 	"image/jpeg"
@@ -67,6 +68,67 @@ func TestCorpusCheckAcceptsPNGEncodingChangesButRejectsChangedSpecimens(t *testi
 	replaceManifestedFixture(t, root, path, original, changed)
 	if err := generate(root, true); err == nil {
 		t.Fatal("manifested metadata change admitted")
+	}
+}
+
+func TestCorpusCheckAcceptsICCCompressionButRejectsProfileChanges(t *testing.T) {
+	root := t.TempDir()
+	if err := generate(root, false); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(root, "png", "color-profile", "icc-srgb.png")
+	original, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	chunks, err := pngimage.Chunks(original)
+	if err != nil {
+		t.Fatal(err)
+	}
+	profileIndex := -1
+	for i, chunk := range chunks {
+		if chunk.Type == "iCCP" {
+			profileIndex = i
+		}
+	}
+	if profileIndex < 0 {
+		t.Fatal("fixture has no profile")
+	}
+	encodeProfile := func(profile []byte) []byte {
+		var compressed bytes.Buffer
+		writer, err := zlib.NewWriterLevel(&compressed, zlib.NoCompression)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := writer.Write(profile); err != nil {
+			t.Fatal(err)
+		}
+		if err := writer.Close(); err != nil {
+			t.Fatal(err)
+		}
+		return append([]byte("smolpng\x00\x00"), compressed.Bytes()...)
+	}
+	chunks[profileIndex].Data = encodeProfile(testutil.ICCProfile(false))
+	reencoded := pngimage.EncodeChunks(chunks)
+	if bytes.Equal(original, reencoded) {
+		t.Fatal("test requires different encodings of the same profile")
+	}
+	replaceManifestedFixture(t, root, path, original, reencoded)
+	if err := generate(root, true); err != nil {
+		t.Fatal("equivalent compressed profile refused:", err)
+	}
+	if err := generate(root, false); err != nil {
+		t.Fatal(err)
+	}
+	retained, err := os.ReadFile(path)
+	if err != nil || !bytes.Equal(retained, reencoded) {
+		t.Fatal("regeneration rewrote the equivalent stored profile", err)
+	}
+	chunks[profileIndex].Data = encodeProfile(testutil.ICCProfile(true))
+	changed := pngimage.EncodeChunks(chunks)
+	replaceManifestedFixture(t, root, path, reencoded, changed)
+	if err := generate(root, true); err == nil {
+		t.Fatal("changed ICC colorants admitted")
 	}
 }
 

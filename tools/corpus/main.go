@@ -3,9 +3,11 @@ package main
 
 import (
 	"bytes"
+	"compress/zlib"
 	"crypto/sha256"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -155,16 +157,53 @@ func equivalentFixture(generated, stored []byte) bool {
 	if err != nil || !pngimage.PixelEqual(a.Image, b.Image) {
 		return false
 	}
-	// Preserve exact headers, palette, metadata, interlacing and chunk order.
-	// Only compression and subdivision of the image-data stream may differ.
-	withoutImageData := func(chunks []pngimage.Chunk) []byte {
+	// Preserve headers, palette, metadata, interlacing and chunk order. Go's
+	// DEFLATE encoding may change for both image data and compressed ICC data.
+	withoutImageData := func(chunks []pngimage.Chunk) []pngimage.Chunk {
 		retained := []pngimage.Chunk{}
 		for _, chunk := range chunks {
 			if chunk.Type != "IDAT" {
 				retained = append(retained, chunk)
 			}
 		}
-		return pngimage.EncodeChunks(retained)
+		return retained
 	}
-	return bytes.Equal(withoutImageData(a.Chunks), withoutImageData(b.Chunks))
+	left, right := withoutImageData(a.Chunks), withoutImageData(b.Chunks)
+	if len(left) != len(right) {
+		return false
+	}
+	for i, chunk := range left {
+		other := right[i]
+		if chunk.Type != other.Type {
+			return false
+		}
+		if bytes.Equal(chunk.Data, other.Data) {
+			continue
+		}
+		if chunk.Type != "iCCP" || !equivalentICCData(chunk.Data, other.Data) {
+			return false
+		}
+	}
+	return true
+}
+
+func equivalentICCData(a, b []byte) bool {
+	separator := bytes.IndexByte(a, 0)
+	if separator < 1 || separator+2 > len(a) || separator+2 > len(b) || a[separator+1] != 0 || !bytes.Equal(a[:separator+2], b[:separator+2]) {
+		return false
+	}
+	decode := func(data []byte) ([]byte, error) {
+		reader, err := zlib.NewReader(bytes.NewReader(data[separator+2:]))
+		if err != nil {
+			return nil, err
+		}
+		defer reader.Close()
+		return io.ReadAll(reader)
+	}
+	left, err := decode(a)
+	if err != nil {
+		return false
+	}
+	right, err := decode(b)
+	return err == nil && bytes.Equal(left, right)
 }
