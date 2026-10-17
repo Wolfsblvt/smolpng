@@ -8,7 +8,7 @@ smolpng now has a substantial PNG/JPEG daily-use source candidate: one engine un
 
 The source implements original-derived PNG/JPEG candidates, exact target semantics, explicit resizing, safe metadata/orientation handling, atomic outputs, data-only configuration/presets and structured reporting. TinyPNG requires explicit policy and native/environment credentials; fake HTTP tests never consume quota. Desktop installers produce Windows per-user `.lnk` and Linux `.desktop` targets with exact ownership hashes. The signed updater stages bounded archives, verifies all members, preserves prior files for guarded rollback and synchronizes only untouched app-managed Skills.
 
-Local release tooling now builds six platform packages and optional offline Winget, Scoop, Homebrew, Chocolatey and nFPM inputs from actual archive hashes. A separate signing tool requires an explicitly supplied protected key. Neither tool publishes or creates a production trust authority.
+Local release tooling now builds six platform archives and optional offline Winget, Scoop, Homebrew, Chocolatey and nFPM inputs from actual archive hashes. The maintained nFPM inputs have also produced [eight locally inspected Linux packages](reference/2026-10-17-linux-package-artifacts.md): DEB, RPM, APK and Arch Linux packages for amd64 and arm64. This establishes package structure, payload and permission evidence, while native Linux installation/runtime, optimizer runtime, signing, registry submission and publication remain unqualified. A separate signing tool requires an explicitly supplied protected key. Neither tool publishes or creates a production trust authority.
 
 ## Current refinement boundary
 
