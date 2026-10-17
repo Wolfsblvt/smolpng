@@ -41,7 +41,7 @@ func (r *managedRunner) Run(_ context.Context, i process.Invocation) (process.Re
 	if r.wrong {
 		v = "0.0.1"
 	}
-	return process.Result{Stdout: "oxipng " + v}, nil
+	return process.Result{Stdout: strings.TrimSuffix(filepath.Base(i.Executable), ".exe") + " " + v}, nil
 }
 func archiveZIP(t *testing.T, entries map[string][]byte) []byte {
 	t.Helper()
@@ -109,6 +109,63 @@ func managedFixture(t *testing.T) (Managed, Artifact, []byte, *managedRunner, *a
 	})}
 	return Managed{Root: filepath.Join(root, "tools"), Runner: runner, Client: client}, a, payload, runner, calls
 }
+func TestManagedJPEGOptimRetainsLicenseAndUsesManagedDiscovery(t *testing.T) {
+	m, _, _, runner, _ := managedFixture(t)
+	a, e := ArtifactFor("jpegoptim", "windows", "amd64")
+	if e != nil {
+		t.Fatal(e)
+	}
+	a.OS, a.Arch = runtime.GOOS, runtime.GOARCH
+	if runtime.GOOS != "windows" {
+		a.Executable = "jpegoptim"
+	}
+	payload := archiveZIP(t, map[string][]byte{
+		a.Executable: []byte("fake version v1.5.6"),
+		"LICENSE":    []byte("GPL license fixture"),
+		"COPYRIGHT":  []byte("jpegoptim copyright fixture"),
+	})
+	a.SHA256 = digest(payload)
+	m.Client = &http.Client{Transport: transport(func(*http.Request) (*http.Response, error) {
+		return &http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader(payload)), ContentLength: int64(len(payload))}, nil
+	})}
+	installed, e := m.Install(context.Background(), a)
+	if e != nil || installed.State != "current" {
+		t.Fatal(installed, e)
+	}
+	license, e := os.ReadFile(filepath.Join(filepath.Dir(installed.Path), "LICENSE"))
+	if e != nil || !bytes.Contains(license, []byte("GPL license fixture")) || !bytes.Contains(license, []byte("jpegoptim copyright fixture")) || bytes.Contains(license, []byte(oxipngLicense)) {
+		t.Fatalf("wrong retained JPEG license: %q, %v", license, e)
+	}
+	tools := Discover(context.Background(), runner, Paths{}, Paths{ManagedRoot: m.Root, Preference: "managed"})
+	if !tools.JPEGOptim.Available || tools.JPEGOptim.Source != "managed" || tools.JPEGOptim.Version != "1.5.6" || tools.JPEGOptim.Path != installed.Path {
+		t.Fatalf("managed JPEG installation was not selected: %+v", tools.JPEGOptim)
+	}
+	if e := m.Remove(context.Background(), "jpegoptim"); e != nil {
+		t.Fatal(e)
+	}
+	if got := m.Inspect("jpegoptim"); got.State != "missing" {
+		t.Fatal(got)
+	}
+	for _, missing := range []string{"LICENSE", "COPYRIGHT"} {
+		t.Run("missing-"+missing, func(t *testing.T) {
+			entries := map[string][]byte{a.Executable: []byte("fake version v1.5.6"), "LICENSE": []byte("GPL fixture"), "COPYRIGHT": []byte("copyright fixture")}
+			delete(entries, missing)
+			payload := archiveZIP(t, entries)
+			a.SHA256 = digest(payload)
+			m.Client = &http.Client{Transport: transport(func(*http.Request) (*http.Response, error) {
+				return &http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader(payload)), ContentLength: int64(len(payload))}, nil
+			})}
+			before := runner.calls
+			if _, err := m.Install(context.Background(), a); err == nil {
+				t.Fatal("installation without upstream notices accepted")
+			}
+			if runner.calls != before || m.Inspect("jpegoptim").State != "missing" {
+				t.Fatal("incomplete licensed archive was executed or activated")
+			}
+		})
+	}
+}
+
 func TestManagedInstallVerifiesArchiveBeforeExecutionAndTracksBytes(t *testing.T) {
 	m, a, _, runner, calls := managedFixture(t)
 	s, e := m.Install(context.Background(), a)
@@ -279,6 +336,19 @@ func TestConcurrentInstallerRefusesSecondWriter(t *testing.T) {
 	}
 }
 func TestManagedCatalogAndPolicy(t *testing.T) {
+	for _, platform := range []string{"windows", "linux", "darwin"} {
+		a, err := ArtifactFor("jpegoptim", platform, "amd64")
+		if err != nil || validateArtifact(a) != nil || a.License != "GPL-3.0-or-later" {
+			t.Fatal(a, err)
+		}
+		a.URL = strings.Replace(a.URL, "/tjko/jpegoptim/", "/oxipng/oxipng/", 1)
+		if validateArtifact(a) == nil {
+			t.Fatal("wrong optimizer's upstream was accepted")
+		}
+		if _, err := ArtifactFor("jpegoptim", platform, "arm64"); err == nil {
+			t.Fatal("invented native arm64 jpegoptim archive")
+		}
+	}
 	for _, target := range []string{"linux/amd64", "linux/arm64", "windows/amd64", "darwin/amd64", "darwin/arm64"} {
 		p := strings.Split(target, "/")
 		a, e := ArtifactFor("oxipng", p[0], p[1])

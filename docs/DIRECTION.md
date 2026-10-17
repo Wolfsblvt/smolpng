@@ -2,7 +2,7 @@
 
 ## Meaning
 
-smolpng now has a substantial PNG/JPEG daily-use source candidate: one engine under deterministic CLI, keyboard and background/drop workflows, with inherited presets, native clipboard adapters, optional TinyPNG, tracked integrations, version-bound Agent Skills, managed OxiPNG and standalone update transactions. This is implemented source, not a claim of a publicly released or fully native-qualified 1.0.
+smolpng now has a substantial PNG/JPEG daily-use source candidate: one engine under deterministic CLI, keyboard and background/drop workflows, with inherited presets, native clipboard adapters, optional TinyPNG, tracked integrations, version-bound Agent Skills, managed OxiPNG/jpegoptim and standalone update transactions. This is implemented source, not a claim of a publicly released or fully native-qualified 1.0.
 
 ## Current frontier
 

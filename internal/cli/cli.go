@@ -212,7 +212,13 @@ func (a *app) root() *cobra.Command {
 		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "commit": Commit, "distribution": Distribution, "platform": runtime.GOOS + "/" + runtime.GOARCH})
 	}})
 	c.AddCommand(&cobra.Command{Use: "capabilities", Args: cobra.NoArgs, Short: "Discover implemented features", RunE: func(*cobra.Command, []string) error {
-		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "shellMenuAdapters": []string{"windows11-IExplorerCommand", "kde-dolphin"}, "windowsShellActivation": "requires matching native DLL and trusted signed sparse package", "localComparison": true, "pngBackground": true, "formats": []string{"png", "jpeg"}, "presets": []string{"auto", "web", "smallest", "lossless"}, "targetSize": true, "explicitResize": true, "remoteDefault": "never", "remoteImplemented": true, "jpegBackend": "jpegoptim", "desktopInstaller": runtime.GOOS == "windows" || runtime.GOOS == "linux", "signedStandaloneUpdater": true, "updateFeedConfigured": UpdateManifestURL != "", "config": true, "namedPresets": true, "presetImport": true, "agentSkill": true, "skillInstallationTracking": true, "interactive": true, "nativeClipboard": true, "managedDependencies": []string{"oxipng"}, "desktopQualification": "adapters implemented; real desktop tests outstanding", "exitCodes": map[string]int{"success": 0, "arguments": 2, "input": 3, "dependency": 4, "optimizer": 5, "target": 6, "network": 7, "batch": 8, "cancelled": 130}})
+		managed := []string{}
+		for _, name := range []string{"oxipng", "jpegoptim"} {
+			if _, err := toolchain.ArtifactFor(name, runtime.GOOS, runtime.GOARCH); err == nil {
+				managed = append(managed, name)
+			}
+		}
+		return a.emit(map[string]any{"schemaVersion": 1, "version": Version, "shellMenuAdapters": []string{"windows11-IExplorerCommand", "kde-dolphin"}, "windowsShellActivation": "requires matching native DLL and trusted signed sparse package", "localComparison": true, "pngBackground": true, "formats": []string{"png", "jpeg"}, "presets": []string{"auto", "web", "smallest", "lossless"}, "targetSize": true, "explicitResize": true, "remoteDefault": "never", "remoteImplemented": true, "jpegBackend": "jpegoptim", "desktopInstaller": runtime.GOOS == "windows" || runtime.GOOS == "linux", "signedStandaloneUpdater": true, "updateFeedConfigured": UpdateManifestURL != "", "config": true, "namedPresets": true, "presetImport": true, "agentSkill": true, "skillInstallationTracking": true, "interactive": true, "nativeClipboard": true, "managedDependencies": managed, "desktopQualification": "adapters implemented; real desktop tests outstanding", "exitCodes": map[string]int{"success": 0, "arguments": 2, "input": 3, "dependency": 4, "optimizer": 5, "target": 6, "network": 7, "batch": 8, "cancelled": 130}})
 	}})
 	c.AddCommand(&cobra.Command{Use: "doctor", Args: cobra.NoArgs, Short: "Inspect paths and optimizer status", RunE: a.doctor})
 	c.AddCommand(a.depsCommand())

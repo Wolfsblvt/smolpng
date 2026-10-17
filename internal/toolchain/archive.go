@@ -18,6 +18,11 @@ const maxExpandedBytes int64 = 128 << 20
 // ArchiveExecutable extracts only the selected executable from an already
 // authenticated archive. Every entry is inspected, not blindly joined to disk.
 func ArchiveExecutable(data []byte, format, executable string) ([]byte, error) {
+	return archiveMember(data, format, executable)
+}
+
+// archiveMember retains the same archive validation for a program or its notices.
+func archiveMember(data []byte, format, executable string) ([]byte, error) {
 	if len(data) == 0 || int64(len(data)) > maxArchiveBytes {
 		return nil, fmt.Errorf("invalid archive size")
 	}

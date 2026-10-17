@@ -51,7 +51,7 @@ type Managed struct {
 }
 
 func digest(b []byte) string    { return fmt.Sprintf("%x", sha256.Sum256(b)) }
-func toolName(name string) bool { return name == "oxipng" || name == "pngquant" }
+func toolName(name string) bool { return name == "oxipng" || name == "pngquant" || name == "jpegoptim" }
 func noManagedLinks(path string) error {
 	abs, e := filepath.Abs(path)
 	if e != nil {
@@ -147,7 +147,11 @@ func compareManagedVersion(a, b string) int {
 func validateArtifact(a Artifact) error {
 	u, e := url.Parse(a.URL)
 	h, he := hex.DecodeString(a.SHA256)
-	if a.Tool != "oxipng" || !managedVersion.MatchString(a.Version) || a.Executable != "oxipng" && a.Executable != "oxipng.exe" || a.Archive != "zip" && a.Archive != "tar.gz" || e != nil || u.Scheme != "https" || u.Host != "github.com" || u.User != nil || !strings.HasPrefix(u.Path, "/oxipng/oxipng/releases/download/v"+a.Version+"/") || u.RawQuery != "" || u.Fragment != "" || he != nil || len(h) != 32 {
+	upstream := "/oxipng/oxipng/releases/download/v" + a.Version + "/"
+	if a.Tool == "jpegoptim" {
+		upstream = "/tjko/jpegoptim/releases/download/v" + a.Version + "/"
+	}
+	if a.Tool != "oxipng" && a.Tool != "jpegoptim" || !managedVersion.MatchString(a.Version) || a.Executable != a.Tool && a.Executable != a.Tool+".exe" || a.Archive != "zip" && a.Archive != "tar.gz" || e != nil || u.Scheme != "https" || u.Host != "github.com" || u.User != nil || !strings.HasPrefix(u.Path, upstream) || u.RawQuery != "" || u.Fragment != "" || he != nil || len(h) != 32 {
 		return fmt.Errorf("unqualified artifact metadata")
 	}
 	return nil
@@ -337,6 +341,18 @@ func (m Managed) Install(ctx context.Context, a Artifact) (ManagedStatus, error)
 	if e != nil {
 		return ManagedStatus{}, e
 	}
+	license := []byte(oxipngLicense)
+	if a.Tool == "jpegoptim" {
+		copyright, err := archiveMember(archive, a.Archive, "COPYRIGHT")
+		if err != nil {
+			return ManagedStatus{}, fmt.Errorf("jpegoptim copyright notice unavailable: %w", err)
+		}
+		terms, err := archiveMember(archive, a.Archive, "LICENSE")
+		if err != nil {
+			return ManagedStatus{}, fmt.Errorf("jpegoptim license unavailable: %w", err)
+		}
+		license = append(append(copyright, '\n', '\n'), terms...)
+	}
 	fresh := len(index.Versions) == 0
 	finalRoot := toolRoot
 	if fresh {
@@ -357,7 +373,7 @@ func (m Managed) Install(ctx context.Context, a Artifact) (ManagedStatus, error)
 	if e = os.WriteFile(filepath.Join(stage, a.Executable), binary, 0700); e != nil {
 		return ManagedStatus{}, e
 	}
-	if e = os.WriteFile(filepath.Join(stage, "LICENSE"), []byte(oxipngLicense), 0600); e != nil {
+	if e = os.WriteFile(filepath.Join(stage, "LICENSE"), license, 0600); e != nil {
 		return ManagedStatus{}, e
 	}
 	runner := m.Runner
@@ -367,14 +383,14 @@ func (m Managed) Install(ctx context.Context, a Artifact) (ManagedStatus, error)
 	probeCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	v, e := runner.Run(probeCtx, process.Invocation{Executable: filepath.Join(stage, a.Executable), Args: []string{"--version"}})
 	cancel()
-	if e != nil || v.ExitCode != 0 || version.FindString(v.Stdout+" "+v.Stderr) != a.Version {
+	if e != nil || v.ExitCode != 0 || strings.TrimPrefix(version.FindString(v.Stdout+" "+v.Stderr), "v") != a.Version {
 		return ManagedStatus{}, fmt.Errorf("downloaded optimizer failed the exact version probe; previous active version unchanged")
 	}
 	if e = ctx.Err(); e != nil {
 		return ManagedStatus{}, e
 	}
 	key := a.Version + "-" + a.OS + "-" + a.Arch + "-" + a.SHA256[:12]
-	record := Installed{Artifact: a, Directory: "versions/" + key, Files: map[string]string{a.Executable: digest(binary), "LICENSE": digest([]byte(oxipngLicense))}, InstalledAt: time.Now().UTC()}
+	record := Installed{Artifact: a, Directory: "versions/" + key, Files: map[string]string{a.Executable: digest(binary), "LICENSE": digest(license)}, InstalledAt: time.Now().UTC()}
 	dest := filepath.Join(toolRoot, "versions", key)
 	if _, e = os.Lstat(dest); e == nil {
 		// A crash before index activation may have left the exact verified version.
@@ -462,7 +478,7 @@ func (m Managed) Remove(ctx context.Context, name string) error {
 	return nil
 }
 func (m Managed) All() []ManagedStatus {
-	names := []string{"pngquant", "oxipng"}
+	names := []string{"pngquant", "oxipng", "jpegoptim"}
 	sort.Strings(names)
 	out := []ManagedStatus{}
 	for _, n := range names {
