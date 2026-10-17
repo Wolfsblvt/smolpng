@@ -454,6 +454,7 @@
           ".github/dependabot.yml",
           ".github/automation/**",
           ".github/label-policy.json",
+          ".diffdevil.yml",
           "tools/release/**",
           "tools/sign-update/**",
           "tools/corpus/**",
