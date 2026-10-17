@@ -28,7 +28,7 @@ The URL above is a placeholder, not a live endpoint. The supplied URL is recorde
 
 Winget receives a multi-file portable ZIP manifest for x64/ARM64. Scoop receives per-architecture URLs/hashes and executable aliases. Homebrew receives macOS/Linux architecture-specific artifacts. Chocolatey receives a checksum-verified x64 ZIP installation recipe. nFPM receives amd64/arm64 definitions for `/usr/bin` and license/doc placement, consumable by its deb/rpm/apk/Arch builders after a separate tool qualification. No installer silently downloads pngquant, jpegoptim or OxiPNG; users explicitly run setup or use package-manager choices.
 
-These files need the destination ecosystem's actual schema validation/install tests and submission review. The source tests verify generation and important hashes/contracts, not external acceptance. MSIX/Store and signed native installers remain separate packaging decisions requiring native and publication qualification.
+These files need the destination ecosystem's actual schema validation/install tests and submission review. The [native Winget validation record](reference/2026-10-17-winget-manifest-validation.md) now qualifies the generated three-file portable manifest shape with Windows Package Manager 1.29.380, using explicit synthetic URLs/hashes. It repaired an unsupported `Scope` field; real assets, installation and submission are not established by that metadata check. Other ecosystem schema/install checks remain separate. MSIX/Store and signed native installers remain separate packaging decisions requiring native and publication qualification.
 
 ## Standalone update archive and signing
 
