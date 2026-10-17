@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"compress/zlib"
 	"crypto/sha256"
 	"fmt"
 	"image/jpeg"
@@ -70,6 +71,67 @@ func TestCorpusCheckAcceptsPNGEncodingChangesButRejectsChangedSpecimens(t *testi
 	}
 }
 
+func TestCorpusCheckAcceptsICCCompressionButRejectsProfileChanges(t *testing.T) {
+	root := t.TempDir()
+	if err := generate(root, false); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(root, "png", "color-profile", "icc-srgb.png")
+	original, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	chunks, err := pngimage.Chunks(original)
+	if err != nil {
+		t.Fatal(err)
+	}
+	profileIndex := -1
+	for i, chunk := range chunks {
+		if chunk.Type == "iCCP" {
+			profileIndex = i
+		}
+	}
+	if profileIndex < 0 {
+		t.Fatal("fixture has no profile")
+	}
+	encodeProfile := func(profile []byte) []byte {
+		var compressed bytes.Buffer
+		writer, err := zlib.NewWriterLevel(&compressed, zlib.NoCompression)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := writer.Write(profile); err != nil {
+			t.Fatal(err)
+		}
+		if err := writer.Close(); err != nil {
+			t.Fatal(err)
+		}
+		return append([]byte("smolpng\x00\x00"), compressed.Bytes()...)
+	}
+	chunks[profileIndex].Data = encodeProfile(testutil.ICCProfile(false))
+	reencoded := pngimage.EncodeChunks(chunks)
+	if bytes.Equal(original, reencoded) {
+		t.Fatal("test requires different encodings of the same profile")
+	}
+	replaceManifestedFixture(t, root, path, original, reencoded)
+	if err := generate(root, true); err != nil {
+		t.Fatal("equivalent compressed profile refused:", err)
+	}
+	if err := generate(root, false); err != nil {
+		t.Fatal(err)
+	}
+	retained, err := os.ReadFile(path)
+	if err != nil || !bytes.Equal(retained, reencoded) {
+		t.Fatal("regeneration rewrote the equivalent stored profile", err)
+	}
+	chunks[profileIndex].Data = encodeProfile(testutil.ICCProfile(true))
+	changed := pngimage.EncodeChunks(chunks)
+	replaceManifestedFixture(t, root, path, reencoded, changed)
+	if err := generate(root, true); err == nil {
+		t.Fatal("changed ICC colorants admitted")
+	}
+}
+
 func replaceManifestedFixture(t *testing.T, root, path string, old, replacement []byte) {
 	t.Helper()
 	manifestPath := filepath.Join(root, "manifest.toml")
@@ -102,7 +164,7 @@ func TestCheckedInCorpusHasExactLicensedStructuralManifest(t *testing.T) {
 	if e = toml.Unmarshal(b, &m); e != nil {
 		t.Fatal(e)
 	}
-	if m.Schema != 1 || len(m.Image) != 26 {
+	if m.Schema != 1 || len(m.Image) != 30 {
 		t.Fatalf("unexpected inventory: %d", len(m.Image))
 	}
 	classes := map[string]bool{}
@@ -141,10 +203,10 @@ func TestCheckedInCorpusHasExactLicensedStructuralManifest(t *testing.T) {
 			t.Fatalf("lying fixture manifest: %s", item.Path)
 		}
 	}
-	if generated != 24 || photographic != 2 {
+	if generated != 28 || photographic != 2 {
 		t.Fatal("incorrect generated/imported inventory", generated, photographic)
 	}
-	for _, class := range []string{"png/flat-icon", "png/alpha-16", "png/transparent-hidden-rgb", "png/interlaced", "jpeg/exif-orientation", "jpeg/metadata", "jpeg/progressive", "jpeg/photographic"} {
+	for _, class := range []string{"png/flat-icon", "png/alpha-16", "png/transparent-hidden-rgb", "png/interlaced", "png/color-profile", "jpeg/exif-orientation", "jpeg/metadata", "jpeg/progressive", "jpeg/color-profile", "jpeg/photographic"} {
 		if !classes[class] {
 			t.Fatal("missing class", class)
 		}

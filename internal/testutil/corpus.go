@@ -25,6 +25,8 @@ func CorpusPath(name string) string {
 		"jpeg-baseline.jpg": "jpeg/baseline", "jpeg-high-chroma.jpg": "jpeg/high-chroma",
 		"jpeg-grayscale.jpg": "jpeg/grayscale", "jpeg-progressive-flat.jpg": "jpeg/progressive",
 		"jpeg-private-exif.jpg": "jpeg/metadata",
+		"icc-srgb.png":          "png/color-profile", "icc-swapped.png": "png/color-profile",
+		"jpeg-icc-srgb.jpg": "jpeg/color-profile", "jpeg-icc-swapped.jpg": "jpeg/color-profile",
 	}
 	if c, ok := classes[name]; ok {
 		return c + "/" + name
