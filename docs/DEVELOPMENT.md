@@ -86,7 +86,7 @@ smolpng-qualify -executable ./smolpng -output ./qualification-run
 
 Use `.exe` names and PowerShell's `./` or `\.\` form on Windows. `-pngquant PATH` and `-oxipng PATH` select separate real executables; both are required for complete qualification. The package builder embeds the expected source commit; a mismatch refuses to qualify the wrong build. The output directory must not already exist. Native optimizer checks are not part of ordinary CI. A preflight refusal on a headless authoring host with no optimizers is not counted as real optimizer success.
 
-Graphical clipboard, drag/drop, native notifications, windowless launch/console allocation, locked files and visual TUI behavior still require the manual checks in the candidate's local qualification packet. The helper exercises rather than rebuilds the app.
+Graphical clipboard, drag/drop, native notifications, windowless launch/console allocation and visual TUI behavior still require the manual checks in the candidate's local qualification packet. [Four real Windows locked-output cases](reference/2026-10-17-windows-output-locks.md) now establish PNG/JPEG overwrite/in-place refusal, byte preservation, temporary-file cleanup and successful retry after unlock. Other-host locks remain separately qualified. The helper exercises rather than rebuilds the app.
 
 ## Native Windows menu addon
 
