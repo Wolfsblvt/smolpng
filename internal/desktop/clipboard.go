@@ -28,6 +28,21 @@ type ClipboardWriter interface {
 }
 type NativeClipboard struct{}
 
+var errSensitiveClipboard = errors.New("clipboard content is marked sensitive")
+
+func sensitiveReadError(marked bool, err error) error {
+	if errors.Is(err, native.ErrUnsupported) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("cannot inspect clipboard sensitivity: %w", err)
+	}
+	if marked {
+		return errSensitiveClipboard
+	}
+	return nil
+}
+
 func (NativeClipboard) Read(ctx context.Context) (input.Snapshot, error) {
 	if e := ctx.Err(); e != nil {
 		return input.Snapshot{}, e
@@ -37,6 +52,10 @@ func (NativeClipboard) Read(ctx context.Context) (input.Snapshot, error) {
 	}
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
+	marked, e := native.Sensitive(ctx)
+	if e = sensitiveReadError(marked, e); e != nil {
+		return input.Snapshot{}, e
+	}
 	s := input.Snapshot{}
 	image, e1 := native.Read(ctx, native.FmtImage)
 	files, e2 := native.ReadFiles(ctx)
