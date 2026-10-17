@@ -35,6 +35,9 @@ func generate(root string, check bool) error {
 	for n, b := range testutil.JPEGCorpus() {
 		specimens[n] = b
 	}
+	for n, b := range testutil.ICCCorpus() {
+		specimens[n] = b
+	}
 	names := []string{}
 	for n := range specimens {
 		names = append(names, n)
@@ -71,6 +74,9 @@ func generate(root string, check bool) error {
 		}
 		if name == "alpha16.png" || name == "jpeg-progressive-flat.jpg" || name == "jpeg-private-exif.jpg" {
 			method += " + internal/testutil/corpus.go"
+		}
+		if strings.HasPrefix(name, "icc-") || strings.HasPrefix(name, "jpeg-icc-") {
+			method = "internal/testutil/icc.go + internal/testutil/profile-srgb.icc"
 		}
 		writeImage(&manifest, corpusImage{Path: relative, Creator: "Wolfsblvt Works contributors", Source: "project-generated", Method: method, License: "CC0-1.0", Redistributable: true, Purpose: strings.TrimSuffix(name, filepath.Ext(name)), SHA256: fmt.Sprintf("%x", sha256.Sum256(data))}, a)
 		if needsWrite {

@@ -93,6 +93,42 @@ progressive = false
 sha256 = "f399336a1aa62f14e56c26ba58c12be0226bc38971fb188fa991589437af0196"
 
 [[image]]
+path = "png/color-profile/icc-srgb.png"
+format = "png"
+class = "color-profile"
+creator = "Wolfsblvt Works contributors"
+source = "project-generated"
+method = "internal/testutil/icc.go + internal/testutil/profile-srgb.icc"
+license = "CC0-1.0"
+redistributable = true
+purpose = "icc-srgb"
+width = 144
+height = 96
+alpha = false
+bit_depth = 8
+orientation = 0
+progressive = false
+sha256 = "072504c1c6b65e336a332b4149c1a33a2cc1561b57cbc69b6bdb26ec7c445005"
+
+[[image]]
+path = "png/color-profile/icc-swapped.png"
+format = "png"
+class = "color-profile"
+creator = "Wolfsblvt Works contributors"
+source = "project-generated"
+method = "internal/testutil/icc.go + internal/testutil/profile-srgb.icc"
+license = "CC0-1.0"
+redistributable = true
+purpose = "icc-swapped"
+width = 144
+height = 96
+alpha = false
+bit_depth = 8
+orientation = 0
+progressive = false
+sha256 = "33753c32b7befee653560a08f2b27a75b8b777812d24ff0187be84609aedb27a"
+
+[[image]]
 path = "png/indexed-palette/indexed.png"
 format = "png"
 class = "indexed-palette"
@@ -181,6 +217,42 @@ bit_depth = 8
 orientation = 1
 progressive = false
 sha256 = "91cdbbcbb8abba12dfad8f8fec6855fa480048717fd8d1c02b4713961b251bb5"
+
+[[image]]
+path = "jpeg/color-profile/jpeg-icc-srgb.jpg"
+format = "jpeg"
+class = "color-profile"
+creator = "Wolfsblvt Works contributors"
+source = "project-generated"
+method = "internal/testutil/icc.go + internal/testutil/profile-srgb.icc"
+license = "CC0-1.0"
+redistributable = true
+purpose = "jpeg-icc-srgb"
+width = 144
+height = 96
+alpha = false
+bit_depth = 8
+orientation = 1
+progressive = false
+sha256 = "ed80772f2e7ed15e5c32ef63fd4955d362faa935be3706cc38bea5081c3727b3"
+
+[[image]]
+path = "jpeg/color-profile/jpeg-icc-swapped.jpg"
+format = "jpeg"
+class = "color-profile"
+creator = "Wolfsblvt Works contributors"
+source = "project-generated"
+method = "internal/testutil/icc.go + internal/testutil/profile-srgb.icc"
+license = "CC0-1.0"
+redistributable = true
+purpose = "jpeg-icc-swapped"
+width = 144
+height = 96
+alpha = false
+bit_depth = 8
+orientation = 1
+progressive = false
+sha256 = "38feb70c9235b626b5188583616ab5700b6d474825d7764a46cce622588255d6"
 
 [[image]]
 path = "jpeg/exif-orientation/jpeg-orientation-1.jpg"
