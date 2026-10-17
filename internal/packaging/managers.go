@@ -62,7 +62,7 @@ func Metadata(version string, artifacts []Artifact) (map[string][]byte, error) {
 		common := "PackageIdentifier: Wolfsblvt.smolpng\nPackageVersion: " + q(version) + "\n"
 		out["winget/Wolfsblvt.smolpng.yaml"] = []byte(common + "DefaultLocale: en-US\nManifestType: version\nManifestVersion: 1.6.0\n")
 		out["winget/Wolfsblvt.smolpng.locale.en-US.yaml"] = []byte(common + "PackageLocale: en-US\nPublisher: Wolfsblvt Works\nPackageName: smolpng\nLicense: MIT\nShortDescription: Local-first image compression for humans, scripts, and agents.\nPackageUrl: https://github.com/Wolfsblvt/smolpng\nManifestType: defaultLocale\nManifestVersion: 1.6.0\n")
-		out["winget/Wolfsblvt.smolpng.installer.yaml"] = []byte(common + "InstallerType: zip\nNestedInstallerType: portable\nScope: user\nNestedInstallerFiles:\n  - RelativeFilePath: smolpng.exe\n    PortableCommandAlias: smolpng\n  - RelativeFilePath: smolpngw.exe\n    PortableCommandAlias: smolpngw\nInstallers:\n" + installers.String() + "ManifestType: installer\nManifestVersion: 1.6.0\n")
+		out["winget/Wolfsblvt.smolpng.installer.yaml"] = []byte(common + "InstallerType: zip\nNestedInstallerType: portable\nNestedInstallerFiles:\n  - RelativeFilePath: smolpng.exe\n    PortableCommandAlias: smolpng\n  - RelativeFilePath: smolpngw.exe\n    PortableCommandAlias: smolpngw\nInstallers:\n" + installers.String() + "ManifestType: installer\nManifestVersion: 1.6.0\n")
 	}
 	ruby := func(s string) string { return "'" + strings.NewReplacer(`\`, `\\`, "'", `\'`).Replace(s) + "'" }
 	var brew strings.Builder

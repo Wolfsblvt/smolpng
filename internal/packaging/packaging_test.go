@@ -85,6 +85,9 @@ func TestPackageMetadataIsOfflineAndUsesExactHashes(t *testing.T) {
 	if !json.Valid(files["scoop/smolpng.json"]) {
 		t.Fatal("invalid scoop JSON")
 	}
+	if strings.Contains(string(files["winget/Wolfsblvt.smolpng.installer.yaml"]), "\nScope:") {
+		t.Fatal("portable WinGet installers must not declare unsupported manifest scope")
+	}
 	for _, n := range []string{"winget/Wolfsblvt.smolpng.installer.yaml", "homebrew/smolpng.rb", "chocolatey/tools/chocolateyinstall.ps1"} {
 		if !strings.Contains(strings.ToLower(string(files[n])), strings.Repeat("a", 64)) {
 			t.Fatal("missing exact hashes", n)
