@@ -14,6 +14,8 @@ go run ./tools/release --version 0.2.0-dev.1 --out artifacts/candidate
 
 The output directory must be new. All six platform targets are built by default. `--platforms linux/amd64` selects a subset. Build arguments explicitly embed version, source SHA and standalone ownership; archives use source-commit time, sorted paths and normalized modes. Files include the main CLI, Windows windowless launcher, native qualification helper, docs, legal corpus, presets, instruction-only Skill sources, license map and full dependency notices. Optimizers, toolchain caches, private profiles and credentials are never collected.
 
+Candidate compilation isolates the Go command from ambient workspaces, per-user Go configuration, build flags, experiments, toolchain switching and target microarchitecture overrides. It uses `GOWORK=off`, `GOENV=off`, `GO111MODULE=on`, `GOTOOLCHAIN=local`, empty `GOFLAGS`/`GOEXPERIMENT`, `CGO_ENABLED=0`, and the portable `GOAMD64=v1` or `GOARM64=v8.0` baseline. This prevents an external `go.work`, local replacement, user build tag or host-specific tuning from changing candidate bytes while the archive still names only the repository commit. The selected `go` executable and dependency transport remain operator inputs and belong in the candidate evidence record.
+
 The archive receipt binds individual member hashes. `SHA256SUMS` binds every archive. `build-index.json` is written incrementally and marks complete only after the entire selected build succeeds. Failure leaves inspectable local output and returns nonzero, not a nominal release.
 
 ## Package-manager inputs
