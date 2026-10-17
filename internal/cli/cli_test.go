@@ -8,8 +8,11 @@ import (
 	"github.com/Wolfsblvt/smolpng/internal/paths"
 	"github.com/Wolfsblvt/smolpng/internal/pngimage"
 	"github.com/Wolfsblvt/smolpng/internal/testutil"
+	"github.com/Wolfsblvt/smolpng/internal/toolchain"
 	"os"
 	"path/filepath"
+	"runtime"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -151,6 +154,20 @@ func TestCapabilitiesInspectCompletions(t *testing.T) {
 	for _, cmd := range []string{"capabilities", "version", "doctor"} {
 		if c := h.run(cmd, "--json"); c != 0 || !json.Valid(h.out.Bytes()) {
 			t.Fatal(cmd, c, h.out)
+		}
+		if cmd == "capabilities" {
+			var capabilities struct {
+				ManagedDependencies []string `json:"managedDependencies"`
+			}
+			if err := json.Unmarshal(h.out.Bytes(), &capabilities); err != nil {
+				t.Fatal(err)
+			}
+			for _, name := range []string{"oxipng", "jpegoptim"} {
+				_, err := toolchain.ArtifactFor(name, runtime.GOOS, runtime.GOARCH)
+				if got, want := slices.Contains(capabilities.ManagedDependencies, name), err == nil; got != want {
+					t.Fatalf("managed %s capability = %v, catalog availability = %v", name, got, want)
+				}
+			}
 		}
 	}
 	if c := h.run("inspect", h.source, "--json"); c != 0 || !json.Valid(h.out.Bytes()) {
