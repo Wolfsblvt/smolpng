@@ -25,7 +25,7 @@ The [workflow at the observed source](https://github.com/Wolfsblvt/smolpng/blob/
 5. Use separately installed pngquant and isolated managed OxiPNG/jpegoptim with the installed CLI. The complete report contains **63 passing checks**, including actual PNG/JPEG compression, lossless pixels, targets and misses, binary stdout, mixed/partial batches, original preservation and final optimizer identities.
 6. Remove the package with dpkg. The workflow checks that `/usr/bin/smolpng` is absent and package status is no longer installed. All **eight** pre-removal per-user dependency files pass their retained hash checks afterward.
 
-This first observation establishes the listed payload checks. The current workflow additionally compares installed primary/dependency licenses and third-party notices with staging; later exact-head runs carry that added check separately rather than attributing it retroactively to this run.
+This first observation establishes the listed payload checks. The current workflow additionally compares installed primary/dependency licenses and third-party notices with staging; later exact-head runs carry that added check separately rather than attributing it retroactively to this run. At source `587473a969c54440ca7beace376d14130f0cfdac`, the [follow-up Ubuntu lifecycle run](https://github.com/Wolfsblvt/smolpng/actions/runs/39342840085) passed all three comparisons as part of the complete package lifecycle job.
 
 The real optimizer identities were:
 
