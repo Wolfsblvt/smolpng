@@ -35,6 +35,18 @@ Source recovery carries the selected main branch and its complete ancestral Git 
 
 The extracted application reported the exact candidate version, source and standalone ownership. Application SHA-256 is `42f2b8d96150bf9e0c93f58623bae093a215376e4cdfc541fc2d83fda7160b2e`; windowless launcher SHA-256 is `8335bd717f0e0c40a52a0d0d4052dec5a5090bc781ae45e3d11cd9b41d946bb1`; packaged qualifier SHA-256 is `4da027dcb03bf8da61b1a2ef6b36df96a18764fa0250d55b7bac20ca3751ece6`.
 
+**Provenance correction, 19 October 2026:** All three suites below ran on the same local Windows amd64 workstation in this implementation session. They did not checkpoint its Windows edition/build or the optimizer executable hashes at execution time. A recovery-time measurement identifies the current host as Microsoft Windows 11 Home, 25H2, build `26200.9711`, 64-bit; its last boot was after those suites. This is current host evidence, not proof of the OS build used on 17 October. Exact historical OS-build provenance remains uncaptured under #36.
+
+The qualifier's retained dependency report records the following explicitly selected paths and versions. Rehashing those retained paths on 19 October produced these identities; the report itself did not capture optimizer hashes. File timestamps are not proof that bytes remained unchanged, so these recovery measurements do not retroactively bind the 61-check execution to exact optimizer bytes.
+
+| Optimizer | Selected path relative to repository root | SHA-256 measured on recovery |
+| --- | --- | --- |
+| pngquant 2.17.0 | `artifacts/toolchain/pngquant/pngquant/pngquant.exe` | `7aadad6a50aa5c40cfcb20f9478c92f6030360a3424bc262ce383dc1e97fb86a` |
+| OxiPNG 10.2.1 | `artifacts/toolchain/oxipng-10.2.1/oxipng-10.2.1-x86_64-pc-windows-msvc/oxipng.exe` | `35ae3980ab831af64f4aecc98f69b81bfa146fa750a61d17ebbb12520128cbc8` |
+| jpegoptim 1.5.6 | `artifacts/toolchain/jpegoptim-1.5.6/upstream/jpegoptim.exe` | `0a79681b56961ec2c5f45c4f9dff01a64e7274b4f3250c22cde5f09c0bb457f3` |
+
+`candidate-native-dev7-9b460e7/recovery-identities-20261019.json` retains the dated host/hash measurement separately from the original report. #36 retains the exact-provenance obligation for the joined candidate journey: checkpoint host and executable identities before further qualification. The historical component results below remain useful, with the omissions above; they are not exact historical host/optimizer-byte attestations.
+
 The packaged qualifier passed all 61 checks with separately installed pngquant 2.17.0, OxiPNG 10.2.1 and jpegoptim 1.5.6. These cover structural PNG/JPEG Auto and lossless behavior, orientation, target success/miss/nearest, binary stdout, partial batches and a mixed batch. The helper's report binds both source identities and actual executable hash. It does not use the clipboard or install optimizers.
 
 The same extracted application then passed 26 lifecycle commands in a disposable portable home/profile. Both managed optimizers were previewed, downloaded, verified, installed and reinstalled without changing PATH. Managed selection and real PNG/JPEG compression passed; original images remained unchanged and remote use stayed false. Skill preview/install/status/sync, custom-path handling, modified-content refusal, forget and unchanged uninstall behaved as documented. The application generated an instruction-only ChatGPT Skill ZIP, inspected locally; no upload or remote-execution capability was claimed. Optimizer removal preserved settings, original images and modified Skill bytes.
