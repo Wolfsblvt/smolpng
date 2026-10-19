@@ -1,9 +1,9 @@
-name: Native Linux qualification
+name: Native optimizer qualification
 on:
   workflow_dispatch:
   pull_request:
     paths:
-      - .github/workflows/native-linux.yml
+      - .github/workflows/native-optimizers.yml
 permissions:
   contents: read
 concurrency:
@@ -11,8 +11,16 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   qualify:
-    # This specimen selects Ubuntu Noble's pngquant and native amd64 libraries.
-    runs-on: ubuntu-24.04
+    name: Qualify (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux
+            runner: ubuntu-24.04
+          - platform: macos
+            runner: macos-26-intel
+    runs-on: ${{ matrix.runner }}
     defaults:
       run:
         shell: bash
@@ -20,6 +28,7 @@ jobs:
       SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
       CGO_ENABLED: '0'
       OMP_NUM_THREADS: '1'
+      NATIVE_PLATFORM: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -30,24 +39,34 @@ jobs:
           go-version-file: go.mod
       - name: Record source, host and toolchain
         run: |
-          evidence="$GITHUB_WORKSPACE/artifacts/validation/native-linux"
+          evidence="$GITHUB_WORKSPACE/artifacts/validation/native-$NATIVE_PLATFORM"
           mkdir -p "$evidence"
           git rev-parse HEAD > "$evidence/source.txt"
           test "$(cat "$evidence/source.txt")" = "$SOURCE_COMMIT"
-          cat /etc/os-release > "$evidence/os-release.txt"
+          if [ "$RUNNER_OS" = macOS ]; then
+            sw_vers > "$evidence/os-release.txt"
+          else
+            cat /etc/os-release > "$evidence/os-release.txt"
+          fi
           uname -srm > "$evidence/kernel.txt"
           printf '%s\n%s\n' "${ImageOS:-unknown}" "${ImageVersion:-unknown}" > "$evidence/runner-image.txt"
           go env -json GOVERSION GOOS GOARCH CGO_ENABLED > "$evidence/go-env.json"
           jq --version > "$evidence/jq-version.txt"
           printf 'EVIDENCE=%s\n' "$evidence" >> "$GITHUB_ENV"
+          printf 'NATIVE_BIN=%s\n' "$GITHUB_WORKSPACE/artifacts/bin/native-$NATIVE_PLATFORM" >> "$GITHUB_ENV"
       - name: Build native application and matching qualifier
         run: |
           go mod verify
-          mkdir -p artifacts/bin/native-linux
-          go build -trimpath -ldflags "-X github.com/Wolfsblvt/smolpng/internal/cli.Commit=$SOURCE_COMMIT" -o artifacts/bin/native-linux/smolpng ./cmd/smolpng
-          go build -trimpath -ldflags "-X main.Commit=$SOURCE_COMMIT" -o artifacts/bin/native-linux/smolpng-qualify ./tools/qualify
-          sha256sum artifacts/bin/native-linux/* > "$EVIDENCE/executables.sha256"
+          mkdir -p "$NATIVE_BIN"
+          go build -trimpath -ldflags "-X github.com/Wolfsblvt/smolpng/internal/cli.Commit=$SOURCE_COMMIT" -o "$NATIVE_BIN/smolpng" ./cmd/smolpng
+          go build -trimpath -ldflags "-X main.Commit=$SOURCE_COMMIT" -o "$NATIVE_BIN/smolpng-qualify" ./tools/qualify
+          if [ "$RUNNER_OS" = macOS ]; then
+            shasum -a 256 "$NATIVE_BIN"/* > "$EVIDENCE/executables.sha256"
+          else
+            sha256sum "$NATIVE_BIN"/* > "$EVIDENCE/executables.sha256"
+          fi
       - name: Extract separate pngquant packages without a system installation
+        if: runner.os == 'Linux'
         run: |
           toolroot="$RUNNER_TEMP/smolpng-pngquant"
           mkdir -p "$toolroot/packages" "$toolroot/root"
@@ -61,9 +80,20 @@ jobs:
           cp "$toolroot/root/usr/share/doc/pngquant/copyright" "$EVIDENCE/pngquant-copyright.txt"
           printf 'PNGQUANT=%s\n' "$toolroot/root/usr/bin/pngquant" >> "$GITHUB_ENV"
           printf 'LD_LIBRARY_PATH=%s\n' "$toolroot/root/usr/lib/x86_64-linux-gnu" >> "$GITHUB_ENV"
+      - name: Install separate pngquant on the disposable macOS host
+        if: runner.os == 'macOS'
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+          HOMEBREW_NO_INSTALL_CLEANUP: '1'
+        run: |
+          brew install pngquant
+          brew info --json=v2 --installed pngquant > "$EVIDENCE/pngquant-formula.json"
+          brew config > "$EVIDENCE/brew-config.txt"
+          pngquant="$(brew --prefix pngquant)/bin/pngquant"
+          printf 'PNGQUANT=%s\n' "$pngquant" >> "$GITHUB_ENV"
       - name: Install catalog-pinned OxiPNG and jpegoptim in an isolated app home
         run: |
-          app="$GITHUB_WORKSPACE/artifacts/bin/native-linux/smolpng"
+          app="$NATIVE_BIN/smolpng"
           bootstrap="$RUNNER_TEMP/smolpng-native-home"
           "$app" --home "$bootstrap" --no-project deps install oxipng --json > "$EVIDENCE/oxipng-preview.json"
           "$app" --home "$bootstrap" --no-project deps install oxipng --apply --json > "$EVIDENCE/oxipng-install.json"
@@ -74,8 +104,8 @@ jobs:
           printf 'OXIPNG=%s\nJPEGOPTIM=%s\n' "$oxipng" "$jpegoptim" >> "$GITHUB_ENV"
       - name: Exercise real PNG and JPEG jobs
         run: |
-          artifacts/bin/native-linux/smolpng-qualify \
-            -executable artifacts/bin/native-linux/smolpng \
+          "$NATIVE_BIN/smolpng-qualify" \
+            -executable "$NATIVE_BIN/smolpng" \
             -expected-commit "$SOURCE_COMMIT" \
             -pngquant "$PNGQUANT" -oxipng "$OXIPNG" -jpegoptim "$JPEGOPTIM" \
             -output "$EVIDENCE/journey"
@@ -84,11 +114,11 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: native-linux-${{ env.SOURCE_COMMIT }}-${{ github.run_id }}
+          name: native-${{ matrix.platform }}-${{ env.SOURCE_COMMIT }}-${{ github.run_id }}
           path: |
-            artifacts/validation/native-linux/*.txt
-            artifacts/validation/native-linux/*.json
-            artifacts/validation/native-linux/*.sha256
-            artifacts/validation/native-linux/journey/report.json
+            artifacts/validation/native-${{ matrix.platform }}/*.txt
+            artifacts/validation/native-${{ matrix.platform }}/*.json
+            artifacts/validation/native-${{ matrix.platform }}/*.sha256
+            artifacts/validation/native-${{ matrix.platform }}/journey/report.json
           if-no-files-found: error
           retention-days: 14
