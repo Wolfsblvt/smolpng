@@ -25,7 +25,14 @@ jobs:
         with:
           go-version-file: go.mod
       - run: go mod verify
-      - run: go test ./...
+      - name: Test with race detector
+        if: runner.os == 'Linux'
+        env:
+          CGO_ENABLED: '1'
+        run: go test -race ./...
+      - name: Test
+        if: runner.os != 'Linux'
+        run: go test ./...
       - run: go vet ./...
       - run: go run ./tools/corpus --check
   build:

@@ -18,6 +18,8 @@ go test -race ./...
 
 `go test ./...` discovers every ordinary `*_test.go`; helper and executable packages need no decorative tests. Race checking requires a native C toolchain. Source tests do not spend TinyPNG quota. Focus a change with `go test ./internal/workflow ./internal/cli`.
 
+Hosted `Verify` runs the ordinary suite with `go test -race ./...` and cgo enabled on Linux; Windows and macOS run `go test ./...`. The Linux race run replaces that job's uninstrumented test step rather than adding another test job. It detects races reached by the tests, not all possible concurrency defects or native desktop behavior. Local race checking remains optional when the required C toolchain is unavailable; do not install a machine-wide compiler merely to duplicate hosted evidence.
+
 ## Build and smoke
 
 ```sh
