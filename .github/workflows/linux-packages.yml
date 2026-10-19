@@ -85,6 +85,9 @@ jobs:
           dpkg-query -S /usr/bin/smolpng > "$EVIDENCE/executable-owner.txt"
           test "$(dpkg-query -W -f='${db:Status-Status}' smolpng)" = installed
           cmp "$PACKAGE_INPUTS/stage/linux-amd64/smolpng" /usr/bin/smolpng
+          cmp "$PACKAGE_INPUTS/stage/linux-amd64/LICENSE" /usr/share/licenses/smolpng/LICENSE
+          diff -r "$PACKAGE_INPUTS/stage/linux-amd64/LICENSES" /usr/share/licenses/smolpng/dependencies
+          cmp "$PACKAGE_INPUTS/stage/linux-amd64/third-party-notices.md" /usr/share/doc/smolpng/third-party-notices.md
           sha256sum /usr/bin/smolpng > "$EVIDENCE/installed-executable.sha256"
           /usr/bin/smolpng --home "$RUNNER_TEMP/smolpng-package-home" --no-project version --json > "$EVIDENCE/installed-version.json"
           jq -e --arg source "$SOURCE_COMMIT" '.commit == $source and .version == "0.0.0"' "$EVIDENCE/installed-version.json"
