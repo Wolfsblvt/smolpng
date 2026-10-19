@@ -166,6 +166,7 @@ func (e Engine) optimizeJPEG(ctx context.Context, data []byte, r domain.Recipe) 
 		return out, nil
 	}
 	if !transform && !e.Tools.JPEGOptim.Available {
+		out.Warnings = append(out.Warnings, "jpegoptim: "+e.Tools.JPEGOptim.Error)
 		return out, domain.E(4, "jpegoptim 1.4+/1.5.x is required for local JPEG optimization; configure it separately", nil)
 	}
 	dims := []domain.Dimensions{original.Info.Dimensions}
