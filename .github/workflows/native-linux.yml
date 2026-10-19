@@ -1,0 +1,94 @@
+name: Native Linux qualification
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/native-linux.yml
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  qualify:
+    # This specimen selects Ubuntu Noble's pngquant and native amd64 libraries.
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
+    env:
+      SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      CGO_ENABLED: '0'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ env.SOURCE_COMMIT }}
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Record source, host and toolchain
+        run: |
+          evidence="$GITHUB_WORKSPACE/artifacts/validation/native-linux"
+          mkdir -p "$evidence"
+          git rev-parse HEAD > "$evidence/source.txt"
+          test "$(cat "$evidence/source.txt")" = "$SOURCE_COMMIT"
+          cat /etc/os-release > "$evidence/os-release.txt"
+          uname -srm > "$evidence/kernel.txt"
+          printf '%s\n%s\n' "${ImageOS:-unknown}" "${ImageVersion:-unknown}" > "$evidence/runner-image.txt"
+          go env -json GOVERSION GOOS GOARCH CGO_ENABLED > "$evidence/go-env.json"
+          jq --version > "$evidence/jq-version.txt"
+          printf 'EVIDENCE=%s\n' "$evidence" >> "$GITHUB_ENV"
+      - name: Build native application and matching qualifier
+        run: |
+          go mod verify
+          mkdir -p artifacts/bin/native-linux
+          go build -trimpath -ldflags "-X github.com/Wolfsblvt/smolpng/internal/cli.Commit=$SOURCE_COMMIT" -o artifacts/bin/native-linux/smolpng ./cmd/smolpng
+          go build -trimpath -ldflags "-X main.Commit=$SOURCE_COMMIT" -o artifacts/bin/native-linux/smolpng-qualify ./tools/qualify
+          sha256sum artifacts/bin/native-linux/* > "$EVIDENCE/executables.sha256"
+      - name: Extract separate pngquant packages without a system installation
+        run: |
+          toolroot="$RUNNER_TEMP/smolpng-pngquant"
+          mkdir -p "$toolroot/packages" "$toolroot/root"
+          cd "$toolroot/packages"
+          apt-get download pngquant=2.18.0-1build2 libimagequant0=2.18.0-1build1 libpng16-16t64 libgomp1
+          sha256sum ./*.deb > "$EVIDENCE/pngquant-packages.sha256"
+          for archive in ./*.deb; do
+            dpkg-deb --field "$archive" Package Version Architecture >> "$EVIDENCE/pngquant-packages.txt"
+            dpkg-deb --extract "$archive" "$toolroot/root"
+          done
+          cp "$toolroot/root/usr/share/doc/pngquant/copyright" "$EVIDENCE/pngquant-copyright.txt"
+          printf 'PNGQUANT=%s\n' "$toolroot/root/usr/bin/pngquant" >> "$GITHUB_ENV"
+          printf 'LD_LIBRARY_PATH=%s\n' "$toolroot/root/usr/lib/x86_64-linux-gnu" >> "$GITHUB_ENV"
+      - name: Install catalog-pinned OxiPNG and jpegoptim in an isolated app home
+        run: |
+          app="$GITHUB_WORKSPACE/artifacts/bin/native-linux/smolpng"
+          bootstrap="$RUNNER_TEMP/smolpng-native-home"
+          "$app" --home "$bootstrap" --no-project deps install oxipng --json > "$EVIDENCE/oxipng-preview.json"
+          "$app" --home "$bootstrap" --no-project deps install oxipng --apply --json > "$EVIDENCE/oxipng-install.json"
+          "$app" --home "$bootstrap" --no-project deps install jpegoptim --json > "$EVIDENCE/jpegoptim-preview.json"
+          "$app" --home "$bootstrap" --no-project deps install jpegoptim --apply --json > "$EVIDENCE/jpegoptim-install.json"
+          oxipng=$(jq -er '.managed | select(.state == "current") | .path' "$EVIDENCE/oxipng-install.json")
+          jpegoptim=$(jq -er '.managed | select(.state == "current") | .path' "$EVIDENCE/jpegoptim-install.json")
+          printf 'OXIPNG=%s\nJPEGOPTIM=%s\n' "$oxipng" "$jpegoptim" >> "$GITHUB_ENV"
+      - name: Exercise real PNG and JPEG jobs
+        run: |
+          artifacts/bin/native-linux/smolpng-qualify \
+            -executable artifacts/bin/native-linux/smolpng \
+            -expected-commit "$SOURCE_COMMIT" \
+            -pngquant "$PNGQUANT" -oxipng "$OXIPNG" -jpegoptim "$JPEGOPTIM" \
+            -output "$EVIDENCE/journey"
+          jq -e '.complete and .passed' "$EVIDENCE/journey/report.json"
+      - name: Retain reports, including incomplete attempts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: native-linux-${{ env.SOURCE_COMMIT }}-${{ github.run_id }}
+          path: |
+            artifacts/validation/native-linux/*.txt
+            artifacts/validation/native-linux/*.json
+            artifacts/validation/native-linux/*.sha256
+            artifacts/validation/native-linux/journey/report.json
+          if-no-files-found: error
+          retention-days: 14

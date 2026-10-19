@@ -66,4 +66,4 @@ Removal checks every recorded version and refuses user edits, extra files or unt
 
 A hard crash can leave a staging or removal directory. Inspect its bytes before manual cleanup; this cut does not sweep unknown directories or overwrite an installation merely to make a green check appear. The local owner is trusted, and these checks do not defend against a malicious simultaneous writer with the same account permissions.
 
-The [Windows managed JPEG record](reference/2026-10-17-windows-managed-jpegoptim.md) qualifies a real download/install/discovery/compression/removal journey in a disposable application home. Other-host execution and graphical setup remain separate observations.
+The [Windows managed JPEG record](reference/2026-10-17-windows-managed-jpegoptim.md) qualifies a real download/install/discovery/compression/removal journey in a disposable application home. The [native Linux record](reference/2026-10-19-linux-native-qualification.md) separately qualifies catalog OxiPNG/jpegoptim installation and real PNG/JPEG compression on Ubuntu amd64. Linux managed removal, other-host execution and graphical setup remain separate observations.
