@@ -124,6 +124,9 @@ func TestCancelledRunRetainsIncompleteEvidence(t *testing.T) {
 	if got.Complete || got.Passed || len(got.Checks) == 0 || len(got.Formats) != 1 || got.Formats[0] != "jpeg" {
 		t.Fatal(got)
 	}
+	if got.Host.OS == "" || got.Host.Architecture == "" || got.ExecutableSHA256 == "" {
+		t.Fatal("interrupted run lost its captured host/application identities", got)
+	}
 }
 
 type runnerFunc func(context.Context, process.Invocation) (process.Result, error)

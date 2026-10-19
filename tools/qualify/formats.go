@@ -33,15 +33,18 @@ func dependencyErrors(report []byte, formats []string) []string {
 	}
 	failures := []string{}
 	for _, format := range formats {
-		tools := []string{"jpegoptim"}
-		if format == "png" {
-			tools = []string{"pngquant", "oxipng"}
-		}
-		for _, name := range tools {
+		for _, name := range toolsForFormat(format) {
 			if !health.Tools[name].Available {
 				failures = append(failures, fmt.Sprintf("%s requires real compatible %s; install separately or supply its explicit path", format, name))
 			}
 		}
 	}
 	return failures
+}
+
+func toolsForFormat(format string) []string {
+	if format == "png" {
+		return []string{"pngquant", "oxipng"}
+	}
+	return []string{"jpegoptim"}
 }

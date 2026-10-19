@@ -6,7 +6,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -40,19 +39,21 @@ type check struct {
 	Stderr    string          `json:"stderr,omitempty"`
 }
 type evidence struct {
-	SchemaVersion    int             `json:"schemaVersion"`
-	QualifierCommit  string          `json:"qualifierCommit"`
-	ExpectedCommit   string          `json:"expectedCommit"`
-	Platform         string          `json:"platform"`
-	Started          time.Time       `json:"started"`
-	Executable       string          `json:"executable"`
-	ExecutableSHA256 string          `json:"executableSHA256"`
-	Tools            json.RawMessage `json:"tools,omitempty"`
-	Checks           []check         `json:"checks"`
-	Formats          []string        `json:"formats"`
-	Complete         bool            `json:"complete"`
-	Passed           bool            `json:"passed"`
-	Qualification    string          `json:"qualification"`
+	SchemaVersion    int               `json:"schemaVersion"`
+	QualifierCommit  string            `json:"qualifierCommit"`
+	ExpectedCommit   string            `json:"expectedCommit"`
+	Platform         string            `json:"platform"`
+	Host             hostIdentity      `json:"host"`
+	Started          time.Time         `json:"started"`
+	Executable       string            `json:"executable"`
+	ExecutableSHA256 string            `json:"executableSHA256"`
+	Tools            json.RawMessage   `json:"tools,omitempty"`
+	OptimizerSHA256  map[string]string `json:"optimizerSHA256,omitempty"`
+	Checks           []check           `json:"checks"`
+	Formats          []string          `json:"formats"`
+	Complete         bool              `json:"complete"`
+	Passed           bool              `json:"passed"`
+	Qualification    string            `json:"qualification"`
 }
 type options struct {
 	Executable, Directory, PNGQuant, OxiPNG, JPEGOptim, Expected, Formats string
@@ -115,6 +116,7 @@ func run(ctx context.Context, o options) (err error) {
 	s := suite{opt: o, root: dir, runner: process.OSRunner{}, common: []string{"--home", filepath.Join(dir, "home"), "--no-project"}, data: evidence{SchemaVersion: 1, ExpectedCommit: o.Expected, Platform: runtime.GOOS + "/" + runtime.GOARCH, Started: time.Now().UTC(), Executable: exe, Checks: []check{}, Qualification: "real local executable/optimizer and filesystem checks; does not qualify graphical clipboard, drag/drop, notifications, signing or remote providers"}}
 	s.data.Formats = formats
 	s.data.QualifierCommit = Commit
+	s.data.Host = currentHostIdentity()
 	defer func() {
 		if !s.data.Complete {
 			err = errors.Join(err, s.save())
@@ -129,11 +131,10 @@ func run(ctx context.Context, o options) (err error) {
 			s.common = append(s.common, p.name, a)
 		}
 	}
-	binaryBytes, e := os.ReadFile(exe)
+	s.data.ExecutableSHA256, e = executableHash(exe)
 	if e != nil {
 		return e
 	}
-	s.data.ExecutableSHA256 = fmt.Sprintf("%x", sha256.Sum256(binaryBytes))
 	s.data.Passed = true
 	v := s.invoke(ctx, "build-provenance", 0, nil, "version", "--json")
 	var info struct {
@@ -149,6 +150,18 @@ func run(ctx context.Context, o options) (err error) {
 	d.Errors = append(d.Errors, dependencyErrors(d.Report, formats)...)
 	s.data.Tools = d.Report
 	s.add(d)
+	if s.data.Passed {
+		s.data.OptimizerSHA256, e = optimizerHashes(d.Report, formats)
+		identity := check{Name: "optimizer-provenance"}
+		if e != nil {
+			identity.Errors = append(identity.Errors, e.Error())
+		}
+		s.add(identity)
+	}
+	// Persist identities before corpus work; an interrupted run must not lose them.
+	if e = s.save(); e != nil {
+		return e
+	}
 	if !s.data.Passed {
 		return fmt.Errorf("qualification preflight failed; inspect %s", filepath.Join(dir, "report.json"))
 	}
@@ -234,6 +247,7 @@ func run(ctx context.Context, o options) (err error) {
 	if e = ctx.Err(); e != nil {
 		return e
 	}
+	s.verifyOptimizerIdentity()
 	s.data.Complete = true
 	if e = s.save(); e != nil {
 		return e
