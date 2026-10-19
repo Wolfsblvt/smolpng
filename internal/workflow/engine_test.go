@@ -17,20 +17,32 @@ import (
 )
 
 func TestUnavailableOptimizerReasonsReachFailedImageReport(t *testing.T) {
-	for _, preset := range []string{"auto", "lossless"} {
-		t.Run(preset, func(t *testing.T) {
+	for _, test := range []struct {
+		name, preset, filename string
+		data                   []byte
+		optimizers             []string
+	}{
+		{"png-auto", "auto", "image.png", testutil.Corpus()["flat-icon.png"], []string{"oxipng", "pngquant"}},
+		{"png-lossless", "lossless", "image.png", testutil.Corpus()["flat-icon.png"], []string{"oxipng"}},
+		{"jpeg-auto", "auto", "image.jpg", jpegData(), []string{"jpegoptim"}},
+		{"jpeg-lossless", "lossless", "image.jpg", jpegData(), []string{"jpegoptim"}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
 			tools := testutil.Tools()
 			tools.OxiPNG.Available = false
 			tools.OxiPNG.Error = "version probe failed: context deadline exceeded"
 			tools.PNGQuant.Available = false
 			tools.PNGQuant.Error = "version probe failed: exit code 9"
-			recipe, _ := domain.Builtin(preset)
+			tools.JPEGOptim.Available = false
+			tools.JPEGOptim.Error = "version probe failed: context deadline exceeded"
+			reasons := map[string]string{"oxipng": tools.OxiPNG.Error, "pngquant": tools.PNGQuant.Error, "jpegoptim": tools.JPEGOptim.Error}
+			recipe, _ := domain.Builtin(test.preset)
 			dir := t.TempDir()
-			path := filepath.Join(dir, "image.png")
-			if err := os.WriteFile(path, testutil.Corpus()["flat-icon.png"], 0600); err != nil {
+			path := filepath.Join(dir, test.filename)
+			if err := os.WriteFile(path, test.data, 0600); err != nil {
 				t.Fatal(err)
 			}
-			jobs, err := output.Plan([]input.Source{{Kind: "file", Path: path, Display: path, Name: "image.png"}}, output.Options{}, time.Now())
+			jobs, err := output.Plan([]input.Source{{Kind: "file", Path: path, Display: path, Name: test.filename}}, output.Options{}, time.Now())
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -41,11 +53,13 @@ func TestUnavailableOptimizerReasonsReachFailedImageReport(t *testing.T) {
 			}
 			result := report.Results[0]
 			warnings := strings.Join(result.Warnings, "; ")
-			if result.Output != "" || !strings.Contains(warnings, "oxipng: "+tools.OxiPNG.Error) {
+			if result.Output != "" {
 				t.Fatal(result)
 			}
-			if preset == "auto" && !strings.Contains(warnings, "pngquant: "+tools.PNGQuant.Error) {
-				t.Fatal(result)
+			for _, optimizer := range test.optimizers {
+				if !strings.Contains(warnings, optimizer+": "+reasons[optimizer]) {
+					t.Fatal(result)
+				}
 			}
 		})
 	}
