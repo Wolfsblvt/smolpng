@@ -70,6 +70,29 @@ func TestSmartPayloadPublishesImageFilesAndPathTogether(t *testing.T) {
 		t.Fatalf("URI path %q want %q", u.Path, expected)
 	}
 }
+func TestImagePayloadPrefersPNGAndKeepsNativeBitmapFallback(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "alpha.png")
+	b := testutil.Corpus()["alpha-gradient.png"]
+	if err := os.WriteFile(p, b, 0600); err != nil {
+		t.Fatal(err)
+	}
+	for _, mode := range []string{"image", "smart"} {
+		t.Run(mode, func(t *testing.T) {
+			opts, _, err := CopyPayload([]string{p}, mode)
+			if err != nil {
+				t.Fatal(err)
+			}
+			preferred, ok := opts[0].(native.Item)
+			if !ok || preferred.Format != native.Register("image/png") {
+				t.Fatal("PNG-aware consumers must receive the encoded PNG before the bitmap fallback")
+			}
+			parts := items(t, opts)
+			if !bytes.Equal(parts[native.Register("image/png")], b) || !bytes.Equal(parts[native.FmtImage], b) {
+				t.Fatal("image copy must preserve PNG alpha bytes and the native bitmap fallback together")
+			}
+		})
+	}
+}
 func TestBatchPayloadDoesNotPretendMultipleImagesAreOne(t *testing.T) {
 	a, b := output(t, "a.png"), output(t, "b.png")
 	opts, modes, e := CopyPayload([]string{a, b}, "smart")

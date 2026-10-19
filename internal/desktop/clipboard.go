@@ -132,7 +132,11 @@ func CopyPayload(files []string, mode string) ([]native.Option, []string, error)
 			// A tagged JPEG cannot be relabeled as sRGB PNG without color
 			// management. Smart still supplies the actual file and its path.
 		} else {
-			options = append(options, native.Item{Format: native.FmtImage, Bytes: b})
+			// Paint ignores bitmap alpha when pasting. Prefer encoded PNG for
+			// consumers that support it, while retaining the native bitmap fallback.
+			options = append(options,
+				native.Item{Format: native.Register("image/png"), Bytes: b},
+				native.Item{Format: native.FmtImage, Bytes: b})
 			modes = append(modes, "image")
 		}
 	}
