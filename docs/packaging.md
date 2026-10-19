@@ -2,7 +2,7 @@
 
 ## Meaning
 
-The repository contains executable local packaging tooling, not just proposed release commands. It builds exact-source standalone candidates, reproducible ZIP/tar.gz archives, member receipts and checksums. With an explicit future asset URL and stable version, it also generates offline Winget, Scoop, Homebrew, Chocolatey and nFPM inputs plus an unsigned update payload. It does not publish, submit, register a package, create a signing authority or contact a package manager.
+The repository contains executable local packaging tooling, not just proposed release commands. It builds exact-source standalone candidates, reproducible ZIP/tar.gz archives, member receipts and checksums. With an explicit future asset URL and stable version, it also generates offline Winget, Scoop, Homebrew, Chocolatey and nFPM inputs plus an unsigned update payload. The builder does not publish, submit, register a package, create a signing authority or contact a package manager. A separate hosted qualifier installs and removes a fixture DEB only on its disposable Ubuntu runner.
 
 ## Candidate builds
 
@@ -50,6 +50,8 @@ The definitions set `umask: 0o022` to remove group/world write permissions inher
 Inspect actual package headers, executable architecture, paths, modes and extracted file hashes before treating package production as qualified. Format/payload inspection does not establish installation, package-manager ownership or runtime behavior on a Linux host.
 
 The [Windows-built Linux package record](reference/2026-10-17-linux-package-artifacts.md) qualifies all eight amd64/arm64 format combinations with nFPM 2.48.0 and independent payload/header readers. It records the staging-permission repair, exact source and artifact identities, all 61 payload files per package, and the remaining host/publication limits.
+
+The [Ubuntu DEB lifecycle record](reference/2026-10-20-linux-deb-lifecycle.md) separately establishes actual amd64 installation, package/update ownership, all 63 PNG/JPEG checks through the installed CLI, and removal with per-user dependency state preserved. Its fixture-only `0.0.0` version is not a public release identity. This result does not qualify other package formats, architectures or graphical integrations. The [dedicated workflow](../.github/workflows/linux-packages.yml) retains reports only and leaves package submission and signing outside its scope.
 
 ## Standalone update archive and signing
 
