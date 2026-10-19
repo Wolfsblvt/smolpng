@@ -46,16 +46,15 @@ func ArtifactFor(tool, goos, arch string) (Artifact, error) {
 }
 
 func jpegoptimArtifact(goos, arch string) (Artifact, error) {
-	if arch != "amd64" {
-		return Artifact{}, fmt.Errorf("no native jpegoptim artifact is qualified for %s/%s in this build; configure an independently installed executable", goos, arch)
-	}
 	// Digests from the upstream v1.5.6 release, checked 2026-10-17.
+	// The upstream x64-osx archive actually contains a thin ARM64 Mach-O binary.
+	// Select its inspected architecture, not the misleading asset name.
 	targets := map[string][2]string{
-		"windows": {"windows", "db2d8caee88f2665b772c4591cba223b8b729500b88266dc06d4bf79d28fe11a"},
-		"linux":   {"linux", "f480db3bdda996cb1ed366f0877f2fe9e0d8708487f7d00e4c7166b52a9e2c1a"},
-		"darwin":  {"osx", "5ca21c2f8f02ed815b00e453b0ea235d84ac6a99704d15bb587f952f700d6d44"},
+		"windows/amd64": {"windows", "db2d8caee88f2665b772c4591cba223b8b729500b88266dc06d4bf79d28fe11a"},
+		"linux/amd64":   {"linux", "f480db3bdda996cb1ed366f0877f2fe9e0d8708487f7d00e4c7166b52a9e2c1a"},
+		"darwin/arm64":  {"osx", "5ca21c2f8f02ed815b00e453b0ea235d84ac6a99704d15bb587f952f700d6d44"},
 	}
-	target, ok := targets[goos]
+	target, ok := targets[goos+"/"+arch]
 	if !ok {
 		return Artifact{}, fmt.Errorf("no native jpegoptim artifact is qualified for %s/%s in this build; configure an independently installed executable", goos, arch)
 	}

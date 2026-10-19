@@ -336,8 +336,9 @@ func TestConcurrentInstallerRefusesSecondWriter(t *testing.T) {
 	}
 }
 func TestManagedCatalogAndPolicy(t *testing.T) {
-	for _, platform := range []string{"windows", "linux", "darwin"} {
-		a, err := ArtifactFor("jpegoptim", platform, "amd64")
+	for _, target := range []string{"windows/amd64", "linux/amd64", "darwin/arm64"} {
+		platform := strings.Split(target, "/")
+		a, err := ArtifactFor("jpegoptim", platform[0], platform[1])
 		if err != nil || validateArtifact(a) != nil || a.License != "GPL-3.0-or-later" {
 			t.Fatal(a, err)
 		}
@@ -345,8 +346,11 @@ func TestManagedCatalogAndPolicy(t *testing.T) {
 		if validateArtifact(a) == nil {
 			t.Fatal("wrong optimizer's upstream was accepted")
 		}
-		if _, err := ArtifactFor("jpegoptim", platform, "arm64"); err == nil {
-			t.Fatal("invented native arm64 jpegoptim archive")
+	}
+	for _, target := range []string{"windows/arm64", "linux/arm64", "darwin/amd64"} {
+		platform := strings.Split(target, "/")
+		if _, err := ArtifactFor("jpegoptim", platform[0], platform[1]); err == nil {
+			t.Fatalf("invented native jpegoptim archive for %s", target)
 		}
 	}
 	for _, target := range []string{"linux/amd64", "linux/arm64", "windows/amd64", "darwin/amd64", "darwin/arm64"} {
