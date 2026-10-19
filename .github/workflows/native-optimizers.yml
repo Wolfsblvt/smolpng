@@ -18,8 +18,13 @@ jobs:
         include:
           - platform: linux
             runner: ubuntu-24.04
-          - platform: macos
+            managed_jpegoptim: true
+          - platform: macos-amd64
             runner: macos-26-intel
+            managed_jpegoptim: false
+          - platform: macos-arm64
+            runner: macos-26
+            managed_jpegoptim: true
     runs-on: ${{ matrix.runner }}
     defaults:
       run:
@@ -29,6 +34,7 @@ jobs:
       CGO_ENABLED: '0'
       OMP_NUM_THREADS: '1'
       NATIVE_PLATFORM: ${{ matrix.platform }}
+      MANAGED_JPEGOPTIM: ${{ matrix.managed_jpegoptim }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -80,28 +86,38 @@ jobs:
           cp "$toolroot/root/usr/share/doc/pngquant/copyright" "$EVIDENCE/pngquant-copyright.txt"
           printf 'PNGQUANT=%s\n' "$toolroot/root/usr/bin/pngquant" >> "$GITHUB_ENV"
           printf 'LD_LIBRARY_PATH=%s\n' "$toolroot/root/usr/lib/x86_64-linux-gnu" >> "$GITHUB_ENV"
-      - name: Install separate pngquant on the disposable macOS host
+      - name: Install separate Homebrew optimizers on the disposable macOS host
         if: runner.os == 'macOS'
         env:
           HOMEBREW_NO_AUTO_UPDATE: '1'
           HOMEBREW_NO_INSTALL_CLEANUP: '1'
         run: |
-          brew install pngquant
-          brew info --json=v2 --installed pngquant > "$EVIDENCE/pngquant-formula.json"
+          if [ "$MANAGED_JPEGOPTIM" = true ]; then
+            brew install pngquant
+          else
+            brew install pngquant jpegoptim
+            brew info --json=v2 jpegoptim > "$EVIDENCE/jpegoptim-formula.json"
+            jpegoptim="$(brew --prefix jpegoptim)/bin/jpegoptim"
+            printf 'JPEGOPTIM=%s\n' "$jpegoptim" >> "$GITHUB_ENV"
+          fi
+          brew info --json=v2 pngquant > "$EVIDENCE/pngquant-formula.json"
           brew config > "$EVIDENCE/brew-config.txt"
           pngquant="$(brew --prefix pngquant)/bin/pngquant"
           printf 'PNGQUANT=%s\n' "$pngquant" >> "$GITHUB_ENV"
-      - name: Install catalog-pinned OxiPNG and jpegoptim in an isolated app home
+      - name: Install catalog tools in an isolated app home
         run: |
           app="$NATIVE_BIN/smolpng"
           bootstrap="$RUNNER_TEMP/smolpng-native-home"
           "$app" --home "$bootstrap" --no-project deps install oxipng --json > "$EVIDENCE/oxipng-preview.json"
           "$app" --home "$bootstrap" --no-project deps install oxipng --apply --json > "$EVIDENCE/oxipng-install.json"
-          "$app" --home "$bootstrap" --no-project deps install jpegoptim --json > "$EVIDENCE/jpegoptim-preview.json"
-          "$app" --home "$bootstrap" --no-project deps install jpegoptim --apply --json > "$EVIDENCE/jpegoptim-install.json"
           oxipng=$(jq -er '.managed | select(.state == "current") | .path' "$EVIDENCE/oxipng-install.json")
-          jpegoptim=$(jq -er '.managed | select(.state == "current") | .path' "$EVIDENCE/jpegoptim-install.json")
-          printf 'OXIPNG=%s\nJPEGOPTIM=%s\n' "$oxipng" "$jpegoptim" >> "$GITHUB_ENV"
+          printf 'OXIPNG=%s\n' "$oxipng" >> "$GITHUB_ENV"
+          if [ "$MANAGED_JPEGOPTIM" = true ]; then
+            "$app" --home "$bootstrap" --no-project deps install jpegoptim --json > "$EVIDENCE/jpegoptim-preview.json"
+            "$app" --home "$bootstrap" --no-project deps install jpegoptim --apply --json > "$EVIDENCE/jpegoptim-install.json"
+            jpegoptim=$(jq -er '.managed | select(.state == "current") | .path' "$EVIDENCE/jpegoptim-install.json")
+            printf 'JPEGOPTIM=%s\n' "$jpegoptim" >> "$GITHUB_ENV"
+          fi
       - name: Exercise real PNG and JPEG jobs
         run: |
           "$NATIVE_BIN/smolpng-qualify" \
