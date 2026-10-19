@@ -1,0 +1,149 @@
+name: Linux package qualification
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/linux-packages.yml
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  deb:
+    name: Ubuntu amd64 DEB lifecycle
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
+    env:
+      SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      CGO_ENABLED: '0'
+      GOTOOLCHAIN: local
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ env.SOURCE_COMMIT }}
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Record clean host, source and toolchain
+        run: |
+          evidence="$GITHUB_WORKSPACE/artifacts/validation/linux-deb"
+          mkdir -p "$evidence"
+          printf 'EVIDENCE=%s\n' "$evidence" >> "$GITHUB_ENV"
+          printf 'PACKAGE_INPUTS=%s\n' "$GITHUB_WORKSPACE/artifacts/package-fixture" >> "$GITHUB_ENV"
+          git rev-parse HEAD > "$evidence/source.txt"
+          test "$(cat "$evidence/source.txt")" = "$SOURCE_COMMIT"
+          cat /etc/os-release > "$evidence/os-release.txt"
+          uname -srm > "$evidence/kernel.txt"
+          go env -json GOVERSION GOOS GOARCH CGO_ENABLED > "$evidence/go-env.json"
+          dpkg --version > "$evidence/dpkg-version.txt"
+          jq --version > "$evidence/jq-version.txt"
+          test ! -e /usr/bin/smolpng
+          if dpkg-query -W -f='${db:Status-Status}' smolpng 2>/dev/null | grep -qx installed; then
+            echo 'A smolpng package already exists on this runner' >&2
+            exit 1
+          fi
+      - name: Build fixture-only Linux archive and existing package definitions
+        run: |
+          go mod verify
+          # Stable 0.0.0 and the reserved .invalid URL are test inputs, not a release identity or asset address.
+          go run ./tools/release --version 0.0.0 --platforms linux/amd64 \
+            --base-url https://example.invalid/smolpng-package-fixture \
+            --out "$PACKAGE_INPUTS" > "$EVIDENCE/build.txt"
+          cp "$PACKAGE_INPUTS/build-index.json" "$EVIDENCE/build-index.json"
+          jq -e --arg source "$SOURCE_COMMIT" '.complete and .source == $source' "$EVIDENCE/build-index.json"
+      - name: Build pinned nFPM in the disposable runner tool directory
+        run: |
+          export GOBIN="$RUNNER_TEMP/smolpng-nfpm"
+          mkdir -p "$GOBIN"
+          go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.48.0
+          go version -m "$GOBIN/nfpm" > "$EVIDENCE/nfpm-build.txt"
+          "$GOBIN/nfpm" --version > "$EVIDENCE/nfpm-version.txt"
+          sha256sum "$GOBIN/nfpm" > "$EVIDENCE/nfpm.sha256"
+          printf 'NFPM=%s\n' "$GOBIN/nfpm" >> "$GITHUB_ENV"
+      - name: Produce and inspect the DEB before installation
+        working-directory: ${{ env.PACKAGE_INPUTS }}
+        run: |
+          "$NFPM" package --config nfpm/amd64.yaml --packager deb --target smolpng-fixture-amd64.deb
+          sha256sum smolpng-fixture-amd64.deb > "$EVIDENCE/package.sha256"
+          dpkg-deb --field smolpng-fixture-amd64.deb Package Version Architecture > "$EVIDENCE/package-fields.txt"
+          test "$(dpkg-deb --field smolpng-fixture-amd64.deb Package)" = smolpng
+          test "$(dpkg-deb --field smolpng-fixture-amd64.deb Architecture)" = amd64
+          dpkg-deb --contents smolpng-fixture-amd64.deb > "$EVIDENCE/package-contents.txt"
+          dpkg-deb --extract smolpng-fixture-amd64.deb "$RUNNER_TEMP/smolpng-deb-payload"
+          cmp stage/linux-amd64/smolpng "$RUNNER_TEMP/smolpng-deb-payload/usr/bin/smolpng"
+          test "$(stat -c %a "$RUNNER_TEMP/smolpng-deb-payload/usr/bin/smolpng")" = 755
+      - name: Install and verify package ownership, build identity and update behavior
+        run: |
+          printf 'PACKAGE_INSTALL_ATTEMPTED=true\n' >> "$GITHUB_ENV"
+          sudo dpkg --install "$PACKAGE_INPUTS/smolpng-fixture-amd64.deb" > "$EVIDENCE/install.txt"
+          dpkg-query -W -f='${Package} ${Version} ${Architecture} ${Status}\n' smolpng > "$EVIDENCE/installed-package.txt"
+          dpkg-query -S /usr/bin/smolpng > "$EVIDENCE/executable-owner.txt"
+          test "$(dpkg-query -W -f='${db:Status-Status}' smolpng)" = installed
+          cmp "$PACKAGE_INPUTS/stage/linux-amd64/smolpng" /usr/bin/smolpng
+          sha256sum /usr/bin/smolpng > "$EVIDENCE/installed-executable.sha256"
+          /usr/bin/smolpng --home "$RUNNER_TEMP/smolpng-package-home" --no-project version --json > "$EVIDENCE/installed-version.json"
+          jq -e --arg source "$SOURCE_COMMIT" '.commit == $source and .version == "0.0.0"' "$EVIDENCE/installed-version.json"
+          /usr/bin/smolpng --home "$RUNNER_TEMP/smolpng-package-home" --no-project update status --json > "$EVIDENCE/update-status.json"
+          jq -e '.channel.owner == "system-package" and (.channel.canApply | not)' "$EVIDENCE/update-status.json"
+      - name: Prepare separate optimizers in isolated directories
+        run: |
+          toolroot="$RUNNER_TEMP/smolpng-pngquant"
+          mkdir -p "$toolroot/packages" "$toolroot/root"
+          cd "$toolroot/packages"
+          apt-get download pngquant=2.18.0-1build2 libimagequant0=2.18.0-1build1 libpng16-16t64 libgomp1
+          sha256sum ./*.deb > "$EVIDENCE/pngquant-packages.sha256"
+          for archive in ./*.deb; do
+            dpkg-deb --extract "$archive" "$toolroot/root"
+          done
+          printf 'PNGQUANT=%s\n' "$toolroot/root/usr/bin/pngquant" >> "$GITHUB_ENV"
+          printf 'LD_LIBRARY_PATH=%s\n' "$toolroot/root/usr/lib/x86_64-linux-gnu" >> "$GITHUB_ENV"
+          for tool in oxipng jpegoptim; do
+            /usr/bin/smolpng --home "$RUNNER_TEMP/smolpng-package-home" --no-project deps install "$tool" --apply --json > "$EVIDENCE/$tool-install.json"
+            path=$(jq -er '.managed | select(.state == "current") | .path' "$EVIDENCE/$tool-install.json")
+            if [ "$tool" = oxipng ]; then
+              printf 'OXIPNG=%s\n' "$path" >> "$GITHUB_ENV"
+            else
+              printf 'JPEGOPTIM=%s\n' "$path" >> "$GITHUB_ENV"
+            fi
+          done
+      - name: Exercise the installed executable with real PNG and JPEG jobs
+        run: |
+          "$PACKAGE_INPUTS/stage/linux-amd64/smolpng-qualify" \
+            -executable /usr/bin/smolpng -expected-commit "$SOURCE_COMMIT" \
+            -pngquant "$PNGQUANT" -oxipng "$OXIPNG" -jpegoptim "$JPEGOPTIM" \
+            -output "$EVIDENCE/journey"
+          jq -e '.complete and .passed' "$EVIDENCE/journey/report.json"
+      - name: Remove the package and preserve per-user dependency state
+        if: always() && env.PACKAGE_INSTALL_ATTEMPTED == 'true'
+        run: |
+          home="$RUNNER_TEMP/smolpng-package-home"
+          if [ -d "$home" ]; then
+            find "$home" -type f -print0 | sort -z | xargs -0 -r sha256sum > "$EVIDENCE/user-state-before.sha256"
+          fi
+          sudo dpkg --remove smolpng > "$EVIDENCE/remove.txt"
+          test ! -e /usr/bin/smolpng
+          status=$(dpkg-query -W -f='${db:Status-Status}' smolpng 2>/dev/null || true)
+          test "$status" != installed
+          printf '%s\n' "$status" > "$EVIDENCE/removed-package-status.txt"
+          if [ -s "$EVIDENCE/user-state-before.sha256" ]; then
+            sha256sum --check "$EVIDENCE/user-state-before.sha256" > "$EVIDENCE/user-state-preserved.txt"
+          else
+            printf 'No per-user files existed before removal\n' > "$EVIDENCE/user-state-preserved.txt"
+          fi
+      - name: Retain reports, including incomplete attempts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: linux-deb-${{ env.SOURCE_COMMIT }}-${{ github.run_id }}
+          path: |
+            artifacts/validation/linux-deb/*.txt
+            artifacts/validation/linux-deb/*.json
+            artifacts/validation/linux-deb/*.sha256
+            artifacts/validation/linux-deb/journey/report.json
+          if-no-files-found: error
+          retention-days: 14
