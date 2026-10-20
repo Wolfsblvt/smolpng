@@ -178,7 +178,7 @@ case "$PACKAGE_FORMAT" in
 		;;
 	archlinux)
 		pacman -Qo /usr/bin/smolpng > "$EVIDENCE/executable-owner.txt"
-		pacman --config "$RUNNER_TEMP/pacman.conf" -Qkk smolpng > "$EVIDENCE/package-integrity.txt"
+		pacman --config "$RUNNER_TEMP/pacman.conf" -Qk smolpng > "$EVIDENCE/package-integrity.txt"
 		;;
 esac
 cmp "$PACKAGE_INPUTS/stage/linux-amd64/smolpng" /usr/bin/smolpng
@@ -187,10 +187,13 @@ diff -r "$PACKAGE_INPUTS/stage/linux-amd64/LICENSES" /usr/share/licenses/smolpng
 cmp "$PACKAGE_INPUTS/stage/linux-amd64/third-party-notices.md" /usr/share/doc/smolpng/third-party-notices.md
 sha256sum /usr/bin/smolpng > "$EVIDENCE/installed-executable.sha256"
 
-"$PACKAGE_INPUTS/stage/linux-amd64/smolpng-qualify" \
+if ! "$PACKAGE_INPUTS/stage/linux-amd64/smolpng-qualify" \
 	-executable /usr/bin/smolpng -expected-commit "$SOURCE_COMMIT" \
 	-pngquant "$(command -v pngquant)" -oxipng "$oxipng" -jpegoptim "$jpegoptim" \
-	-output "$EVIDENCE/journey"
+	-output "$EVIDENCE/journey"; then
+	jq . "$EVIDENCE/journey/report.json" >&2
+	exit 1
+fi
 jq -e '.complete and .passed' "$EVIDENCE/journey/report.json"
 
 find "$home" -type f -print0 | sort -z | xargs -0 -r sha256sum > "$EVIDENCE/user-state-before.sha256"

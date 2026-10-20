@@ -268,20 +268,26 @@ jobs:
             > "$EVIDENCE/execution-boundary.txt"
       - name: Install, use, and remove the package in its distribution container
         run: |
-          docker run --rm --network=bridge \
-            --platform linux/amd64 \
-            --env PACKAGE_FORMAT="$PACKAGE_FORMAT" \
-            --env PACKAGE_FILE="$PACKAGE_FILE" \
-            --env SOURCE_COMMIT="$SOURCE_COMMIT" \
-            --env PACKAGE_IMAGE="$PACKAGE_IMAGE_REF" \
-            --env EVIDENCE=/workspace/artifacts/validation/linux-package-lifecycle \
-            --env PACKAGE_INPUTS=/workspace/artifacts/package-fixture \
-            --env RUNNER_TEMP=/runner-temp \
-            --volume "$GITHUB_WORKSPACE:/workspace" \
-            --volume "$RUNNER_TEMP:/runner-temp" \
-            --workdir /workspace \
-            --entrypoint /bin/sh "$PACKAGE_IMAGE_REF" \
-            /workspace/tools/qualify/linux-package-lifecycle.sh
+          if docker run --rm --network=bridge \
+              --platform linux/amd64 \
+              --env PACKAGE_FORMAT="$PACKAGE_FORMAT" \
+              --env PACKAGE_FILE="$PACKAGE_FILE" \
+              --env SOURCE_COMMIT="$SOURCE_COMMIT" \
+              --env PACKAGE_IMAGE="$PACKAGE_IMAGE_REF" \
+              --env EVIDENCE=/workspace/artifacts/validation/linux-package-lifecycle \
+              --env PACKAGE_INPUTS=/workspace/artifacts/package-fixture \
+              --env RUNNER_TEMP=/runner-temp \
+              --volume "$GITHUB_WORKSPACE:/workspace" \
+              --volume "$RUNNER_TEMP:/runner-temp" \
+              --workdir /workspace \
+              --entrypoint /bin/sh "$PACKAGE_IMAGE_REF" \
+              /workspace/tools/qualify/linux-package-lifecycle.sh; then
+            container_status=0
+          else
+            container_status=$?
+          fi
+          sudo chown -R "$(id -u):$(id -g)" "$GITHUB_WORKSPACE/artifacts/validation/linux-package-lifecycle"
+          exit "$container_status"
       - name: Retain lifecycle reports, including incomplete attempts
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
