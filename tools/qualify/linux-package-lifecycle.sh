@@ -85,9 +85,27 @@ mkdir -p "$home" "$toolroot"
 
 case "$PACKAGE_FORMAT" in
 	rpm)
-		dnf install --assumeyes ca-certificates coreutils curl diffutils findutils gzip jq pngquant tar > "$EVIDENCE/container-tools-install.txt"
+		dnf install --assumeyes ca-certificates coreutils curl diffutils findutils gcc gzip jq libpng-devel make tar zlib-devel > "$EVIDENCE/container-tools-install.txt"
 		dnf --version > "$EVIDENCE/package-manager-version.txt"
-		dnf list --installed pngquant > "$EVIDENCE/pngquant-package.txt"
+		gcc --version > "$EVIDENCE/pngquant-compiler-version.txt"
+		make --version > "$EVIDENCE/pngquant-make-version.txt"
+		# Fedora's current pngquant package exposes the incompatible 4.x CLI even
+		# though its RPM metadata retains the historical 2.x version.
+		source_archive="$toolroot/pngquant-2.18.0-src.tar.gz"
+		curl --fail --location --silent --show-error \
+			https://pngquant.org/pngquant-2.18.0-src.tar.gz \
+			--output "$source_archive"
+		printf '%s  %s\n' \
+			e72194b52b36f040deaec49a1ddd5dcd8d4feecc3a5fe6c5e9589a9707b233d4 \
+			"$source_archive" | sha256sum --check > "$EVIDENCE/pngquant-source.sha256"
+		printf 'source=https://pngquant.org/pngquant-2.18.0-src.tar.gz\nversion=2.18.0\n' > "$EVIDENCE/pngquant-source.txt"
+		mkdir "$toolroot/pngquant-source"
+		tar --extract --gzip --file "$source_archive" --directory "$toolroot/pngquant-source"
+		source_dir="$toolroot/pngquant-source/pngquant-2.18.0"
+		(cd "$source_dir" && ./configure --prefix="$toolroot/pngquant-install" > "$EVIDENCE/pngquant-configure.txt")
+		make --directory "$source_dir" --jobs=2 > "$EVIDENCE/pngquant-build.txt"
+		make --directory "$source_dir" install > "$EVIDENCE/pngquant-install.txt"
+		pngquant="$toolroot/pngquant-install/bin/pngquant"
 		rpm -qp --queryformat '%{NAME} %{VERSION} %{ARCH}\n' "$package" > "$EVIDENCE/package-fields.txt"
 		test "$(rpm -qp --queryformat '%{NAME}' "$package")" = smolpng
 		test "$(rpm -qp --queryformat '%{ARCH}' "$package")" = x86_64
@@ -112,10 +130,14 @@ case "$PACKAGE_FORMAT" in
 		pacman -Syu --noconfirm --needed ca-certificates coreutils curl diffutils findutils gzip jq pngquant base-devel libarchive libjpeg-turbo tar > "$EVIDENCE/container-tools-install.txt"
 		pacman --version > "$EVIDENCE/package-manager-version.txt"
 		pacman -Q pngquant > "$EVIDENCE/pngquant-package.txt"
+		pngquant=$(command -v pngquant)
 		bsdtar -xOf "$package" .PKGINFO > "$EVIDENCE/package-fields.txt"
 		grep -qx 'pkgname = smolpng' "$EVIDENCE/package-fields.txt"
 		grep -qx 'arch = x86_64' "$EVIDENCE/package-fields.txt"
 		pacman -Qip "$package" > "$EVIDENCE/package-contents.txt"
+		bsdtar -tf "$package" > "$EVIDENCE/package-archive-members.txt"
+		grep -qx 'usr/share/doc/smolpng/third-party-notices.md' "$EVIDENCE/package-archive-members.txt"
+		bsdtar -xOf "$package" usr/share/doc/smolpng/third-party-notices.md | cmp - "$PACKAGE_INPUTS/stage/linux-amd64/third-party-notices.md"
 		sed '/^SigLevel =/a LocalFileSigLevel = Optional' /etc/pacman.conf > "$RUNNER_TEMP/pacman.conf"
 		package_installed=true
 		pacman --config "$RUNNER_TEMP/pacman.conf" -U --noconfirm "$package" > "$EVIDENCE/install.txt"
@@ -126,8 +148,13 @@ case "$PACKAGE_FORMAT" in
 		;;
 esac
 
-pngquant --version > "$EVIDENCE/pngquant-version.txt"
-sha256sum "$(command -v pngquant)" > "$EVIDENCE/pngquant.sha256"
+if [ -z "${pngquant:-}" ]; then
+	pngquant=$(command -v pngquant)
+fi
+
+"$pngquant" --version > "$EVIDENCE/pngquant-version.txt"
+grep -q '2\.18\.0\|3\.' "$EVIDENCE/pngquant-version.txt"
+sha256sum "$pngquant" > "$EVIDENCE/pngquant.sha256"
 
 if [ "$PACKAGE_FORMAT" = apk ]; then
 	# The maintained Linux amd64 jpegoptim archive targets glibc; build the same
@@ -189,7 +216,7 @@ sha256sum /usr/bin/smolpng > "$EVIDENCE/installed-executable.sha256"
 
 if ! "$PACKAGE_INPUTS/stage/linux-amd64/smolpng-qualify" \
 	-executable /usr/bin/smolpng -expected-commit "$SOURCE_COMMIT" \
-	-pngquant "$(command -v pngquant)" -oxipng "$oxipng" -jpegoptim "$jpegoptim" \
+	-pngquant "$pngquant" -oxipng "$oxipng" -jpegoptim "$jpegoptim" \
 	-output "$EVIDENCE/journey"; then
 	jq . "$EVIDENCE/journey/report.json" >&2
 	exit 1
