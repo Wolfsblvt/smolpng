@@ -2,7 +2,7 @@
 
 ## Meaning
 
-The repository contains executable local packaging tooling, not just proposed release commands. It builds exact-source standalone candidates, reproducible ZIP/tar.gz archives, member receipts and checksums. With an explicit future asset URL and stable version, it also generates offline Winget, Scoop, Homebrew, Chocolatey and nFPM inputs plus an unsigned update payload. The builder does not publish, submit, register a package, create a signing authority or contact a package manager. A separate hosted qualifier installs and removes a fixture DEB only on its disposable Ubuntu runner.
+The repository contains executable local packaging tooling, not just proposed release commands. It builds exact-source standalone candidates, reproducible ZIP/tar.gz archives, member receipts and checksums. With an explicit future asset URL and stable version, it also generates offline Winget, Scoop, Homebrew, Chocolatey and nFPM inputs plus an unsigned update payload. The builder does not publish, submit, register a package, create a signing authority or contact a package manager. Hosted qualification installs and removes fixture packages through dpkg on native Ubuntu amd64/arm64 runners, and RPM/APK/Arch package managers inside digest-recorded Fedora/Alpine/Arch containers on a hosted Ubuntu amd64 runner. The container cases share the host kernel; they do not claim full distribution or desktop qualification.
 
 ## Candidate builds
 
@@ -51,7 +51,7 @@ Inspect actual package headers, executable architecture, paths, modes and extrac
 
 The [Windows-built Linux package record](reference/2026-10-17-linux-package-artifacts.md) qualifies all eight amd64/arm64 format combinations with nFPM 2.48.0 and independent payload/header readers. It records the staging-permission repair, exact source and artifact identities, all 61 payload files per package, and the remaining host/publication limits.
 
-The [Ubuntu DEB lifecycle record](reference/2026-10-20-linux-deb-lifecycle.md) separately establishes actual amd64 installation, package/update ownership, all 63 PNG/JPEG checks through the installed CLI, and removal with per-user dependency state preserved. Its fixture-only `0.0.0` version is not a public release identity. This result does not qualify other package formats, architectures or graphical integrations. The [dedicated workflow](../.github/workflows/linux-packages.yml) retains reports only and leaves package submission and signing outside its scope.
+The [Ubuntu DEB lifecycle record](reference/2026-10-20-linux-deb-lifecycle.md) separately establishes actual amd64 installation, package/update ownership, all 63 PNG/JPEG checks through the installed CLI, and removal with per-user dependency state preserved. The same [dedicated workflow](../.github/workflows/linux-packages.yml) now exercises RPM, APK and Arch packages in their corresponding hosted distribution containers and retains reports only. Every fixture uses version `0.0.0`, which is not a public release identity. These hosted lifecycles do not qualify other architectures, full distribution installations, graphical integrations, package submission or signing.
 
 ## Standalone update archive and signing
 
