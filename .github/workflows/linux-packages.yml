@@ -107,7 +107,7 @@ jobs:
           toolroot="$RUNNER_TEMP/smolpng-pngquant"
           mkdir -p "$toolroot/packages" "$toolroot/root"
           cd "$toolroot/packages"
-          apt-get download pngquant=2.18.0-1build2 libimagequant0=2.18.0-1build1 libpng16-16t64 libgomp1 jpegoptim
+          apt-get download pngquant=2.18.0-1build2 libimagequant0=2.18.0-1build1 libpng16-16t64 libgomp1
           sha256sum ./*.deb > "$EVIDENCE/pngquant-packages.sha256"
           for archive in ./*.deb; do
             dpkg-deb --extract "$archive" "$toolroot/root"
@@ -115,27 +115,42 @@ jobs:
           printf 'PNGQUANT=%s\n' "$toolroot/root/usr/bin/pngquant" >> "$GITHUB_ENV"
           multiarch=$(dpkg-architecture -qDEB_HOST_MULTIARCH)
           printf 'LD_LIBRARY_PATH=%s\n' "$toolroot/root/usr/lib/$multiarch" >> "$GITHUB_ENV"
-          jpegoptim="$toolroot/root/usr/bin/jpegoptim"
-          test -x "$jpegoptim"
-          dpkg-deb --field jpegoptim_*.deb Package Version Architecture > "$EVIDENCE/jpegoptim-package.txt"
-          "$jpegoptim" --version > "$EVIDENCE/jpegoptim-version.txt"
-          sha256sum "$jpegoptim" > "$EVIDENCE/jpegoptim.sha256"
-          printf 'JPEGOPTIM=%s\n' "$jpegoptim" >> "$GITHUB_ENV"
-          probe="$RUNNER_TEMP/smolpng-jpegoptim-probe"
-          mkdir -p "$probe/out"
-          set +e
-          "$jpegoptim" --force --overwrite --keep-all --dest="$probe/out" --all-progressive -- \
-            testdata/corpus/jpeg/grayscale/jpeg-grayscale.jpg > "$EVIDENCE/jpegoptim-probe.txt" 2>&1
-          probe_status=$?
-          set -e
-          printf '%s\n' "$probe_status" > "$EVIDENCE/jpegoptim-probe-exit.txt"
-          for tool in oxipng; do
-            /usr/bin/smolpng --home "$RUNNER_TEMP/smolpng-package-home" --no-project deps install "$tool" --apply --json > "$EVIDENCE/$tool-install.json"
-            path=$(jq -er '.managed | select(.state == "current") | .path' "$EVIDENCE/$tool-install.json")
-            if [ "$tool" = oxipng ]; then
-              printf 'OXIPNG=%s\n' "$path" >> "$GITHUB_ENV"
-            fi
-          done
+          if [ "$ARCH" = amd64 ]; then
+            for tool in oxipng jpegoptim; do
+              /usr/bin/smolpng --home "$RUNNER_TEMP/smolpng-package-home" --no-project deps install "$tool" --apply --json > "$EVIDENCE/$tool-install.json"
+              path=$(jq -er '.managed | select(.state == "current") | .path' "$EVIDENCE/$tool-install.json")
+              if [ "$tool" = oxipng ]; then
+                printf 'OXIPNG=%s\n' "$path" >> "$GITHUB_ENV"
+              else
+                printf 'JPEGOPTIM=%s\n' "$path" >> "$GITHUB_ENV"
+              fi
+            done
+          else
+            sudo apt-get install --yes --no-install-recommends libjpeg-dev > "$EVIDENCE/jpegoptim-build-dependency-install.txt"
+            dpkg-query -W -f='${Package} ${Version} ${Architecture} ${Status}\n' libjpeg-dev > "$EVIDENCE/jpegoptim-build-dependency.txt"
+            gcc --version > "$EVIDENCE/gcc-version.txt"
+            make --version > "$EVIDENCE/make-version.txt"
+            source_archive="$toolroot/jpegoptim-1.5.6.tar.gz"
+            curl --fail --location --silent --show-error \
+              https://github.com/tjko/jpegoptim/releases/download/v1.5.6/jpegoptim-1.5.6.tar.gz \
+              --output "$source_archive"
+            printf '%s  %s\n' \
+              661a808dfffa933d78c6beb47a2937d572b9f03e94cbaaab3d4c0d72f410e9be \
+              "$source_archive" | sha256sum --check > "$EVIDENCE/jpegoptim-source.sha256"
+            mkdir "$toolroot/jpegoptim-source"
+            tar --extract --gzip --file "$source_archive" --directory "$toolroot/jpegoptim-source"
+            source_dir="$toolroot/jpegoptim-source/jpegoptim-1.5.6"
+            (cd "$source_dir" && ./configure --prefix="$toolroot/jpegoptim-install" > "$EVIDENCE/jpegoptim-configure.txt")
+            make --directory "$source_dir" --jobs=2 > "$EVIDENCE/jpegoptim-build.txt"
+            make --directory "$source_dir" install > "$EVIDENCE/jpegoptim-install.txt"
+            jpegoptim="$toolroot/jpegoptim-install/bin/jpegoptim"
+            "$jpegoptim" --version > "$EVIDENCE/jpegoptim-version.txt"
+            sha256sum "$jpegoptim" > "$EVIDENCE/jpegoptim.sha256"
+            printf 'JPEGOPTIM=%s\n' "$jpegoptim" >> "$GITHUB_ENV"
+            /usr/bin/smolpng --home "$RUNNER_TEMP/smolpng-package-home" --no-project deps install oxipng --apply --json > "$EVIDENCE/oxipng-install.json"
+            oxipng=$(jq -er '.managed | select(.state == "current") | .path' "$EVIDENCE/oxipng-install.json")
+            printf 'OXIPNG=%s\n' "$oxipng" >> "$GITHUB_ENV"
+          fi
       - name: Exercise the installed executable with real PNG and JPEG jobs
         run: |
           "$PACKAGE_INPUTS/stage/linux-$ARCH/smolpng-qualify" \
