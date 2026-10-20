@@ -138,9 +138,13 @@ case "$PACKAGE_FORMAT" in
 		bsdtar -tf "$package" > "$EVIDENCE/package-archive-members.txt"
 		grep -qx 'usr/share/doc/smolpng/third-party-notices.md' "$EVIDENCE/package-archive-members.txt"
 		bsdtar -xOf "$package" usr/share/doc/smolpng/third-party-notices.md | cmp - "$PACKAGE_INPUTS/stage/linux-amd64/third-party-notices.md"
+		pacman-conf NoExtract > "$EVIDENCE/pacman-no-extract.txt"
+		cp /etc/pacman.conf "$EVIDENCE/pacman.conf"
 		sed '/^SigLevel =/a LocalFileSigLevel = Optional' /etc/pacman.conf > "$RUNNER_TEMP/pacman.conf"
 		package_installed=true
 		pacman --config "$RUNNER_TEMP/pacman.conf" -U --noconfirm "$package" > "$EVIDENCE/install.txt"
+		pacman --config "$RUNNER_TEMP/pacman.conf" -Ql smolpng > "$EVIDENCE/installed-package-files.txt"
+		pacman --config "$RUNNER_TEMP/pacman.conf" -Qk smolpng > "$EVIDENCE/package-integrity.txt"
 		;;
 	*)
 		printf 'Unsupported package format: %s\n' "$PACKAGE_FORMAT" >&2
