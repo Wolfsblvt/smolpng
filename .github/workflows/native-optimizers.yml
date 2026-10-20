@@ -138,3 +138,121 @@ jobs:
             artifacts/validation/native-${{ matrix.platform }}/journey/report.json
           if-no-files-found: error
           retention-days: 14
+
+  qualify-windows-arm64:
+    name: Qualify (windows-arm64)
+    runs-on: windows-11-arm
+    env:
+      SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ env.SOURCE_COMMIT }}
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Build and record native ARM64 application and qualifier
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE 'artifacts/validation/native-windows-arm64'
+          $bin = Join-Path $env:GITHUB_WORKSPACE 'artifacts/bin/native-windows-arm64'
+          New-Item -ItemType Directory -Path $evidence, $bin -Force | Out-Null
+          $source = (& git rev-parse HEAD).Trim()
+          if ($source -ne $env:SOURCE_COMMIT) { throw "Checked out $source instead of $env:SOURCE_COMMIT" }
+          $source | Set-Content -LiteralPath (Join-Path $evidence 'source.txt') -Encoding utf8
+          [Environment]::OSVersion.Version.ToString() | Set-Content -LiteralPath (Join-Path $evidence 'os-version.txt') -Encoding utf8
+          [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString() | Set-Content -LiteralPath (Join-Path $evidence 'host-architecture.txt') -Encoding utf8
+          Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion' | Format-List EditionID, DisplayVersion, CurrentBuild, UBR | Out-String | Set-Content -LiteralPath (Join-Path $evidence 'os-release.txt') -Encoding utf8
+          @($env:ImageOS, $env:ImageVersion) | Set-Content -LiteralPath (Join-Path $evidence 'runner-image.txt') -Encoding utf8
+          $env:CGO_ENABLED = '0'
+          & go env -json GOVERSION GOOS GOARCH CGO_ENABLED | Set-Content -LiteralPath (Join-Path $evidence 'go-env.json') -Encoding utf8
+          if ($LASTEXITCODE -ne 0) { throw 'go env failed' }
+          go version | Set-Content -LiteralPath (Join-Path $evidence 'go-version.txt') -Encoding utf8
+          if ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -ne [System.Runtime.InteropServices.Architecture]::Arm64 -or (go env GOARCH).Trim() -ne 'arm64') { throw 'Runner and Go toolchain must both be ARM64' }
+          & go mod verify
+          if ($LASTEXITCODE -ne 0) { throw 'Go module verification failed' }
+          & go build -trimpath -ldflags "-X github.com/Wolfsblvt/smolpng/internal/cli.Commit=$source" -o (Join-Path $bin 'smolpng.exe') ./cmd/smolpng
+          if ($LASTEXITCODE -ne 0) { throw 'Native ARM64 application build failed' }
+          & go build -trimpath -ldflags "-X main.Commit=$source" -o (Join-Path $bin 'smolpng-qualify.exe') ./tools/qualify
+          if ($LASTEXITCODE -ne 0) { throw 'Native ARM64 qualifier build failed' }
+          Get-FileHash -Algorithm SHA256 (Join-Path $bin 'smolpng.exe'), (Join-Path $bin 'smolpng-qualify.exe') | ForEach-Object { "$($_.Hash.ToLowerInvariant())  $($_.Path)" } | Set-Content -LiteralPath (Join-Path $evidence 'executables.sha256') -Encoding utf8
+          function Get-PeArchitecture([string]$Path) {
+            $stream = [System.IO.File]::OpenRead($Path)
+            try {
+              $reader = [System.IO.BinaryReader]::new($stream)
+              $stream.Position = 0x3c
+              $stream.Position = $reader.ReadInt32() + 4
+              switch ($reader.ReadUInt16()) { 0xAA64 { 'ARM64' } 0x8664 { 'AMD64 (x64)' } 0x014c { 'x86' } default { 'unknown' } }
+            } finally { $stream.Dispose() }
+          }
+          @("smolpng.exe: $(Get-PeArchitecture (Join-Path $bin 'smolpng.exe'))", "smolpng-qualify.exe: $(Get-PeArchitecture (Join-Path $bin 'smolpng-qualify.exe'))") | Set-Content -LiteralPath (Join-Path $evidence 'executable-architectures.txt') -Encoding utf8
+          if ((Get-PeArchitecture (Join-Path $bin 'smolpng.exe')) -ne 'ARM64' -or (Get-PeArchitecture (Join-Path $bin 'smolpng-qualify.exe')) -ne 'ARM64') { throw 'Application and qualifier must both be ARM64' }
+          "EVIDENCE=$evidence`nNATIVE_BIN=$bin" | Out-File -LiteralPath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Download and identify pinned x64 optimizer builds
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = Join-Path $env:RUNNER_TEMP 'smolpng-windows-optimizers'
+          New-Item -ItemType Directory -Path $root -Force | Out-Null
+          $archives = @(
+            @{ name = 'pngquant'; url = 'https://pngquant.org/pngquant-windows.zip'; sha256 = 'bd0257aeeccfe446a4cd764927e26f8af6051796f28abed104307284107b120d' },
+            @{ name = 'oxipng'; url = 'https://github.com/oxipng/oxipng/releases/download/v10.2.1/oxipng-10.2.1-x86_64-pc-windows-msvc.zip'; sha256 = '7e940f83ee46874b73f53031f96a15834cb70b220af27391fb06fe7b4dd798e1' },
+            @{ name = 'jpegoptim'; url = 'https://github.com/tjko/jpegoptim/releases/download/v1.5.6/jpegoptim-1.5.6-x64-windows.zip'; sha256 = 'db2d8caee88f2665b772c4591cba223b8b729500b88266dc06d4bf79d28fe11a' }
+          )
+          foreach ($archive in $archives) {
+            $zip = Join-Path $root ($archive.name + '.zip')
+            Invoke-WebRequest -Uri $archive.url -OutFile $zip
+            $actual = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($actual -ne $archive.sha256) { throw "$($archive.name) archive SHA-256 mismatch: $actual" }
+            Expand-Archive -LiteralPath $zip -DestinationPath (Join-Path $root $archive.name) -Force
+            "$($archive.name) archive SHA-256: $actual`n$($archive.name) source: $($archive.url)" | Add-Content -LiteralPath (Join-Path $env:EVIDENCE 'optimizer-archives.txt') -Encoding utf8
+          }
+          $tools = @{
+            PNGQUANT = (Get-ChildItem -LiteralPath (Join-Path $root 'pngquant') -Filter 'pngquant.exe' -File -Recurse | Select-Object -First 1).FullName
+            OXIPNG = (Get-ChildItem -LiteralPath (Join-Path $root 'oxipng') -Filter 'oxipng.exe' -File -Recurse | Select-Object -First 1).FullName
+            JPEGOPTIM = (Get-ChildItem -LiteralPath (Join-Path $root 'jpegoptim') -Filter 'jpegoptim.exe' -File -Recurse | Select-Object -First 1).FullName
+          }
+          if ($tools.Values | Where-Object { -not $_ }) { throw 'An optimizer executable is missing' }
+          function Get-PeArchitecture([string]$Path) {
+            $stream = [System.IO.File]::OpenRead($Path)
+            try {
+              $reader = [System.IO.BinaryReader]::new($stream)
+              $stream.Position = 0x3c
+              $stream.Position = $reader.ReadInt32() + 4
+              switch ($reader.ReadUInt16()) { 0xAA64 { 'ARM64' } 0x8664 { 'AMD64 (x64)' } 0x014c { 'x86' } default { 'unknown' } }
+            } finally { $stream.Dispose() }
+          }
+          $details = foreach ($entry in $tools.GetEnumerator()) {
+            $path = $entry.Value
+            $version = (& $path --version 2>&1 | Out-String).Trim()
+            "$($entry.Key): $version`n  architecture: $(Get-PeArchitecture $path)"
+            if ((Get-PeArchitecture $path) -ne 'AMD64 (x64)') { throw "$($entry.Key) is not the expected x64 optimizer" }
+          }
+          $details | Set-Content -LiteralPath (Join-Path $env:EVIDENCE 'optimizer-versions-and-architectures.txt') -Encoding utf8
+          Get-FileHash -Algorithm SHA256 $tools.Values | ForEach-Object { "$($_.Hash.ToLowerInvariant())  $($_.Path)" } | Set-Content -LiteralPath (Join-Path $env:EVIDENCE 'optimizer-executables.sha256') -Encoding utf8
+          $tools.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" } | Out-File -LiteralPath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Exercise native ARM64 application with real optimizers
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $qualifier = Join-Path $env:NATIVE_BIN 'smolpng-qualify.exe'
+          $application = Join-Path $env:NATIVE_BIN 'smolpng.exe'
+          $arguments = @('-executable', $application, '-expected-commit', $env:SOURCE_COMMIT, '-pngquant', $env:PNGQUANT, '-oxipng', $env:OXIPNG, '-jpegoptim', $env:JPEGOPTIM, '-output', (Join-Path $env:EVIDENCE 'journey'))
+          & $qualifier @arguments
+          if ($LASTEXITCODE -ne 0) { throw "Native qualification exited $LASTEXITCODE" }
+          $report = Get-Content -LiteralPath (Join-Path $env:EVIDENCE 'journey/report.json') -Raw | ConvertFrom-Json
+          if (-not $report.complete -or -not $report.passed) { throw 'Native qualification did not complete successfully' }
+      - name: Retain reports, including incomplete attempts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: native-windows-arm64-${{ env.SOURCE_COMMIT }}-${{ github.run_id }}
+          path: |
+            artifacts/validation/native-windows-arm64/*.txt
+            artifacts/validation/native-windows-arm64/*.json
+            artifacts/validation/native-windows-arm64/*.sha256
+            artifacts/validation/native-windows-arm64/journey/report.json
+          if-no-files-found: error
+          retention-days: 14
