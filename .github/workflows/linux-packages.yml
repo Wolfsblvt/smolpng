@@ -11,13 +11,18 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   deb:
-    name: Ubuntu amd64 DEB lifecycle
-    runs-on: ubuntu-24.04
+    name: Ubuntu ${{ matrix.arch }} DEB lifecycle
+    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [amd64, arm64]
     defaults:
       run:
         shell: bash
     env:
       SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      ARCH: ${{ matrix.arch }}
       CGO_ENABLED: '0'
       GOTOOLCHAIN: local
       OMP_NUM_THREADS: '1'
@@ -40,6 +45,9 @@ jobs:
           cat /etc/os-release > "$evidence/os-release.txt"
           uname -srm > "$evidence/kernel.txt"
           go env -json GOVERSION GOOS GOARCH CGO_ENABLED > "$evidence/go-env.json"
+          test "$(go env GOARCH)" = "$ARCH"
+          dpkg-architecture -qDEB_HOST_ARCH > "$evidence/deb-host-architecture.txt"
+          test "$(cat "$evidence/deb-host-architecture.txt")" = "$ARCH"
           dpkg --version > "$evidence/dpkg-version.txt"
           jq --version > "$evidence/jq-version.txt"
           test ! -e /usr/bin/smolpng
@@ -51,7 +59,7 @@ jobs:
         run: |
           go mod verify
           # Stable 0.0.0 and the reserved .invalid URL are test inputs, not a release identity or asset address.
-          go run ./tools/release --version 0.0.0 --platforms linux/amd64 \
+          go run ./tools/release --version 0.0.0 --platforms "linux/$ARCH" \
             --base-url https://example.invalid/smolpng-package-fixture \
             --out "$PACKAGE_INPUTS" > "$EVIDENCE/build.txt"
           cp "$PACKAGE_INPUTS/build-index.json" "$EVIDENCE/build-index.json"
@@ -68,26 +76,27 @@ jobs:
       - name: Produce and inspect the DEB before installation
         working-directory: ${{ env.PACKAGE_INPUTS }}
         run: |
-          "$NFPM" package --config nfpm/amd64.yaml --packager deb --target smolpng-fixture-amd64.deb
-          sha256sum smolpng-fixture-amd64.deb > "$EVIDENCE/package.sha256"
-          dpkg-deb --field smolpng-fixture-amd64.deb Package Version Architecture > "$EVIDENCE/package-fields.txt"
-          test "$(dpkg-deb --field smolpng-fixture-amd64.deb Package)" = smolpng
-          test "$(dpkg-deb --field smolpng-fixture-amd64.deb Architecture)" = amd64
-          dpkg-deb --contents smolpng-fixture-amd64.deb > "$EVIDENCE/package-contents.txt"
-          dpkg-deb --extract smolpng-fixture-amd64.deb "$RUNNER_TEMP/smolpng-deb-payload"
-          cmp stage/linux-amd64/smolpng "$RUNNER_TEMP/smolpng-deb-payload/usr/bin/smolpng"
+          "$NFPM" package --config "nfpm/$ARCH.yaml" --packager deb --target "smolpng-fixture-$ARCH.deb"
+          sha256sum "smolpng-fixture-$ARCH.deb" > "$EVIDENCE/package.sha256"
+          dpkg-deb --field "smolpng-fixture-$ARCH.deb" Package Version Architecture > "$EVIDENCE/package-fields.txt"
+          test "$(dpkg-deb --field "smolpng-fixture-$ARCH.deb" Package)" = smolpng
+          test "$(dpkg-deb --field "smolpng-fixture-$ARCH.deb" Architecture)" = "$ARCH"
+          dpkg-deb --contents "smolpng-fixture-$ARCH.deb" > "$EVIDENCE/package-contents.txt"
+          dpkg-deb --extract "smolpng-fixture-$ARCH.deb" "$RUNNER_TEMP/smolpng-deb-payload"
+          cmp "stage/linux-$ARCH/smolpng" "$RUNNER_TEMP/smolpng-deb-payload/usr/bin/smolpng"
           test "$(stat -c %a "$RUNNER_TEMP/smolpng-deb-payload/usr/bin/smolpng")" = 755
       - name: Install and verify package ownership, build identity and update behavior
         run: |
           printf 'PACKAGE_INSTALL_ATTEMPTED=true\n' >> "$GITHUB_ENV"
-          sudo dpkg --install "$PACKAGE_INPUTS/smolpng-fixture-amd64.deb" > "$EVIDENCE/install.txt"
+          sudo dpkg --install "$PACKAGE_INPUTS/smolpng-fixture-$ARCH.deb" > "$EVIDENCE/install.txt"
           dpkg-query -W -f='${Package} ${Version} ${Architecture} ${Status}\n' smolpng > "$EVIDENCE/installed-package.txt"
+          test "$(dpkg-query -W -f='${Architecture}' smolpng)" = "$ARCH"
           dpkg-query -S /usr/bin/smolpng > "$EVIDENCE/executable-owner.txt"
           test "$(dpkg-query -W -f='${db:Status-Status}' smolpng)" = installed
-          cmp "$PACKAGE_INPUTS/stage/linux-amd64/smolpng" /usr/bin/smolpng
-          cmp "$PACKAGE_INPUTS/stage/linux-amd64/LICENSE" /usr/share/licenses/smolpng/LICENSE
-          diff -r "$PACKAGE_INPUTS/stage/linux-amd64/LICENSES" /usr/share/licenses/smolpng/dependencies
-          cmp "$PACKAGE_INPUTS/stage/linux-amd64/third-party-notices.md" /usr/share/doc/smolpng/third-party-notices.md
+          cmp "$PACKAGE_INPUTS/stage/linux-$ARCH/smolpng" /usr/bin/smolpng
+          cmp "$PACKAGE_INPUTS/stage/linux-$ARCH/LICENSE" /usr/share/licenses/smolpng/LICENSE
+          diff -r "$PACKAGE_INPUTS/stage/linux-$ARCH/LICENSES" /usr/share/licenses/smolpng/dependencies
+          cmp "$PACKAGE_INPUTS/stage/linux-$ARCH/third-party-notices.md" /usr/share/doc/smolpng/third-party-notices.md
           sha256sum /usr/bin/smolpng > "$EVIDENCE/installed-executable.sha256"
           /usr/bin/smolpng --home "$RUNNER_TEMP/smolpng-package-home" --no-project version --json > "$EVIDENCE/installed-version.json"
           jq -e --arg source "$SOURCE_COMMIT" '.commit == $source and .version == "0.0.0"' "$EVIDENCE/installed-version.json"
@@ -104,7 +113,8 @@ jobs:
             dpkg-deb --extract "$archive" "$toolroot/root"
           done
           printf 'PNGQUANT=%s\n' "$toolroot/root/usr/bin/pngquant" >> "$GITHUB_ENV"
-          printf 'LD_LIBRARY_PATH=%s\n' "$toolroot/root/usr/lib/x86_64-linux-gnu" >> "$GITHUB_ENV"
+          multiarch=$(dpkg-architecture -qDEB_HOST_MULTIARCH)
+          printf 'LD_LIBRARY_PATH=%s\n' "$toolroot/root/usr/lib/$multiarch" >> "$GITHUB_ENV"
           for tool in oxipng jpegoptim; do
             /usr/bin/smolpng --home "$RUNNER_TEMP/smolpng-package-home" --no-project deps install "$tool" --apply --json > "$EVIDENCE/$tool-install.json"
             path=$(jq -er '.managed | select(.state == "current") | .path' "$EVIDENCE/$tool-install.json")
@@ -116,7 +126,7 @@ jobs:
           done
       - name: Exercise the installed executable with real PNG and JPEG jobs
         run: |
-          "$PACKAGE_INPUTS/stage/linux-amd64/smolpng-qualify" \
+          "$PACKAGE_INPUTS/stage/linux-$ARCH/smolpng-qualify" \
             -executable /usr/bin/smolpng -expected-commit "$SOURCE_COMMIT" \
             -pngquant "$PNGQUANT" -oxipng "$OXIPNG" -jpegoptim "$JPEGOPTIM" \
             -output "$EVIDENCE/journey"
@@ -142,7 +152,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: linux-deb-${{ env.SOURCE_COMMIT }}-${{ github.run_id }}
+          name: linux-deb-${{ matrix.arch }}-${{ env.SOURCE_COMMIT }}-${{ github.run_id }}
           path: |
             artifacts/validation/linux-deb/*.txt
             artifacts/validation/linux-deb/*.json
