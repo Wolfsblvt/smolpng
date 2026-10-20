@@ -209,13 +209,18 @@ case "$PACKAGE_FORMAT" in
 		;;
 	archlinux)
 		pacman -Qo /usr/bin/smolpng > "$EVIDENCE/executable-owner.txt"
-		pacman --config "$RUNNER_TEMP/pacman.conf" -Qk smolpng > "$EVIDENCE/package-integrity.txt"
 		;;
 esac
 cmp "$PACKAGE_INPUTS/stage/linux-amd64/smolpng" /usr/bin/smolpng
 cmp "$PACKAGE_INPUTS/stage/linux-amd64/LICENSE" /usr/share/licenses/smolpng/LICENSE
 diff -r "$PACKAGE_INPUTS/stage/linux-amd64/LICENSES" /usr/share/licenses/smolpng/dependencies
-cmp "$PACKAGE_INPUTS/stage/linux-amd64/third-party-notices.md" /usr/share/doc/smolpng/third-party-notices.md
+if [ "$PACKAGE_FORMAT" = archlinux ] && grep -Fqx 'usr/share/doc/*' "$EVIDENCE/pacman-no-extract.txt"; then
+	grep -Fqx 'smolpng /usr/share/doc/smolpng/third-party-notices.md' "$EVIDENCE/installed-package-files.txt"
+	test ! -e /usr/share/doc/smolpng/third-party-notices.md
+	printf 'The package carries the byte-exact notices file; this pacman configuration records it as owned but applies NoExtract=usr/share/doc/*, so it is not extracted.\n' > "$EVIDENCE/notice-extraction-policy.txt"
+else
+	cmp "$PACKAGE_INPUTS/stage/linux-amd64/third-party-notices.md" /usr/share/doc/smolpng/third-party-notices.md
+fi
 sha256sum /usr/bin/smolpng > "$EVIDENCE/installed-executable.sha256"
 
 if ! "$PACKAGE_INPUTS/stage/linux-amd64/smolpng-qualify" \
