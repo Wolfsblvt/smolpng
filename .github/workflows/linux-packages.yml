@@ -107,7 +107,7 @@ jobs:
           toolroot="$RUNNER_TEMP/smolpng-pngquant"
           mkdir -p "$toolroot/packages" "$toolroot/root"
           cd "$toolroot/packages"
-          apt-get download pngquant=2.18.0-1build2 libimagequant0=2.18.0-1build1 libpng16-16t64 libgomp1
+          apt-get download pngquant=2.18.0-1build2 libimagequant0=2.18.0-1build1 libpng16-16t64 libgomp1 jpegoptim
           sha256sum ./*.deb > "$EVIDENCE/pngquant-packages.sha256"
           for archive in ./*.deb; do
             dpkg-deb --extract "$archive" "$toolroot/root"
@@ -115,13 +115,17 @@ jobs:
           printf 'PNGQUANT=%s\n' "$toolroot/root/usr/bin/pngquant" >> "$GITHUB_ENV"
           multiarch=$(dpkg-architecture -qDEB_HOST_MULTIARCH)
           printf 'LD_LIBRARY_PATH=%s\n' "$toolroot/root/usr/lib/$multiarch" >> "$GITHUB_ENV"
-          for tool in oxipng jpegoptim; do
+          jpegoptim="$toolroot/root/usr/bin/jpegoptim"
+          test -x "$jpegoptim"
+          dpkg-deb --field jpegoptim_*.deb Package Version Architecture > "$EVIDENCE/jpegoptim-package.txt"
+          "$jpegoptim" --version > "$EVIDENCE/jpegoptim-version.txt"
+          sha256sum "$jpegoptim" > "$EVIDENCE/jpegoptim.sha256"
+          printf 'JPEGOPTIM=%s\n' "$jpegoptim" >> "$GITHUB_ENV"
+          for tool in oxipng; do
             /usr/bin/smolpng --home "$RUNNER_TEMP/smolpng-package-home" --no-project deps install "$tool" --apply --json > "$EVIDENCE/$tool-install.json"
             path=$(jq -er '.managed | select(.state == "current") | .path' "$EVIDENCE/$tool-install.json")
             if [ "$tool" = oxipng ]; then
               printf 'OXIPNG=%s\n' "$path" >> "$GITHUB_ENV"
-            else
-              printf 'JPEGOPTIM=%s\n' "$path" >> "$GITHUB_ENV"
             fi
           done
       - name: Exercise the installed executable with real PNG and JPEG jobs
