@@ -85,9 +85,9 @@ mkdir -p "$home" "$toolroot"
 
 case "$PACKAGE_FORMAT" in
 	rpm)
-			dnf install --assumeyes ca-certificates coreutils curl findutils gzip jq pngquant tar > "$EVIDENCE/container-tools-install.txt"
+		dnf install --assumeyes ca-certificates coreutils curl diffutils findutils gzip jq pngquant tar > "$EVIDENCE/container-tools-install.txt"
 		dnf --version > "$EVIDENCE/package-manager-version.txt"
-			dnf list --installed pngquant > "$EVIDENCE/pngquant-package.txt"
+		dnf list --installed pngquant > "$EVIDENCE/pngquant-package.txt"
 		rpm -qp --queryformat '%{NAME} %{VERSION} %{ARCH}\n' "$package" > "$EVIDENCE/package-fields.txt"
 		test "$(rpm -qp --queryformat '%{NAME}' "$package")" = smolpng
 		test "$(rpm -qp --queryformat '%{ARCH}' "$package")" = x86_64
@@ -96,7 +96,7 @@ case "$PACKAGE_FORMAT" in
 		dnf install --assumeyes --nogpgcheck "$package" > "$EVIDENCE/install.txt"
 		;;
 	apk)
-		apk add --no-cache ca-certificates coreutils curl findutils gzip jq pngquant build-base libjpeg-turbo-dev tar > "$EVIDENCE/container-tools-install.txt"
+		apk add --no-cache ca-certificates coreutils curl diffutils findutils gzip jq pngquant build-base libjpeg-turbo-dev tar > "$EVIDENCE/container-tools-install.txt"
 		apk --version > "$EVIDENCE/package-manager-version.txt"
 		apk info -v pngquant libjpeg-turbo-dev > "$EVIDENCE/pngquant-package.txt"
 		cc --version > "$EVIDENCE/c-compiler-version.txt"
@@ -109,7 +109,7 @@ case "$PACKAGE_FORMAT" in
 		apk add --allow-untrusted "$package" > "$EVIDENCE/install.txt"
 		;;
 	archlinux)
-		pacman -Syu --noconfirm --needed ca-certificates coreutils curl findutils gzip jq pngquant base-devel libarchive libjpeg-turbo tar > "$EVIDENCE/container-tools-install.txt"
+		pacman -Syu --noconfirm --needed ca-certificates coreutils curl diffutils findutils gzip jq pngquant base-devel libarchive libjpeg-turbo tar > "$EVIDENCE/container-tools-install.txt"
 		pacman --version > "$EVIDENCE/package-manager-version.txt"
 		pacman -Q pngquant > "$EVIDENCE/pngquant-package.txt"
 		bsdtar -xOf "$package" .PKGINFO > "$EVIDENCE/package-fields.txt"
