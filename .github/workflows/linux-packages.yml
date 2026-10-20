@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/linux-packages.yml
+      - tools/qualify/linux-package-lifecycle.sh
 permissions:
   contents: read
 concurrency:
@@ -185,5 +186,117 @@ jobs:
             artifacts/validation/linux-deb/*.json
             artifacts/validation/linux-deb/*.sha256
             artifacts/validation/linux-deb/journey/report.json
+          if-no-files-found: error
+          retention-days: 14
+
+  other-formats:
+    name: ${{ matrix.distribution }} amd64 ${{ matrix.format }} lifecycle
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distribution: Fedora
+            image: fedora:latest
+            format: rpm
+            package: smolpng-fixture-amd64.rpm
+          - distribution: Alpine
+            image: alpine:latest
+            format: apk
+            package: smolpng-fixture-amd64.apk
+          - distribution: Arch Linux
+            image: archlinux:base
+            format: archlinux
+            package: smolpng-fixture-amd64.pkg.tar.zst
+    defaults:
+      run:
+        shell: bash
+    env:
+      SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      PACKAGE_FORMAT: ${{ matrix.format }}
+      PACKAGE_FILE: ${{ matrix.package }}
+      PACKAGE_IMAGE: ${{ matrix.image }}
+      CGO_ENABLED: '0'
+      GOTOOLCHAIN: local
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ env.SOURCE_COMMIT }}
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Build exact-source amd64 package inputs
+        run: |
+          evidence="$GITHUB_WORKSPACE/artifacts/validation/linux-package-lifecycle"
+          inputs="$GITHUB_WORKSPACE/artifacts/package-fixture"
+          mkdir -p "$evidence"
+          printf 'EVIDENCE=%s\n' "$evidence" >> "$GITHUB_ENV"
+          printf 'PACKAGE_INPUTS=%s\n' "$inputs" >> "$GITHUB_ENV"
+          git rev-parse HEAD > "$evidence/source.txt"
+          test "$(cat "$evidence/source.txt")" = "$SOURCE_COMMIT"
+          go env -json GOVERSION GOOS GOARCH CGO_ENABLED > "$evidence/build-go-env.json"
+          test "$(go env GOOS)/$(go env GOARCH)" = linux/amd64
+          go mod verify > "$evidence/module-verify.txt"
+          go run ./tools/release --version 0.0.0 --platforms linux/amd64 \
+            --base-url https://example.invalid/smolpng-package-fixture \
+            --out "$inputs" > "$evidence/build.txt"
+          jq -e --arg source "$SOURCE_COMMIT" '.complete and .source == $source' "$inputs/build-index.json"
+          cp "$inputs/build-index.json" "$evidence/build-index.json"
+          export GOBIN="$RUNNER_TEMP/smolpng-nfpm"
+          mkdir -p "$GOBIN"
+          go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.48.0
+          go version -m "$GOBIN/nfpm" > "$evidence/nfpm-build.txt"
+          "$GOBIN/nfpm" --version > "$evidence/nfpm-version.txt"
+          sha256sum "$GOBIN/nfpm" > "$evidence/nfpm.sha256"
+          printf 'NFPM=%s\n' "$GOBIN/nfpm" >> "$GITHUB_ENV"
+      - name: Produce and inspect the selected package
+        working-directory: ${{ env.PACKAGE_INPUTS }}
+        run: |
+          "$NFPM" package --config nfpm/amd64.yaml --packager "$PACKAGE_FORMAT" --target "$EVIDENCE/$PACKAGE_FILE"
+          sha256sum "$EVIDENCE/$PACKAGE_FILE" > "$EVIDENCE/package.sha256"
+      - name: Record the hosted container identity
+        run: |
+          docker pull --platform linux/amd64 "$PACKAGE_IMAGE" > "$EVIDENCE/container-pull.txt"
+          image_ref=$(docker image inspect --format '{{index .RepoDigests 0}}' "$PACKAGE_IMAGE")
+          test -n "$image_ref"
+          printf '%s\n' "$image_ref" > "$EVIDENCE/container-image.txt"
+          printf 'PACKAGE_IMAGE_REF=%s\n' "$image_ref" >> "$GITHUB_ENV"
+          printf 'distribution=%s\nformat=%s\narchitecture=amd64\nhosted-runner=ubuntu-24.04\ncontainer-image=%s\n' \
+            '${{ matrix.distribution }}' "$PACKAGE_FORMAT" "$image_ref" \
+            > "$EVIDENCE/execution-boundary.txt"
+      - name: Install, use, and remove the package in its distribution container
+        run: |
+          if docker run --rm --network=bridge \
+              --platform linux/amd64 \
+              --env PACKAGE_FORMAT="$PACKAGE_FORMAT" \
+              --env PACKAGE_FILE="$PACKAGE_FILE" \
+              --env SOURCE_COMMIT="$SOURCE_COMMIT" \
+              --env PACKAGE_IMAGE="$PACKAGE_IMAGE_REF" \
+              --env EVIDENCE=/workspace/artifacts/validation/linux-package-lifecycle \
+              --env PACKAGE_INPUTS=/workspace/artifacts/package-fixture \
+              --env RUNNER_TEMP=/runner-temp \
+              --volume "$GITHUB_WORKSPACE:/workspace" \
+              --volume "$RUNNER_TEMP:/runner-temp" \
+              --workdir /workspace \
+              --entrypoint /bin/sh "$PACKAGE_IMAGE_REF" \
+              /workspace/tools/qualify/linux-package-lifecycle.sh; then
+            container_status=0
+          else
+            container_status=$?
+          fi
+          sudo chown -R "$(id -u):$(id -g)" "$GITHUB_WORKSPACE/artifacts/validation/linux-package-lifecycle"
+          exit "$container_status"
+      - name: Retain lifecycle reports, including incomplete attempts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: linux-${{ matrix.format }}-amd64-${{ env.SOURCE_COMMIT }}-${{ github.run_id }}
+          path: |
+            artifacts/validation/linux-package-lifecycle/*.txt
+            artifacts/validation/linux-package-lifecycle/*.json
+            artifacts/validation/linux-package-lifecycle/*.sha256
+            artifacts/validation/linux-package-lifecycle/journey/report.json
           if-no-files-found: error
           retention-days: 14
