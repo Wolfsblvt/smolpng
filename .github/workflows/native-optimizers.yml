@@ -231,7 +231,11 @@ jobs:
             if ((Get-PeArchitecture $path) -ne 'AMD64 (x64)') { throw "$($entry.Key) is not the expected x64 optimizer" }
           }
           $details | Set-Content -LiteralPath (Join-Path $env:EVIDENCE 'optimizer-versions-and-architectures.txt') -Encoding utf8
-          Get-FileHash -Algorithm SHA256 $tools.Values | ForEach-Object { "$($_.Hash.ToLowerInvariant())  $($_.Path)" } | Set-Content -LiteralPath (Join-Path $env:EVIDENCE 'optimizer-executables.sha256') -Encoding utf8
+          $optimizerHashes = foreach ($path in $tools.Values) {
+            $hash = Get-FileHash -LiteralPath $path -Algorithm SHA256
+            "$($hash.Hash.ToLowerInvariant())  $path"
+          }
+          $optimizerHashes | Set-Content -LiteralPath (Join-Path $env:EVIDENCE 'optimizer-executables.sha256') -Encoding utf8
           $tools.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" } | Out-File -LiteralPath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Exercise native ARM64 application with real optimizers
         shell: pwsh
