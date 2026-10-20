@@ -121,6 +121,14 @@ jobs:
           "$jpegoptim" --version > "$EVIDENCE/jpegoptim-version.txt"
           sha256sum "$jpegoptim" > "$EVIDENCE/jpegoptim.sha256"
           printf 'JPEGOPTIM=%s\n' "$jpegoptim" >> "$GITHUB_ENV"
+          probe="$RUNNER_TEMP/smolpng-jpegoptim-probe"
+          mkdir -p "$probe/out"
+          set +e
+          "$jpegoptim" --force --overwrite --keep-all --dest="$probe/out" --all-progressive -- \
+            testdata/corpus/jpeg/grayscale/jpeg-grayscale.jpg > "$EVIDENCE/jpegoptim-probe.txt" 2>&1
+          probe_status=$?
+          set -e
+          printf '%s\n' "$probe_status" > "$EVIDENCE/jpegoptim-probe-exit.txt"
           for tool in oxipng; do
             /usr/bin/smolpng --home "$RUNNER_TEMP/smolpng-package-home" --no-project deps install "$tool" --apply --json > "$EVIDENCE/$tool-install.json"
             path=$(jq -er '.managed | select(.state == "current") | .path' "$EVIDENCE/$tool-install.json")
