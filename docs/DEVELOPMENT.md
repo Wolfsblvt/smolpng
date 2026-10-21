@@ -102,6 +102,20 @@ The expanded [JPEG color-model qualifier](reference/2026-10-21-native-jpeg-color
 
 Graphical clipboard, drag/drop, native notifications, windowless launch/console allocation and visual TUI behavior still require the manual checks in the candidate's local qualification packet. [Four real Windows locked-output cases](reference/2026-10-17-windows-output-locks.md) now establish PNG/JPEG overwrite/in-place refusal, byte preservation, temporary-file cleanup and successful retry after unlock. Other-host locks remain separately qualified. The helper exercises rather than rebuilds the app.
 
+## JPEG backend comparison
+
+`tools/qualify/jpeg-backends.py` is a separate native calibration journey for [Issue #57](https://github.com/Wolfsblvt/smolpng/issues/57), not an application runtime or an ordinary Go unit suite. It needs Python 3.12 with Pillow 12.3.0/LittleCMS, an already-built smolpng, jpegoptim and a separately built candidate cjpegli. The selected Python boundary supplies independent decoding, profile conversion and lossless pixel-crop artifacts without adding another application codec or runtime. The `JPEG backend comparison` workflow selects those tools on one disposable Ubuntu 24.04 host, pins upstream jpegli/Highway/skcms sources and retains build identities. It runs only manually or for changes to its own workflow/helper.
+
+```sh
+python tools/qualify/jpeg-backends.py --source . --smolpng /path/to/smolpng \
+  --jpegoptim /path/to/jpegoptim --jpegli /path/to/cjpegli \
+  --jpegli-source EXACT_UPSTREAM_COMMIT --output artifacts/validation/jpeg-backend-comparison
+```
+
+The helper validates the existing CC0 fixture manifest and refuses an existing output directory. It compares the two photographic inputs at the selected jpegoptim 85/80/70 anchors and actual matching jpegli byte budgets. Its prepared PNGs are losslessly decoded, display-oriented references; preparation is timed separately. Managed sRGB channel diagnostics and two 100% pixel crops per photograph accompany original/candidate hashes and outputs. These diagnostics are not perceptual acceptance. Untagged RGB assumes sRGB; untagged CMYK conversion remains unmanaged. Source color profiles and conversion assumptions stay visible.
+
+Four grayscale/CMYK/Display P3 candidate calls separately record output, refusal or failure and profile/dimension observations. A complete comparison report means every outcome was captured, not that all candidate capabilities passed or that jpegli was accepted. Actual output size is measured; cjpegli's target-size request is not promoted to smolpng's strict target promise. Reports checkpoint before and after native calls so a failed late step retains earlier results. Qualify the exact hosted outcome before making a backend recommendation; codecs and defaults remain unchanged by this helper.
+
 ## Native Windows menu addon
 
 The optional [primary context menu](context-menu.md) has a small Windows COM DLL outside the Go executable. `native/windows-shell/core.hpp` is portable; its parser and binary request protocol can be checked here:
