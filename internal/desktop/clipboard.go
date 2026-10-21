@@ -74,7 +74,7 @@ func (NativeClipboard) Read(ctx context.Context) (input.Snapshot, error) {
 	if readImage {
 		image, e1 = native.Read(ctx, native.FmtImage)
 	}
-	files, e2 := nativeClipboardFiles(ctx)
+	files, e2 := native.ReadFiles(ctx)
 	text, e3 := native.Read(ctx, native.FmtText)
 	if len(image) > 64<<20 || len(text) > 1<<20 || len(files) > 1024 {
 		return s, fmt.Errorf("clipboard representation exceeds safe input limit")

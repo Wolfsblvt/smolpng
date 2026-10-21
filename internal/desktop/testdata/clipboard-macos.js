@@ -26,9 +26,20 @@ function run(args) {
     }
     if (operation === 'write' && kind === 'files') {
         const input = $.NSString.stringWithContentsOfFileEncodingError(path, $.NSUTF8StringEncoding, null).js;
-        const urls = JSON.parse(input).map(file => $.NSURL.fileURLWithPath(file));
+        const paths = JSON.parse(input);
+        const items = $.NSMutableArray.alloc.init;
+        for (const file of paths) {
+            const item = $.NSPasteboardItem.alloc.init;
+            const url = $.NSURL.fileURLWithPath($(file));
+            if (!item.setStringForType(url.absoluteString, $('public.file-url'))) {
+                throw new Error('Cannot populate native file URL item');
+            }
+            items.addObject(item);
+        }
         board.clearContents;
-        if (!board.writeObjects($.NSArray.arrayWithArray(urls))) throw new Error('Native file URL write failed');
+        if (!board.writeObjects(items)) throw new Error('Native file URL write failed');
+        const observed = board.readObjectsForClassesOptions($.NSArray.arrayWithObject($.NSURL), $({}));
+        if (!observed || observed.count !== paths.length) throw new Error('Native file URL write did not populate its items');
         return 'Native file URLs written';
     }
     const type = kind === 'image' ? 'public.png' : 'public.utf8-plain-text';
