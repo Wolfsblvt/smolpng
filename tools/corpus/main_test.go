@@ -164,7 +164,7 @@ func TestCheckedInCorpusHasExactLicensedStructuralManifest(t *testing.T) {
 	if e = toml.Unmarshal(b, &m); e != nil {
 		t.Fatal(e)
 	}
-	if m.Schema != 1 || len(m.Image) != 30 {
+	if m.Schema != 1 || len(m.Image) != 34 {
 		t.Fatalf("unexpected inventory: %d", len(m.Image))
 	}
 	classes := map[string]bool{}
@@ -203,7 +203,7 @@ func TestCheckedInCorpusHasExactLicensedStructuralManifest(t *testing.T) {
 			t.Fatalf("lying fixture manifest: %s", item.Path)
 		}
 	}
-	if generated != 28 || photographic != 2 {
+	if generated != 32 || photographic != 2 {
 		t.Fatal("incorrect generated/imported inventory", generated, photographic)
 	}
 	for _, class := range []string{"png/flat-icon", "png/alpha-16", "png/transparent-hidden-rgb", "png/interlaced", "png/color-profile", "jpeg/exif-orientation", "jpeg/metadata", "jpeg/progressive", "jpeg/color-profile", "jpeg/photographic"} {

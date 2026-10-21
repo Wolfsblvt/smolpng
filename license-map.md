@@ -9,6 +9,7 @@ The application, data-only examples, generated and admitted test media, and futu
 | Project Go code, generator, ordinary docs and repository tooling | MIT, root `LICENSE` |
 | `testdata/corpus/**` generated PNG/JPEG images, admitted original CC0 photographs, inventory documentation and manifest | CC0-1.0, local `LICENSE`; imported originals retain their publishers' CC0 dedications recorded in `manifest.toml` |
 | `internal/testutil/profile-srgb.icc` generated ICC control data | CC0-1.0, as for the generated corpus; its embedded original copyright tag also permits free use |
+| `internal/testutil/profile-gray.icc`, `profile-cmyk.icc`, `profile-display-p3.icc` and `jpeg-cmyk-seed.jpg` | CC0-1.0; exact profile sources and original seed construction are in `internal/testutil/jpeg-color-inputs.md` |
 | `LICENSES/**` and third-party source notices | Their own unchanged terms |
 
 Standard MIT, CC0-1.0 and AGPL-3.0-or-later texts are installed in `LICENSES/`. Compiled dependency notices are in `third-party-notices.md`.

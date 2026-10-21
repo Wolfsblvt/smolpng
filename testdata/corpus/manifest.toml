@@ -183,6 +183,24 @@ progressive = false
 sha256 = "6508452b90d2984120aac8cf20cae21fca7402ca9bdc30b798a995e18e4911fe"
 
 [[image]]
+path = "jpeg/cmyk/jpeg-cmyk.jpg"
+format = "jpeg"
+class = "cmyk"
+creator = "Wolfsblvt Works contributors"
+source = "project-generated"
+method = "internal/testutil/jpeg_color.go + frozen CC0 profile/CMYK inputs; see internal/testutil/jpeg-color-inputs.md"
+license = "CC0-1.0"
+redistributable = true
+purpose = "jpeg-cmyk"
+width = 128
+height = 96
+alpha = false
+bit_depth = 8
+orientation = 1
+progressive = false
+sha256 = "bccd6a50ff4d3284d85401e5a337bb1e3157c6b0b8e8c775695ffabacdb123d8"
+
+[[image]]
 path = "jpeg/grayscale/jpeg-grayscale.jpg"
 format = "jpeg"
 class = "grayscale"
@@ -217,6 +235,60 @@ bit_depth = 8
 orientation = 1
 progressive = false
 sha256 = "91cdbbcbb8abba12dfad8f8fec6855fa480048717fd8d1c02b4713961b251bb5"
+
+[[image]]
+path = "jpeg/color-profile/jpeg-icc-cmyk.jpg"
+format = "jpeg"
+class = "color-profile"
+creator = "Wolfsblvt Works contributors"
+source = "project-generated"
+method = "internal/testutil/jpeg_color.go + frozen CC0 profile/CMYK inputs; see internal/testutil/jpeg-color-inputs.md"
+license = "CC0-1.0"
+redistributable = true
+purpose = "jpeg-icc-cmyk"
+width = 128
+height = 96
+alpha = false
+bit_depth = 8
+orientation = 1
+progressive = false
+sha256 = "e051ee60ad1d86f8579c6121990d1e6788108ee52122fd03497334cee91bf3a7"
+
+[[image]]
+path = "jpeg/color-profile/jpeg-icc-display-p3.jpg"
+format = "jpeg"
+class = "color-profile"
+creator = "Wolfsblvt Works contributors"
+source = "project-generated"
+method = "internal/testutil/jpeg_color.go + frozen CC0 profile/CMYK inputs; see internal/testutil/jpeg-color-inputs.md"
+license = "CC0-1.0"
+redistributable = true
+purpose = "jpeg-icc-display-p3"
+width = 128
+height = 96
+alpha = false
+bit_depth = 8
+orientation = 1
+progressive = false
+sha256 = "b29a2b5fabddd97ff4c39537209fa27604f7ed636bfced71b10036e0ee315e3d"
+
+[[image]]
+path = "jpeg/color-profile/jpeg-icc-gray.jpg"
+format = "jpeg"
+class = "color-profile"
+creator = "Wolfsblvt Works contributors"
+source = "project-generated"
+method = "internal/testutil/jpeg_color.go + frozen CC0 profile/CMYK inputs; see internal/testutil/jpeg-color-inputs.md"
+license = "CC0-1.0"
+redistributable = true
+purpose = "jpeg-icc-gray"
+width = 128
+height = 96
+alpha = false
+bit_depth = 8
+orientation = 1
+progressive = false
+sha256 = "50ba3ea54dc9044b41c8b22ed86371bc48072252fe377bb027bf6e5b23b608eb"
 
 [[image]]
 path = "jpeg/color-profile/jpeg-icc-srgb.jpg"

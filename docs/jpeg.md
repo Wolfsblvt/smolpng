@@ -2,7 +2,7 @@
 
 ## Meaning
 
-JPEG is implemented through the existing input, recipe, output and result flow. This first backend uses separately installed `jpegoptim` 1.4+/1.5.x for ordinary entropy-only optimization and lossy candidates. It is a reversible implementation choice, not a claim that the final jpegli/jpegoptim quality benchmark has been decided. No JPEG optimizer is bundled or automatically downloaded.
+JPEG is implemented through the existing input, recipe, output and result flow. This first backend uses externally installed `jpegoptim` 1.4+/1.5.x for ordinary entropy-only optimization and lossy candidates. Supported hosts can preview the pinned managed artifact with `smolpng deps install jpegoptim` and explicitly install it with `--apply`; catalog-absent hosts use an independently installed executable. It is a reversible implementation choice, not a claim that the final jpegli/jpegoptim quality benchmark has been decided. No JPEG optimizer is bundled or downloaded without explicit selection.
 
 ## Use
 
@@ -37,6 +37,6 @@ TinyPNG accepts upright JPEG under explicit permission. A remotely changed orien
 
 ## Evidence and qualification
 
-Generated CC0 baseline, grayscale, high-chroma and eight-orientation specimens accompany parser, metadata, target, original-preservation and process-boundary tests. Ordinary tests do not execute jpegoptim or consume TinyPNG quota. [Native Windows structural qualification](reference/2026-10-16-windows-jpeg-qualification.md) exercised real jpegoptim, targets, progressive output and orientation cases. [Real camera attachment qualification](reference/2026-10-16-jpeg-camera-attachments.md) independently checked Safe/Lossless, strip-all and byte-exact Keep against a CC0 Samsung photograph. Final quality selection, broader photographic/ICC/CMYK calibration and native clipboard rendering remain separate.
+Generated CC0 baseline, grayscale, high-chroma and eight-orientation specimens accompany parser, metadata, target, original-preservation and process-boundary tests. Ordinary tests do not execute jpegoptim or consume TinyPNG quota. [Native Windows structural qualification](reference/2026-10-16-windows-jpeg-qualification.md) exercised real jpegoptim, targets, progressive output and orientation cases. [Real camera attachment qualification](reference/2026-10-16-jpeg-camera-attachments.md) independently checked Safe/Lossless, strip-all and byte-exact Keep against a CC0 Samsung photograph. [Native grayscale, CMYK and Display P3 controls](reference/2026-10-21-windows-jpeg-color-models.md) additionally exercise profile/component preservation, strict Lossless pixels, explicit profile removal and tagged non-RGB resize refusal. Final quality selection, broader photographs/arbitrary profiles and native clipboard rendering remain separate.
 
 Upstream command contract: https://github.com/tjko/jpegoptim/blob/main/jpegoptim.1 . Current source and older releases have differing GPL license vintages; the installed tool retains its own exact license. External invocation is not permission to relicense or bundle it.
