@@ -2,7 +2,7 @@
 
 ## Meaning
 
-This tree contains **30 CC0-1.0 specimens: 28 project-generated structural images and two unmodified, explicitly licensed photographic originals**. Four PNG/JPEG controls carry complete RGB ICC profiles, including a deliberately different red/blue interpretation. `manifest.toml` binds each file to its class, creator, source/rights, method, hash, dimensions, depth, transparency, orientation, progressive state and any appended camera bytes. The photographs add reproducible real-image cases; these controls and two photos are not a general perceptual-quality or wide-gamut benchmark.
+This tree contains **34 CC0-1.0 specimens: 32 project-generated structural images and two unmodified, explicitly licensed photographic originals**. The profile controls include complete RGB profiles, a deliberately different red/blue interpretation, real grayscale/CMYK profiles and Display P3. `manifest.toml` binds each file to its class, creator, source/rights, method, hash, dimensions, depth, transparency, orientation, progressive state and any appended camera bytes. The photographs add reproducible real-image cases; these controls and two photos are not a general perceptual-quality or wide-gamut benchmark.
 
 The directory layout now separates PNG and JPEG classes. The previous root-level filenames moved into these folders; the logical names used by in-memory tests/native qualification remain stable. Always use `--recursive` when evaluating this whole tree.
 
@@ -28,7 +28,8 @@ jpeg/
   exif-orientation/     all eight orientation values
   metadata/             valid EXIF maker/GPS IFDs at synthetic coordinates 0/0
   photographic/         original landscape and Samsung food/refocus photographs
-  color-profile/        complete RGB ICC controls, separate from photographic diversity
+  color-profile/        complete RGB, grayscale, CMYK and Display P3 ICC controls
+  cmyk/                 untagged four-component Adobe-marked JPEG
 ```
 
 ## Regeneration and tests
@@ -43,7 +44,7 @@ go test ./tools/corpus ./internal/testutil ./internal/pngimage ./internal/jpegim
 
 The generator uses Go and the checked-in source/media; it never downloads images or runs a native codec, font or image editor. Check mode verifies bytes against their manifest and rejects unmanifested PNG/JPEG files. PNG compression bytes may vary across Go versions: generated and stored specimens must retain identical decoded pixels (including hidden RGB), headers, palette, metadata and interlacing. This includes equivalent compression of the same complete ICC profile; its name, method and decompressed contents must still match. Existing equivalent encodings are preserved during regeneration, avoiding unrelated fixture/hash churn. Generated JPEG remains byte-exact. Changed generated specimens can be regenerated; imported originals are never rewritten or silently rehashed. Check mode writes nothing and neither mode deletes additional media.
 
-The manifest is the single admission source for imported media. Their creator, permanent source-page URL, original download URL, method, CC0 rights, purpose and fixed SHA-256 are curated there. Regeneration preserves those entries, verifies the admitted hashes, and derives inspectable properties from the actual files under the application's decoded-pixel limit. A missing or modified original fails; restore it from Git or its recorded source and verify the hash. A fresh `--output` directory contains only the 28 generated specimens unless admitted originals and their manifest entries are deliberately supplied there.
+The manifest is the single admission source for imported media. Their creator, permanent source-page URL, original download URL, method, CC0 rights, purpose and fixed SHA-256 are curated there. Regeneration preserves those entries, verifies the admitted hashes, and derives inspectable properties from the actual files under the application's decoded-pixel limit. A missing or modified original fails; restore it from Git or its recorded source and verify the hash. A fresh `--output` directory contains only the 32 generated specimens unless admitted originals and their manifest entries are deliberately supplied there.
 
 Tests validate structure/rights/hashes, preserve imported bytes and admission through regeneration, reject missing/changed/unscoped imports, follow the synthetic GPS pointer, prove safe EXIF cleanup preserves orientation/pixels, and assert that the progressive specimen really has two scans. The 8x8 progressive image is deliberately a small structural case, not an optimizer-performance victory.
 
@@ -71,9 +72,11 @@ Both commands use the real installed local tools. Ordinary unit tests use contro
 
 The 216-color swatches allow ordinary-quality quantization. In the swapped variant, stored red/blue channels change with the profile so the displayed image remains comparable. Ignoring the profile or restoring it after conversion to sRGB produces a large, independently measurable error. Unit tests check the complete profile, changed colorants and safe-metadata carriers; independent native CMS rendering is a separate qualification boundary.
 
+The additional JPEG color controls consume three unmodified CC0 Compact-ICC-Profiles inputs and one original frozen CMYK seed. [Exact input provenance and construction](../../internal/testutil/jpeg-color-inputs.md) preserve their sources, hashes and supported interpretation. Normal generation remains Go-only. Focused tests preserve color components, ICC policy, metadata reconciliation and the explicit refusal of tagged non-RGB resizing. Native LittleCMS observations remain separate from these source tests.
+
 ## Admission gaps and future media
 
-The first two natural photographs and four valid RGB profile controls are admitted. Broader photographic diversity, representative artwork, real wide-gamut distributions and grayscale/CMYK ICC coverage remain admission/qualification gaps. Small malformed/profile-marker fixtures in unit tests are **not** real color-managed corpus evidence; the controlled RGB cases do not establish those broader claims either. More complex progressive/chroma combinations also deserve native encoder qualification.
+The first two natural photographs, four original RGB profile controls and four additional grayscale/CMYK/Display P3 JPEG controls are admitted. Broader photographic diversity, representative artwork, real wide-gamut distributions and arbitrary grayscale/CMYK profiles remain admission/qualification gaps. Small malformed/profile-marker fixtures in unit tests are **not** real color-managed corpus evidence; the controlled RGB cases do not establish those broader claims either. More complex progressive/chroma combinations also deserve native encoder qualification.
 
 A contributed asset needs recorded creator/source, explicit CC0/public-domain or otherwise reviewed redistribution rights, exact hash and why it adds coverage. Keep privately supplied images outside this checked-in tree, for example an explicitly chosen `artifacts/private-corpus/`; review its comparison outputs as private data. Do not relicense imported media automatically.
 

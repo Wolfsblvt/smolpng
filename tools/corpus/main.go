@@ -40,6 +40,9 @@ func generate(root string, check bool) error {
 	for n, b := range testutil.ICCCorpus() {
 		specimens[n] = b
 	}
+	for n, b := range testutil.JPEGColorCorpus() {
+		specimens[n] = b
+	}
 	names := []string{}
 	for n := range specimens {
 		names = append(names, n)
@@ -79,6 +82,9 @@ func generate(root string, check bool) error {
 		}
 		if strings.HasPrefix(name, "icc-") || strings.HasPrefix(name, "jpeg-icc-") {
 			method = "internal/testutil/icc.go + internal/testutil/profile-srgb.icc"
+		}
+		if name == "jpeg-icc-gray.jpg" || name == "jpeg-icc-cmyk.jpg" || name == "jpeg-icc-display-p3.jpg" || name == "jpeg-cmyk.jpg" {
+			method = "internal/testutil/jpeg_color.go + frozen CC0 profile/CMYK inputs; see internal/testutil/jpeg-color-inputs.md"
 		}
 		writeImage(&manifest, corpusImage{Path: relative, Creator: "Wolfsblvt Works contributors", Source: "project-generated", Method: method, License: "CC0-1.0", Redistributable: true, Purpose: strings.TrimSuffix(name, filepath.Ext(name)), SHA256: fmt.Sprintf("%x", sha256.Sum256(data))}, a)
 		if needsWrite {
