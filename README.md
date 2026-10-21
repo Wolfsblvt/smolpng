@@ -25,7 +25,7 @@ go build -o artifacts/bin/ ./cmd/smolpng
 
 On Windows, use `.\artifacts\bin\smolpng.exe` for the executable commands. Go is needed to build, not to run the binary.
 
-**Optimizers are separate, not bundled.** Install pngquant and OxiPNG for the full local PNG pipeline, or jpegoptim for JPEG. The [dependency guide](docs/dependencies.md) covers compatible versions, explicit paths, and the optional, preview-first managed OxiPNG download.
+**Optimizers are separate, not bundled.** Install pngquant and OxiPNG for the full local PNG pipeline, or jpegoptim for JPEG. The [dependency guide](docs/dependencies.md) covers compatible versions, explicit paths, preview-first managed OxiPNG/jpegoptim installation on supported host targets, and separate setup where no catalog artifact exists.
 
 With those tools available, replace `icon.png` with your image:
 
