@@ -34,7 +34,7 @@ import (
 	"time"
 )
 
-var Version = "0.1.0-dev"
+var Version = "0.3.0-dev"
 var Commit = "unknown"
 var Distribution = "source"
 
