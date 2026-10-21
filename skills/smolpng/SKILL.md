@@ -19,7 +19,7 @@ smolpng deps status --json
 smolpng preset list --json
 ```
 
-Check capabilities rather than assuming a newer feature exists. This bundle supports PNG and JPEG plus optional TinyPNG; discover the installed version rather than assuming all past versions did. Missing local tools are a setup problem, not permission to upload images. `smolpng deps install oxipng --json` previews a pinned native artifact; do not add `--apply` without permission to download and execute that dependency. pngquant, jpegoptim and unsupported native targets still require separate setup. Modified managed installations are preserved, not forcibly replaced. Inspect image properties with `smolpng inspect INPUT --json`.
+Check capabilities rather than assuming a newer feature exists. This bundle supports PNG and JPEG plus optional TinyPNG; discover the installed version rather than assuming all past versions did. Missing local tools are a setup problem, not permission to upload images. `smolpng deps install oxipng --json` and `smolpng deps install jpegoptim --json` preview the installed build's pinned managed artifacts where that host target is supported; do not add `--apply` without permission to download and execute that dependency. pngquant and host targets absent from the managed catalog still require separate setup. A failed or unavailable preview is not permission to substitute a remote optimizer. Modified managed installations are preserved, not forcibly replaced. Inspect image properties with `smolpng inspect INPUT --json`.
 
 ## Deterministic workflow
 
