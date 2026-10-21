@@ -267,9 +267,19 @@ func TestInterruptedApplyIsResumable(t *testing.T) {
 	}
 }
 func TestChannelGuardsAndMonotonicVersions(t *testing.T) {
-	for _, p := range []string{`C:\Users\x\scoop\apps\smolpng\current\smolpng.exe`, "/opt/homebrew/Cellar/smolpng/1.0/bin/smolpng", "/usr/bin/smolpng", `C:\Program Files\WindowsApps\smolpng.exe`} {
-		if Installation(p, "standalone").CanApply {
-			t.Fatal("package owner bypass", p)
+	for _, tc := range []struct {
+		path, owner, instruction string
+	}{
+		{`C:\Users\x\scoop\apps\smolpng\current\smolpng.exe`, "scoop", "scoop update smolpng"},
+		{`C:\ProgramData\chocolatey\lib\smolpng\tools\smolpng.exe`, "chocolatey", "choco upgrade smolpng"},
+		{`C:\Users\x\AppData\Local\Microsoft\WinGet\Packages\Wolfsblvt.smolpng_source\smolpng.exe`, "winget", "winget upgrade"},
+		{"/opt/homebrew/Cellar/smolpng/1.0/bin/smolpng", "homebrew", "brew upgrade"},
+		{"/usr/bin/smolpng", "system-package", "operating-system package manager"},
+		{`C:\Program Files\WindowsApps\smolpng.exe`, "msix", "Microsoft Store"},
+	} {
+		got := Installation(tc.path, "standalone")
+		if got.CanApply || got.Owner != tc.owner || !strings.Contains(got.Instruction, tc.instruction) {
+			t.Fatalf("package ownership mismatch for %s: %+v", tc.path, got)
 		}
 	}
 	if Installation("/tmp/smolpng", "source").CanApply {
