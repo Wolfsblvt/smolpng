@@ -94,6 +94,12 @@ func TestPackageMetadataIsOfflineAndUsesExactHashes(t *testing.T) {
 			t.Fatal("missing exact hashes", n)
 		}
 	}
+	for _, n := range []string{"scoop/smolpng.json", "homebrew/smolpng.rb", "chocolatey/smolpng.nuspec"} {
+		text := strings.ToLower(string(files[n]))
+		if !strings.Contains(text, "not bundled") || !strings.Contains(text, "deps install") {
+			t.Fatal("package metadata must explain the supported optimizer setup route", n)
+		}
+	}
 	for _, n := range []string{"nfpm/amd64.yaml", "nfpm/arm64.yaml", "PUBLICATION-NOT-AUTHORIZED.md"} {
 		if len(files[n]) == 0 {
 			t.Fatal("missing config", n)

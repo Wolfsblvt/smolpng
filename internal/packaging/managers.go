@@ -57,7 +57,7 @@ func Metadata(version string, artifacts []Artifact) (map[string][]byte, error) {
 		fmt.Fprintf(&installers, "  - Architecture: %s\n    InstallerUrl: %s\n    InstallerSha256: %s\n", pair[1], q(a.URL), strings.ToUpper(a.SHA256))
 	}
 	if len(arches) > 0 {
-		scoop, _ := json.MarshalIndent(map[string]any{"version": version, "description": "Local-first image compression for humans, scripts, and agents.", "homepage": "https://github.com/Wolfsblvt/smolpng", "license": "MIT", "architecture": arches, "bin": []string{"smolpng.exe", "smolpngw.exe"}, "notes": "External optimizers are installed separately. Run smolpng setup; TinyPNG never uploads without permission."}, "", "  ")
+		scoop, _ := json.MarshalIndent(map[string]any{"version": version, "description": "Local-first image compression for humans, scripts, and agents.", "homepage": "https://github.com/Wolfsblvt/smolpng", "license": "MIT", "architecture": arches, "bin": []string{"smolpng.exe", "smolpngw.exe"}, "notes": "External optimizers are not bundled. Run smolpng setup or deps install; TinyPNG never uploads without permission."}, "", "  ")
 		out["scoop/smolpng.json"] = append(scoop, '\n')
 		common := "PackageIdentifier: Wolfsblvt.smolpng\nPackageVersion: " + q(version) + "\n"
 		out["winget/Wolfsblvt.smolpng.yaml"] = []byte(common + "DefaultLocale: en-US\nManifestType: version\nManifestVersion: 1.6.0\n")
@@ -88,13 +88,13 @@ func Metadata(version string, artifacts []Artifact) (map[string][]byte, error) {
 		}
 		brew.WriteString("  end\n")
 	}
-	brew.WriteString("  def install\n    bin.install 'smolpng'\n    pkgshare.install 'LICENSES', 'LICENSE', 'license-map.md', 'third-party-notices.md'\n  end\n  def caveats\n    'Optimizers are separate. Run smolpng setup. TinyPNG requires explicit upload permission.'\n  end\n  test do\n    assert_match 'schemaVersion', shell_output(\"#{bin}/smolpng capabilities --json\")\n  end\nend\n")
+	brew.WriteString("  def install\n    bin.install 'smolpng'\n    pkgshare.install 'LICENSES', 'LICENSE', 'license-map.md', 'third-party-notices.md'\n  end\n  def caveats\n    'Optimizers are not bundled. Run smolpng setup or deps install. TinyPNG requires explicit upload permission.'\n  end\n  test do\n    assert_match 'schemaVersion', shell_output(\"#{bin}/smolpng capabilities --json\")\n  end\nend\n")
 	if brewAssets > 0 {
 		out["homebrew/smolpng.rb"] = []byte(brew.String())
 	}
 	xmlEscape := func(s string) string { var b bytes.Buffer; xml.EscapeText(&b, []byte(s)); return b.String() }
 	if a, ok := index["windows/amd64"]; ok {
-		out["chocolatey/smolpng.nuspec"] = []byte(`<?xml version="1.0"?><package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd"><metadata><id>smolpng</id><version>` + xmlEscape(version) + `</version><title>smolpng</title><authors>Wolfsblvt Works</authors><projectUrl>https://github.com/Wolfsblvt/smolpng</projectUrl><requireLicenseAcceptance>false</requireLicenseAcceptance><description>Local-first image compression. External optimizers are installed separately; TinyPNG requires explicit permission.</description><tags>image png jpeg compression cli</tags></metadata><files><file src="tools\**" target="tools" /></files></package>`)
+		out["chocolatey/smolpng.nuspec"] = []byte(`<?xml version="1.0"?><package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd"><metadata><id>smolpng</id><version>` + xmlEscape(version) + `</version><title>smolpng</title><authors>Wolfsblvt Works</authors><projectUrl>https://github.com/Wolfsblvt/smolpng</projectUrl><requireLicenseAcceptance>false</requireLicenseAcceptance><description>Local-first image compression. External optimizers are not bundled; run smolpng setup or deps install. TinyPNG requires explicit permission.</description><tags>image png jpeg compression cli</tags></metadata><files><file src="tools\**" target="tools" /></files></package>`)
 		ps := func(s string) string { return "'" + strings.ReplaceAll(s, "'", "''") + "'" }
 		out["chocolatey/tools/chocolateyinstall.ps1"] = []byte("$ErrorActionPreference='Stop'\n$tools=Split-Path -Parent $MyInvocation.MyCommand.Definition\nInstall-ChocolateyZipPackage -PackageName 'smolpng' -Url64bit " + ps(a.URL) + " -UnzipLocation $tools -Checksum64 " + ps(a.SHA256) + " -ChecksumType64 'sha256'\n")
 	}
