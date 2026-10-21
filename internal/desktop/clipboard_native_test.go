@@ -61,6 +61,15 @@ func nativeMIME(kind string) string {
 	}
 }
 
+func macOSConsumer(t *testing.T) string {
+	t.Helper()
+	path := os.Getenv("SMOLPNG_NATIVE_CONSUMER")
+	if !filepath.IsAbs(path) {
+		t.Fatal("SMOLPNG_NATIVE_CONSUMER must name the built native AppKit consumer")
+	}
+	return path
+}
+
 func independentRead(t *testing.T, kind string) []byte {
 	t.Helper()
 	switch nativeBackend(t) {
@@ -74,7 +83,7 @@ func independentRead(t *testing.T, kind string) []byte {
 		return nativeCommand(t, nil, "wl-paste", "--no-newline", "--type", nativeMIME(kind))
 	default:
 		path := filepath.Join(t.TempDir(), "pasteboard.bin")
-		nativeCommand(t, nil, "osascript", "-l", "JavaScript", "testdata/clipboard-macos.js", "read", kind, path)
+		nativeCommand(t, nil, macOSConsumer(t), "read", kind, path)
 		data, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatal(err)
@@ -91,7 +100,7 @@ func independentWrite(t *testing.T, kind string, data []byte) {
 		if err := os.WriteFile(path, data, 0600); err != nil {
 			t.Fatal(err)
 		}
-		nativeCommand(t, nil, "osascript", "-l", "JavaScript", "testdata/clipboard-macos.js", "write", kind, path)
+		nativeCommand(t, nil, macOSConsumer(t), "write", kind, path)
 		return
 	}
 	var cmd *exec.Cmd

@@ -5,7 +5,7 @@ on:
     paths:
       - .github/workflows/native-clipboard.yml
       - internal/desktop/clipboard_native_test.go
-      - internal/desktop/testdata/clipboard-macos.js
+      - internal/desktop/testdata/clipboard-macos.swift
 permissions:
   contents: read
 concurrency:
@@ -89,8 +89,11 @@ jobs:
           go test -c -tags nativeclipboard -o "$NATIVE_BIN/clipboard.test" ./internal/desktop
           "$NATIVE_BIN/smolpng" version --json > "$EVIDENCE/application-version.json"
           if [ "$RUNNER_OS" = macOS ]; then
+            xcrun --find swiftc > "$EVIDENCE/swift-compiler.txt"
+            xcrun swiftc --version > "$EVIDENCE/native-tools.txt"
+            xcrun swiftc -O internal/desktop/testdata/clipboard-macos.swift -o "$NATIVE_BIN/clipboard-consumer"
+            printf 'SMOLPNG_NATIVE_CONSUMER=%s\n' "$NATIVE_BIN/clipboard-consumer" >> "$GITHUB_ENV"
             shasum -a 256 "$NATIVE_BIN"/* > "$EVIDENCE/executables.sha256"
-            /usr/bin/osascript -e 'return system version of (system info)' > "$EVIDENCE/native-tools.txt"
           else
             sha256sum "$NATIVE_BIN"/* > "$EVIDENCE/executables.sha256"
           fi
