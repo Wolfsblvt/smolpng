@@ -118,7 +118,7 @@ go vet ./...
 go run ./tools/corpus --check
 ```
 
-Tests substitute optimizer/HTTP/desktop boundaries. The [30-image CC0 corpus](testdata/corpus/README.md) includes 28 structural specimens, with complete RGB ICC controls, and two photographic originals; it does not establish general photographic quality or full ICC fidelity. Cross-builds and native bridge compilation do not prove graphical behavior or signed Explorer activation. [Development and qualification](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [Source map](docs/PROJECT-MAP.md).
+Tests substitute optimizer/HTTP/desktop boundaries. The [34-image CC0 corpus](testdata/corpus/README.md) includes 32 project-generated structural specimens, with complete RGB, grayscale, CMYK and Display P3 profile controls, plus two photographic originals; it does not establish general photographic quality or arbitrary color-profile fidelity. Cross-builds and native bridge compilation do not prove graphical behavior or signed Explorer activation. [Development and qualification](docs/DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [Source map](docs/PROJECT-MAP.md).
 
 Desktop integration and standalone-update source exist; production signing/feed operation, installers, and package publication remain separate work. The website, final mascot art, self-hosted `smolpng-web`, authenticated MCP integration, and hosting are future surfaces, not deployable services here. [Current direction](docs/DIRECTION.md) distinguishes implemented source from the [complete vision](docs/VISION.md).
 
