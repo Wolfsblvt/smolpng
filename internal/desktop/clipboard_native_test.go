@@ -316,6 +316,11 @@ func TestNativeClipboardForeignSourcesReachCLI(t *testing.T) {
 	}{{"image", image, []string{"<clipboard image>"}}, {"files", foreignFiles(t, []string{b, a}), []string{b, a}}, {"text", []byte(a + "\n" + b), []string{a, b}}} {
 		t.Run(tc.kind, func(t *testing.T) {
 			independentWrite(t, tc.kind, tc.data)
+			if tc.kind == "files" && nativeBackend(t) == "macos" {
+				if actual := independentFiles(t); !sameNativeFiles(t, actual, tc.inputs) {
+					t.Fatalf("independent NSURL producer/consumer disagree: %q, want %q", actual, tc.inputs)
+				}
+			}
 			root := t.TempDir()
 			out := nativeCommand(t, nil, app, "--home", filepath.Join(root, "home"), "--no-project", "compress", "--clipboard", "--target-size", "1MiB", "--strip", "keep", "--output-dir", filepath.Join(root, "outputs"), "--json")
 			var report domain.Report
