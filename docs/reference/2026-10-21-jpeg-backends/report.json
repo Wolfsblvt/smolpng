@@ -1,0 +1,973 @@
+{
+  "schemaVersion": 1,
+  "complete": true,
+  "started": 1792615524.0344026,
+  "jpegliDeclaredSource": "031a0077f5799a6041004267fc12b956c1f52a20",
+  "python": "3.12.15 (main, Oct  1 2026, 02:35:59) [GCC 13.3.0]",
+  "pillow": "12.3.0",
+  "littleCMS": "2.19",
+  "tools": {
+    "smolpng": {
+      "path": "/home/runner/work/_temp/smolpng-jpeg-backends",
+      "sha256": "b1c1a92b7640247928ad83fa56a6e66d5c94be699786aa65a7d700267f7e4308"
+    },
+    "jpegoptim": {
+      "path": "/home/runner/work/_temp/smolpng-jpegoptim-home/tools/jpegoptim/versions/1.5.6-linux-amd64-f480db3bdda9/jpegoptim",
+      "sha256": "279800dabce2e03916560cefbefb307cd05c8f75430f24e79729ede1d8a5da8a"
+    },
+    "jpegli": {
+      "path": "/home/runner/work/_temp/smolpng-jpegli/build/tools/cjpegli",
+      "sha256": "cac47c811b066fefb52faccb3756f00dbea23eda6db968dcdfca9992116f670b"
+    }
+  },
+  "commands": [
+    {
+      "label": "application-version",
+      "arguments": [
+        "/home/runner/work/_temp/smolpng-jpeg-backends",
+        "--home",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/home",
+        "--no-project",
+        "--jpegoptim-path",
+        "/home/runner/work/_temp/smolpng-jpegoptim-home/tools/jpegoptim/versions/1.5.6-linux-amd64-f480db3bdda9/jpegoptim",
+        "version",
+        "--json"
+      ],
+      "started": 1792615524.0524893,
+      "exitCode": 0,
+      "stdout": "{\n  \"commit\": \"1137e1ac8fca83bd9d472d337a310dd183f4d632\",\n  \"distribution\": \"source\",\n  \"platform\": \"linux/amd64\",\n  \"schemaVersion\": 1,\n  \"version\": \"0.1.0-dev\"\n}\n",
+      "stderr": "",
+      "elapsedMS": 29.697873000031905
+    },
+    {
+      "label": "jpegli-help",
+      "arguments": [
+        "/home/runner/work/_temp/smolpng-jpegli/build/tools/cjpegli",
+        "--help"
+      ],
+      "started": 1792615524.0829048,
+      "exitCode": 0,
+      "stdout": "Usage: /home/runner/work/_temp/smolpng-jpegli/build/tools/cjpegli INPUT OUTPUT [OPTIONS...]\n INPUT\n    the input can be PPM, PNM, PFM, PAM, PGX, PNG, APNG, JPEG\n OUTPUT\n    the compressed JPEG output file\n -d maxError, --distance=maxError\n    Max. butteraugli distance, lower = higher quality.\n    1.0 = visually lossless (default).\n    Recommended range: 0.5 .. 3.0. Allowed range: 0.0 ... 25.0.\n    Mutually exclusive with --quality and --target_size.\n -q QUALITY, --quality=QUALITY\n    Quality setting (is remapped to --distance).    Default is quality 90.\n    Quality values roughly match libjpeg quality.\n    Recommended range: 68 .. 96. Allowed range: 1 .. 100.\n    Mutually exclusive with --distance and --target_size.\n --chroma_subsampling=444|440|422|420\n    Chroma subsampling setting.\n -p N, --progressive_level=N\n    Progressive level setting. Range: 0 .. 2.\n    Default: 2. Higher number is more scans, 0 means sequential.\n -v, --verbose\n    Verbose output; can be repeated, also applies to help (!).\n\n -h, --help\n    Prints this help message. Add -v (up to a total of 2 times) to see more options.\n",
+      "stderr": "",
+      "elapsedMS": 2.0721900000353344
+    },
+    {
+      "label": "food-refocus/jpegoptim/auto",
+      "arguments": [
+        "/home/runner/work/_temp/smolpng-jpeg-backends",
+        "--home",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/home",
+        "--no-project",
+        "--jpegoptim-path",
+        "/home/runner/work/_temp/smolpng-jpegoptim-home/tools/jpegoptim/versions/1.5.6-linux-amd64-f480db3bdda9/jpegoptim",
+        "compress",
+        "/home/runner/work/smolpng/smolpng/testdata/corpus/jpeg/photographic/food-refocus.jpg",
+        "--preset",
+        "auto",
+        "--jpeg-quality",
+        "85-85",
+        "--output",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/food-refocus-jpegoptim-auto.jpg",
+        "--copy",
+        "none",
+        "--offline",
+        "--remote-policy",
+        "never",
+        "--jobs",
+        "1",
+        "--json"
+      ],
+      "started": 1792615525.1719682,
+      "exitCode": 0,
+      "stdout": "{\n  \"schemaVersion\": 1,\n  \"results\": [\n    {\n      \"schemaVersion\": 1,\n      \"status\": \"optimized\",\n      \"input\": \"/home/runner/work/smolpng/smolpng/testdata/corpus/jpeg/photographic/food-refocus.jpg\",\n      \"output\": \"/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/food-refocus-jpegoptim-auto.jpg\",\n      \"originalBytes\": 2532117,\n      \"outputBytes\": 287155,\n      \"savedBytes\": 2244962,\n      \"savingPercent\": 88.659489273205,\n      \"format\": \"jpeg\",\n      \"recipe\": \"auto\",\n      \"dimensions\": {\n        \"before\": {\n          \"width\": 3264,\n          \"height\": 1472\n        },\n        \"after\": {\n          \"width\": 3264,\n          \"height\": 1472\n        }\n      },\n      \"pipeline\": [\n        {\n          \"tool\": \"jpegoptim\",\n          \"version\": \"1.5.6\"\n        }\n      ],\n      \"resizeUsed\": false,\n      \"remoteUsed\": false,\n      \"warnings\": [\n        \"Detected 1799549 attached bytes after the primary JPEG; Safe/all outputs omit attached depth, refocus, motion or other auxiliary content; use keep metadata to preserve the complete file unchanged\"\n      ],\n      \"jpegAttachment\": {\n        \"bytes\": 1799549,\n        \"keep\": false\n      },\n      \"exitCode\": 0\n    }\n  ],\n  \"summary\": {\n    \"total\": 1,\n    \"succeeded\": 1,\n    \"failed\": 0,\n    \"skipped\": 0,\n    \"originalBytes\": 2532117,\n    \"outputBytes\": 287155\n  },\n  \"exitCode\": 0\n}\n",
+      "stderr": "",
+      "elapsedMS": 1516.6808370000808
+    },
+    {
+      "label": "food-refocus/jpegli/auto",
+      "arguments": [
+        "/home/runner/work/_temp/smolpng-jpegli/build/tools/cjpegli",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/food-refocus-upright-srgb.png",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/food-refocus-jpegli-auto.jpg",
+        "--target_size",
+        "287155"
+      ],
+      "started": 1792615526.6898553,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "Read 3264x1472 image, 3192170 bytes.\nEncoding [YUV d1.000 AQ p2 OPT]\nCompressed to 286680 bytes (0.477 bpp).\n3264 x 1472, 13.711 MP/s, 1 threads.\n",
+      "elapsedMS": 446.056186000078
+    },
+    {
+      "label": "food-refocus/jpegoptim/web",
+      "arguments": [
+        "/home/runner/work/_temp/smolpng-jpeg-backends",
+        "--home",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/home",
+        "--no-project",
+        "--jpegoptim-path",
+        "/home/runner/work/_temp/smolpng-jpegoptim-home/tools/jpegoptim/versions/1.5.6-linux-amd64-f480db3bdda9/jpegoptim",
+        "compress",
+        "/home/runner/work/smolpng/smolpng/testdata/corpus/jpeg/photographic/food-refocus.jpg",
+        "--preset",
+        "web",
+        "--jpeg-quality",
+        "80-80",
+        "--output",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/food-refocus-jpegoptim-web.jpg",
+        "--copy",
+        "none",
+        "--offline",
+        "--remote-policy",
+        "never",
+        "--jobs",
+        "1",
+        "--json"
+      ],
+      "started": 1792615527.2550735,
+      "exitCode": 0,
+      "stdout": "{\n  \"schemaVersion\": 1,\n  \"results\": [\n    {\n      \"schemaVersion\": 1,\n      \"status\": \"optimized\",\n      \"input\": \"/home/runner/work/smolpng/smolpng/testdata/corpus/jpeg/photographic/food-refocus.jpg\",\n      \"output\": \"/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/food-refocus-jpegoptim-web.jpg\",\n      \"originalBytes\": 2532117,\n      \"outputBytes\": 227579,\n      \"savedBytes\": 2304538,\n      \"savingPercent\": 91.01230314397004,\n      \"format\": \"jpeg\",\n      \"recipe\": \"web\",\n      \"dimensions\": {\n        \"before\": {\n          \"width\": 3264,\n          \"height\": 1472\n        },\n        \"after\": {\n          \"width\": 3264,\n          \"height\": 1472\n        }\n      },\n      \"pipeline\": [\n        {\n          \"tool\": \"jpegoptim\",\n          \"version\": \"1.5.6\"\n        }\n      ],\n      \"resizeUsed\": false,\n      \"remoteUsed\": false,\n      \"warnings\": [\n        \"Detected 1799549 attached bytes after the primary JPEG; Safe/all outputs omit attached depth, refocus, motion or other auxiliary content; use keep metadata to preserve the complete file unchanged\"\n      ],\n      \"jpegAttachment\": {\n        \"bytes\": 1799549,\n        \"keep\": false\n      },\n      \"exitCode\": 0\n    }\n  ],\n  \"summary\": {\n    \"total\": 1,\n    \"succeeded\": 1,\n    \"failed\": 0,\n    \"skipped\": 0,\n    \"originalBytes\": 2532117,\n    \"outputBytes\": 227579\n  },\n  \"exitCode\": 0\n}\n",
+      "stderr": "",
+      "elapsedMS": 1461.908110999957
+    },
+    {
+      "label": "food-refocus/jpegli/web",
+      "arguments": [
+        "/home/runner/work/_temp/smolpng-jpegli/build/tools/cjpegli",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/food-refocus-upright-srgb.png",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/food-refocus-jpegli-web.jpg",
+        "--target_size",
+        "227579"
+      ],
+      "started": 1792615528.7182477,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "Read 3264x1472 image, 3192170 bytes.\nEncoding [YUV d1.000 AQ p2 OPT]\nCompressed to 226544 bytes (0.377 bpp).\n3264 x 1472, 3.855 MP/s, 1 threads.\n",
+      "elapsedMS": 1342.167601999904
+    },
+    {
+      "label": "food-refocus/jpegoptim/smallest",
+      "arguments": [
+        "/home/runner/work/_temp/smolpng-jpeg-backends",
+        "--home",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/home",
+        "--no-project",
+        "--jpegoptim-path",
+        "/home/runner/work/_temp/smolpng-jpegoptim-home/tools/jpegoptim/versions/1.5.6-linux-amd64-f480db3bdda9/jpegoptim",
+        "compress",
+        "/home/runner/work/smolpng/smolpng/testdata/corpus/jpeg/photographic/food-refocus.jpg",
+        "--preset",
+        "smallest",
+        "--jpeg-quality",
+        "70-70",
+        "--output",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/food-refocus-jpegoptim-smallest.jpg",
+        "--copy",
+        "none",
+        "--offline",
+        "--remote-policy",
+        "never",
+        "--jobs",
+        "1",
+        "--json"
+      ],
+      "started": 1792615530.1716573,
+      "exitCode": 0,
+      "stdout": "{\n  \"schemaVersion\": 1,\n  \"results\": [\n    {\n      \"schemaVersion\": 1,\n      \"status\": \"optimized\",\n      \"input\": \"/home/runner/work/smolpng/smolpng/testdata/corpus/jpeg/photographic/food-refocus.jpg\",\n      \"output\": \"/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/food-refocus-jpegoptim-smallest.jpg\",\n      \"originalBytes\": 2532117,\n      \"outputBytes\": 161307,\n      \"savedBytes\": 2370810,\n      \"savingPercent\": 93.62955977152714,\n      \"format\": \"jpeg\",\n      \"recipe\": \"smallest\",\n      \"dimensions\": {\n        \"before\": {\n          \"width\": 3264,\n          \"height\": 1472\n        },\n        \"after\": {\n          \"width\": 3264,\n          \"height\": 1472\n        }\n      },\n      \"pipeline\": [\n        {\n          \"tool\": \"jpegoptim\",\n          \"version\": \"1.5.6\"\n        }\n      ],\n      \"resizeUsed\": false,\n      \"remoteUsed\": false,\n      \"warnings\": [\n        \"Detected 1799549 attached bytes after the primary JPEG; Safe/all outputs omit attached depth, refocus, motion or other auxiliary content; use keep metadata to preserve the complete file unchanged\"\n      ],\n      \"jpegAttachment\": {\n        \"bytes\": 1799549,\n        \"keep\": false\n      },\n      \"exitCode\": 0\n    }\n  ],\n  \"summary\": {\n    \"total\": 1,\n    \"succeeded\": 1,\n    \"failed\": 0,\n    \"skipped\": 0,\n    \"originalBytes\": 2532117,\n    \"outputBytes\": 161307\n  },\n  \"exitCode\": 0\n}\n",
+      "stderr": "",
+      "elapsedMS": 1421.8610010000248
+    },
+    {
+      "label": "food-refocus/jpegli/smallest",
+      "arguments": [
+        "/home/runner/work/_temp/smolpng-jpegli/build/tools/cjpegli",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/food-refocus-upright-srgb.png",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/food-refocus-jpegli-smallest.jpg",
+        "--target_size",
+        "161307"
+      ],
+      "started": 1792615531.5949543,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "Read 3264x1472 image, 3192170 bytes.\nEncoding [YUV d1.000 AQ p2 OPT]\nCompressed to 161175 bytes (0.268 bpp).\n3264 x 1472, 9.839 MP/s, 1 threads.\n",
+      "elapsedMS": 584.1215000000375
+    },
+    {
+      "label": "landscape-clouds/jpegoptim/auto",
+      "arguments": [
+        "/home/runner/work/_temp/smolpng-jpeg-backends",
+        "--home",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/home",
+        "--no-project",
+        "--jpegoptim-path",
+        "/home/runner/work/_temp/smolpng-jpegoptim-home/tools/jpegoptim/versions/1.5.6-linux-amd64-f480db3bdda9/jpegoptim",
+        "compress",
+        "/home/runner/work/smolpng/smolpng/testdata/corpus/jpeg/photographic/landscape-clouds.jpg",
+        "--preset",
+        "auto",
+        "--jpeg-quality",
+        "85-85",
+        "--output",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/landscape-clouds-jpegoptim-auto.jpg",
+        "--copy",
+        "none",
+        "--offline",
+        "--remote-policy",
+        "never",
+        "--jobs",
+        "1",
+        "--json"
+      ],
+      "started": 1792615534.622381,
+      "exitCode": 0,
+      "stdout": "{\n  \"schemaVersion\": 1,\n  \"results\": [\n    {\n      \"schemaVersion\": 1,\n      \"status\": \"optimized\",\n      \"input\": \"/home/runner/work/smolpng/smolpng/testdata/corpus/jpeg/photographic/landscape-clouds.jpg\",\n      \"output\": \"/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/landscape-clouds-jpegoptim-auto.jpg\",\n      \"originalBytes\": 399226,\n      \"outputBytes\": 276012,\n      \"savedBytes\": 123214,\n      \"savingPercent\": 30.863220331341147,\n      \"format\": \"jpeg\",\n      \"recipe\": \"auto\",\n      \"dimensions\": {\n        \"before\": {\n          \"width\": 4000,\n          \"height\": 3000\n        },\n        \"after\": {\n          \"width\": 4000,\n          \"height\": 3000\n        }\n      },\n      \"pipeline\": [\n        {\n          \"tool\": \"jpegoptim\",\n          \"version\": \"1.5.6\"\n        }\n      ],\n      \"resizeUsed\": false,\n      \"remoteUsed\": false,\n      \"warnings\": [],\n      \"exitCode\": 0\n    }\n  ],\n  \"summary\": {\n    \"total\": 1,\n    \"succeeded\": 1,\n    \"failed\": 0,\n    \"skipped\": 0,\n    \"originalBytes\": 399226,\n    \"outputBytes\": 276012\n  },\n  \"exitCode\": 0\n}\n",
+      "stderr": "",
+      "elapsedMS": 2789.68725499999
+    },
+    {
+      "label": "landscape-clouds/jpegli/auto",
+      "arguments": [
+        "/home/runner/work/_temp/smolpng-jpegli/build/tools/cjpegli",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/landscape-clouds-upright-srgb.png",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/landscape-clouds-jpegli-auto.jpg",
+        "--target_size",
+        "276012"
+      ],
+      "started": 1792615537.4139814,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "Read 4000x3000 image, 5288690 bytes.\nEncoding [YUV d1.000 AQ p2 OPT]\nCompressed to 275731 bytes (0.184 bpp).\n4000 x 3000, 5.286 MP/s, 1 threads.\n",
+      "elapsedMS": 2458.3877290000373
+    },
+    {
+      "label": "landscape-clouds/jpegoptim/web",
+      "arguments": [
+        "/home/runner/work/_temp/smolpng-jpeg-backends",
+        "--home",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/home",
+        "--no-project",
+        "--jpegoptim-path",
+        "/home/runner/work/_temp/smolpng-jpegoptim-home/tools/jpegoptim/versions/1.5.6-linux-amd64-f480db3bdda9/jpegoptim",
+        "compress",
+        "/home/runner/work/smolpng/smolpng/testdata/corpus/jpeg/photographic/landscape-clouds.jpg",
+        "--preset",
+        "web",
+        "--jpeg-quality",
+        "80-80",
+        "--output",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/landscape-clouds-jpegoptim-web.jpg",
+        "--copy",
+        "none",
+        "--offline",
+        "--remote-policy",
+        "never",
+        "--jobs",
+        "1",
+        "--json"
+      ],
+      "started": 1792615540.5034528,
+      "exitCode": 0,
+      "stdout": "{\n  \"schemaVersion\": 1,\n  \"results\": [\n    {\n      \"schemaVersion\": 1,\n      \"status\": \"optimized\",\n      \"input\": \"/home/runner/work/smolpng/smolpng/testdata/corpus/jpeg/photographic/landscape-clouds.jpg\",\n      \"output\": \"/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/landscape-clouds-jpegoptim-web.jpg\",\n      \"originalBytes\": 399226,\n      \"outputBytes\": 276012,\n      \"savedBytes\": 123214,\n      \"savingPercent\": 30.863220331341147,\n      \"format\": \"jpeg\",\n      \"recipe\": \"web\",\n      \"dimensions\": {\n        \"before\": {\n          \"width\": 4000,\n          \"height\": 3000\n        },\n        \"after\": {\n          \"width\": 4000,\n          \"height\": 3000\n        }\n      },\n      \"pipeline\": [\n        {\n          \"tool\": \"jpegoptim\",\n          \"version\": \"1.5.6\"\n        }\n      ],\n      \"resizeUsed\": false,\n      \"remoteUsed\": false,\n      \"warnings\": [],\n      \"exitCode\": 0\n    }\n  ],\n  \"summary\": {\n    \"total\": 1,\n    \"succeeded\": 1,\n    \"failed\": 0,\n    \"skipped\": 0,\n    \"originalBytes\": 399226,\n    \"outputBytes\": 276012\n  },\n  \"exitCode\": 0\n}\n",
+      "stderr": "",
+      "elapsedMS": 2801.4631489999147
+    },
+    {
+      "label": "landscape-clouds/jpegli/web",
+      "arguments": [
+        "/home/runner/work/_temp/smolpng-jpegli/build/tools/cjpegli",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/landscape-clouds-upright-srgb.png",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/landscape-clouds-jpegli-web.jpg",
+        "--target_size",
+        "276012"
+      ],
+      "started": 1792615543.306841,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "Read 4000x3000 image, 5288690 bytes.\nEncoding [YUV d1.000 AQ p2 OPT]\nCompressed to 275731 bytes (0.184 bpp).\n4000 x 3000, 5.228 MP/s, 1 threads.\n",
+      "elapsedMS": 2483.0192389999866
+    },
+    {
+      "label": "landscape-clouds/jpegoptim/smallest",
+      "arguments": [
+        "/home/runner/work/_temp/smolpng-jpeg-backends",
+        "--home",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/home",
+        "--no-project",
+        "--jpegoptim-path",
+        "/home/runner/work/_temp/smolpng-jpegoptim-home/tools/jpegoptim/versions/1.5.6-linux-amd64-f480db3bdda9/jpegoptim",
+        "compress",
+        "/home/runner/work/smolpng/smolpng/testdata/corpus/jpeg/photographic/landscape-clouds.jpg",
+        "--preset",
+        "smallest",
+        "--jpeg-quality",
+        "70-70",
+        "--output",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/landscape-clouds-jpegoptim-smallest.jpg",
+        "--copy",
+        "none",
+        "--offline",
+        "--remote-policy",
+        "never",
+        "--jobs",
+        "1",
+        "--json"
+      ],
+      "started": 1792615546.4243398,
+      "exitCode": 0,
+      "stdout": "{\n  \"schemaVersion\": 1,\n  \"results\": [\n    {\n      \"schemaVersion\": 1,\n      \"status\": \"optimized\",\n      \"input\": \"/home/runner/work/smolpng/smolpng/testdata/corpus/jpeg/photographic/landscape-clouds.jpg\",\n      \"output\": \"/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/landscape-clouds-jpegoptim-smallest.jpg\",\n      \"originalBytes\": 399226,\n      \"outputBytes\": 276012,\n      \"savedBytes\": 123214,\n      \"savingPercent\": 30.863220331341147,\n      \"format\": \"jpeg\",\n      \"recipe\": \"smallest\",\n      \"dimensions\": {\n        \"before\": {\n          \"width\": 4000,\n          \"height\": 3000\n        },\n        \"after\": {\n          \"width\": 4000,\n          \"height\": 3000\n        }\n      },\n      \"pipeline\": [\n        {\n          \"tool\": \"jpegoptim\",\n          \"version\": \"1.5.6\"\n        }\n      ],\n      \"resizeUsed\": false,\n      \"remoteUsed\": false,\n      \"warnings\": [],\n      \"exitCode\": 0\n    }\n  ],\n  \"summary\": {\n    \"total\": 1,\n    \"succeeded\": 1,\n    \"failed\": 0,\n    \"skipped\": 0,\n    \"originalBytes\": 399226,\n    \"outputBytes\": 276012\n  },\n  \"exitCode\": 0\n}\n",
+      "stderr": "",
+      "elapsedMS": 2787.5443890000042
+    },
+    {
+      "label": "landscape-clouds/jpegli/smallest",
+      "arguments": [
+        "/home/runner/work/_temp/smolpng-jpegli/build/tools/cjpegli",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/landscape-clouds-upright-srgb.png",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/landscape-clouds-jpegli-smallest.jpg",
+        "--target_size",
+        "276012"
+      ],
+      "started": 1792615549.2139897,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "Read 4000x3000 image, 5288690 bytes.\nEncoding [YUV d1.000 AQ p2 OPT]\nCompressed to 275731 bytes (0.184 bpp).\n4000 x 3000, 5.246 MP/s, 1 threads.\n",
+      "elapsedMS": 2476.8820369999958
+    },
+    {
+      "label": "jpeg-cmyk/jpegli/control",
+      "arguments": [
+        "/home/runner/work/_temp/smolpng-jpegli/build/tools/cjpegli",
+        "/home/runner/work/smolpng/smolpng/testdata/corpus/jpeg/cmyk/jpeg-cmyk.jpg",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/jpeg-cmyk-jpegli.jpg",
+        "--quality",
+        "85"
+      ],
+      "started": 1792615552.358616,
+      "exitCode": 1,
+      "stdout": "",
+      "stderr": "Failed to decode input image /home/runner/work/smolpng/smolpng/testdata/corpus/jpeg/cmyk/jpeg-cmyk.jpg\n",
+      "elapsedMS": 2.894705000016984
+    },
+    {
+      "label": "jpeg-icc-gray/jpegli/control",
+      "arguments": [
+        "/home/runner/work/_temp/smolpng-jpegli/build/tools/cjpegli",
+        "/home/runner/work/smolpng/smolpng/testdata/corpus/jpeg/color-profile/jpeg-icc-gray.jpg",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/jpeg-icc-gray-jpegli.jpg",
+        "--quality",
+        "85"
+      ],
+      "started": 1792615552.365065,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "Read 128x96 image, 4460 bytes.\nEncoding [YUV d1.450 AQ p2 OPT]\nCompressed to 1772 bytes (1.154 bpp).\n128 x 96, 44.419 MP/s, 1 threads.\n",
+      "elapsedMS": 2.3331359999474444
+    },
+    {
+      "label": "jpeg-icc-cmyk/jpegli/control",
+      "arguments": [
+        "/home/runner/work/_temp/smolpng-jpegli/build/tools/cjpegli",
+        "/home/runner/work/smolpng/smolpng/testdata/corpus/jpeg/color-profile/jpeg-icc-cmyk.jpg",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/jpeg-icc-cmyk-jpegli.jpg",
+        "--quality",
+        "85"
+      ],
+      "started": 1792615552.3736072,
+      "exitCode": 1,
+      "stdout": "",
+      "stderr": "Failed to decode input image /home/runner/work/smolpng/smolpng/testdata/corpus/jpeg/color-profile/jpeg-icc-cmyk.jpg\n",
+      "elapsedMS": 1.6751779999140126
+    },
+    {
+      "label": "jpeg-icc-display-p3/jpegli/control",
+      "arguments": [
+        "/home/runner/work/_temp/smolpng-jpegli/build/tools/cjpegli",
+        "/home/runner/work/smolpng/smolpng/testdata/corpus/jpeg/color-profile/jpeg-icc-display-p3.jpg",
+        "/home/runner/work/smolpng/smolpng/artifacts/validation/jpeg-backends/comparison/jpeg-icc-display-p3-jpegli.jpg",
+        "--quality",
+        "85"
+      ],
+      "started": 1792615552.3786926,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "Read 128x96 image, 3829 bytes.\nEncoding [YUV d1.450 AQ p2 OPT]\nCompressed to 1994 bytes (1.298 bpp).\n128 x 96, 27.807 MP/s, 1 threads.\n",
+      "elapsedMS": 2.222288999973898
+    }
+  ],
+  "photos": [
+    {
+      "input": "jpeg/photographic/food-refocus.jpg",
+      "original": {
+        "bytes": 2532117,
+        "sha256": "62842b3086bb8ec0ddd119b87a9c64055a28f0dcf3d890af7b0c4891248bcb8b",
+        "mode": "RGB",
+        "size": [
+          3264,
+          1472
+        ],
+        "orientation": 3,
+        "iccSHA256": null
+      },
+      "prepared": {
+        "bytes": 3192170,
+        "sha256": "dbf0389c4a2b3e8ed61a3102dc1e3714e7cae9d741220dedcc2f83bfd7588adc",
+        "mode": "RGB",
+        "size": [
+          3264,
+          1472
+        ],
+        "orientation": 1,
+        "iccSHA256": null
+      },
+      "preparationMS": 1085.4916619999813,
+      "rows": [
+        {
+          "preset": "auto",
+          "jpegoptimQuality": 85,
+          "requestedJPEGliBytes": 287155,
+          "jpegoptim": {
+            "bytes": 287155,
+            "sha256": "7edbea1d5b50a43a11a186379212c1bda59b008d04e9dfbd229af4fe780295c0",
+            "mode": "RGB",
+            "size": [
+              3264,
+              1472
+            ],
+            "orientation": 3,
+            "iccSHA256": null
+          },
+          "jpegli": {
+            "bytes": 286680,
+            "sha256": "68c63b4d294346be8b01c63c77b6728df4c3bf8ad76ed8f6190f3a2bc4e959ca",
+            "mode": "RGB",
+            "size": [
+              3264,
+              1472
+            ],
+            "orientation": 1,
+            "iccSHA256": null
+          },
+          "jpegliBudgetMet": true,
+          "jpegoptimCommandMS": 1516.6808370000808,
+          "jpegliCommandMS": 446.056186000078,
+          "jpegoptimDiagnostics": {
+            "meanAbsoluteChannelError": [
+              0.7779954160672421,
+              0.7457286837968883,
+              0.8606131863411125
+            ],
+            "channelRMSE": [
+              1.3649462699362855,
+              1.3061594872620834,
+              1.4994543827978735
+            ],
+            "maximumChannelError": [
+              24,
+              23,
+              22
+            ]
+          },
+          "jpegliDiagnostics": {
+            "meanAbsoluteChannelError": [
+              0.8448235527227195,
+              0.7775142113570972,
+              1.0621898810475277
+            ],
+            "channelRMSE": [
+              1.4489190022367109,
+              1.3275367284505655,
+              1.8315055775217812
+            ],
+            "maximumChannelError": [
+              18,
+              16,
+              28
+            ]
+          }
+        },
+        {
+          "preset": "web",
+          "jpegoptimQuality": 80,
+          "requestedJPEGliBytes": 227579,
+          "jpegoptim": {
+            "bytes": 227579,
+            "sha256": "26f5c56004ea7a958d32145379ae4626c0d88ed0c42d49638fc991e63b048d0c",
+            "mode": "RGB",
+            "size": [
+              3264,
+              1472
+            ],
+            "orientation": 3,
+            "iccSHA256": null
+          },
+          "jpegli": {
+            "bytes": 226544,
+            "sha256": "146e139e2181f2d14f1db297edf06e6c7b97a71ea3d9e8dccfe49a733a86c6bc",
+            "mode": "RGB",
+            "size": [
+              3264,
+              1472
+            ],
+            "orientation": 1,
+            "iccSHA256": null
+          },
+          "jpegliBudgetMet": true,
+          "jpegoptimCommandMS": 1461.908110999957,
+          "jpegliCommandMS": 1342.167601999904,
+          "jpegoptimDiagnostics": {
+            "meanAbsoluteChannelError": [
+              0.9221420353127664,
+              0.8674193607470162,
+              1.0526502890558398
+            ],
+            "channelRMSE": [
+              1.5933955949038567,
+              1.4994884593262465,
+              1.7859303461650926
+            ],
+            "maximumChannelError": [
+              23,
+              26,
+              27
+            ]
+          },
+          "jpegliDiagnostics": {
+            "meanAbsoluteChannelError": [
+              1.1484914065830136,
+              0.9540058210784313,
+              1.3343671325527493
+            ],
+            "channelRMSE": [
+              1.7942166851750396,
+              1.589292746042931,
+              2.171536785137313
+            ],
+            "maximumChannelError": [
+              22,
+              20,
+              32
+            ]
+          }
+        },
+        {
+          "preset": "smallest",
+          "jpegoptimQuality": 70,
+          "requestedJPEGliBytes": 161307,
+          "jpegoptim": {
+            "bytes": 161307,
+            "sha256": "bbe3810334df4b0a817f65cc31a83af155d20a18caee949df8dee510d0279946",
+            "mode": "RGB",
+            "size": [
+              3264,
+              1472
+            ],
+            "orientation": 3,
+            "iccSHA256": null
+          },
+          "jpegli": {
+            "bytes": 161175,
+            "sha256": "3a124936bbf587903494374f53747cbc9af6c496bffa12174c9b81c3d3ea5c55",
+            "mode": "RGB",
+            "size": [
+              3264,
+              1472
+            ],
+            "orientation": 1,
+            "iccSHA256": null
+          },
+          "jpegliBudgetMet": true,
+          "jpegoptimCommandMS": 1421.8610010000248,
+          "jpegliCommandMS": 584.1215000000375,
+          "jpegoptimDiagnostics": {
+            "meanAbsoluteChannelError": [
+              1.2489568347719522,
+              1.1508980545343137,
+              1.4475343253809676
+            ],
+            "channelRMSE": [
+              1.982084589614117,
+              1.8376772317329355,
+              2.2601859854015567
+            ],
+            "maximumChannelError": [
+              29,
+              32,
+              33
+            ]
+          },
+          "jpegliDiagnostics": {
+            "meanAbsoluteChannelError": [
+              1.6571788999227408,
+              1.3570836580216326,
+              1.9869531499760231
+            ],
+            "channelRMSE": [
+              2.3325123548804103,
+              2.057081562269305,
+              2.8402782079542894
+            ],
+            "maximumChannelError": [
+              30,
+              34,
+              48
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "input": "jpeg/photographic/landscape-clouds.jpg",
+      "original": {
+        "bytes": 399226,
+        "sha256": "d266b5bfa1179a6298f1c084e8c539ef81698643f7c45d9adb34d43a30ed2758",
+        "mode": "RGB",
+        "size": [
+          4000,
+          3000
+        ],
+        "orientation": 1,
+        "iccSHA256": "e5f6ffb83b6d3491301dd750975684cc5cc2a1951c994a14b08cfdaa0d75a041"
+      },
+      "prepared": {
+        "bytes": 5288690,
+        "sha256": "1b599ad646a3ddd2804bfe1442433d60c3c88d417955312a95d9e581ee0471f2",
+        "mode": "RGB",
+        "size": [
+          4000,
+          3000
+        ],
+        "orientation": 1,
+        "iccSHA256": "b0913c36e7c05a512a547c8fb7caaddf31af40e145092b22d0ce90d14a01ae46"
+      },
+      "preparationMS": 2153.4634020000567,
+      "rows": [
+        {
+          "preset": "auto",
+          "jpegoptimQuality": 85,
+          "requestedJPEGliBytes": 276012,
+          "jpegoptim": {
+            "bytes": 276012,
+            "sha256": "fa37021bb3c7e1df719120575255f491e30fa04183d08fa8c315f3fdd9397e7e",
+            "mode": "RGB",
+            "size": [
+              4000,
+              3000
+            ],
+            "orientation": 1,
+            "iccSHA256": "e5f6ffb83b6d3491301dd750975684cc5cc2a1951c994a14b08cfdaa0d75a041"
+          },
+          "jpegli": {
+            "bytes": 275731,
+            "sha256": "85bf4fc1ac97e874208adcf191e90a7cbc433c5e9295b5296b305a5696c7c6b5",
+            "mode": "RGB",
+            "size": [
+              4000,
+              3000
+            ],
+            "orientation": 1,
+            "iccSHA256": null
+          },
+          "jpegliBudgetMet": true,
+          "jpegoptimCommandMS": 2789.68725499999,
+          "jpegliCommandMS": 2458.3877290000373,
+          "jpegoptimDiagnostics": {
+            "meanAbsoluteChannelError": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "channelRMSE": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "maximumChannelError": [
+              0,
+              0,
+              0
+            ]
+          },
+          "jpegliDiagnostics": {
+            "meanAbsoluteChannelError": [
+              2.7800331666666667,
+              2.0279920833333334,
+              3.87332975
+            ],
+            "channelRMSE": [
+              3.5807554137825908,
+              2.7672667170573444,
+              4.77618073534353
+            ],
+            "maximumChannelError": [
+              48,
+              48,
+              60
+            ]
+          }
+        },
+        {
+          "preset": "web",
+          "jpegoptimQuality": 80,
+          "requestedJPEGliBytes": 276012,
+          "jpegoptim": {
+            "bytes": 276012,
+            "sha256": "fa37021bb3c7e1df719120575255f491e30fa04183d08fa8c315f3fdd9397e7e",
+            "mode": "RGB",
+            "size": [
+              4000,
+              3000
+            ],
+            "orientation": 1,
+            "iccSHA256": "e5f6ffb83b6d3491301dd750975684cc5cc2a1951c994a14b08cfdaa0d75a041"
+          },
+          "jpegli": {
+            "bytes": 275731,
+            "sha256": "85bf4fc1ac97e874208adcf191e90a7cbc433c5e9295b5296b305a5696c7c6b5",
+            "mode": "RGB",
+            "size": [
+              4000,
+              3000
+            ],
+            "orientation": 1,
+            "iccSHA256": null
+          },
+          "jpegliBudgetMet": true,
+          "jpegoptimCommandMS": 2801.4631489999147,
+          "jpegliCommandMS": 2483.0192389999866,
+          "jpegoptimDiagnostics": {
+            "meanAbsoluteChannelError": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "channelRMSE": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "maximumChannelError": [
+              0,
+              0,
+              0
+            ]
+          },
+          "jpegliDiagnostics": {
+            "meanAbsoluteChannelError": [
+              2.7800331666666667,
+              2.0279920833333334,
+              3.87332975
+            ],
+            "channelRMSE": [
+              3.5807554137825908,
+              2.7672667170573444,
+              4.77618073534353
+            ],
+            "maximumChannelError": [
+              48,
+              48,
+              60
+            ]
+          }
+        },
+        {
+          "preset": "smallest",
+          "jpegoptimQuality": 70,
+          "requestedJPEGliBytes": 276012,
+          "jpegoptim": {
+            "bytes": 276012,
+            "sha256": "fa37021bb3c7e1df719120575255f491e30fa04183d08fa8c315f3fdd9397e7e",
+            "mode": "RGB",
+            "size": [
+              4000,
+              3000
+            ],
+            "orientation": 1,
+            "iccSHA256": "e5f6ffb83b6d3491301dd750975684cc5cc2a1951c994a14b08cfdaa0d75a041"
+          },
+          "jpegli": {
+            "bytes": 275731,
+            "sha256": "85bf4fc1ac97e874208adcf191e90a7cbc433c5e9295b5296b305a5696c7c6b5",
+            "mode": "RGB",
+            "size": [
+              4000,
+              3000
+            ],
+            "orientation": 1,
+            "iccSHA256": null
+          },
+          "jpegliBudgetMet": true,
+          "jpegoptimCommandMS": 2787.5443890000042,
+          "jpegliCommandMS": 2476.8820369999958,
+          "jpegoptimDiagnostics": {
+            "meanAbsoluteChannelError": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "channelRMSE": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "maximumChannelError": [
+              0,
+              0,
+              0
+            ]
+          },
+          "jpegliDiagnostics": {
+            "meanAbsoluteChannelError": [
+              2.7800331666666667,
+              2.0279920833333334,
+              3.87332975
+            ],
+            "channelRMSE": [
+              3.5807554137825908,
+              2.7672667170573444,
+              4.77618073534353
+            ],
+            "maximumChannelError": [
+              48,
+              48,
+              60
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "controls": [
+    {
+      "input": "jpeg/cmyk/jpeg-cmyk.jpg",
+      "original": {
+        "bytes": 7950,
+        "sha256": "bccd6a50ff4d3284d85401e5a337bb1e3157c6b0b8e8c775695ffabacdb123d8",
+        "mode": "CMYK",
+        "size": [
+          128,
+          96
+        ],
+        "orientation": 1,
+        "iccSHA256": null
+      },
+      "observedExitCode": 1,
+      "status": "failed"
+    },
+    {
+      "input": "jpeg/color-profile/jpeg-icc-gray.jpg",
+      "original": {
+        "bytes": 4460,
+        "sha256": "50ba3ea54dc9044b41c8b22ed86371bc48072252fe377bb027bf6e5b23b608eb",
+        "mode": "L",
+        "size": [
+          128,
+          96
+        ],
+        "orientation": 1,
+        "iccSHA256": "00c0f94e09127520a17dc0e1d9264b5702081d96dbdb1549ee88e3631ce42a9d"
+      },
+      "observedExitCode": 0,
+      "status": "output",
+      "candidate": {
+        "bytes": 1772,
+        "sha256": "07756dc3d223a7c13f0970ed385773c70e844f52aee1284dbc7afc5c4d04e93a",
+        "mode": "L",
+        "size": [
+          128,
+          96
+        ],
+        "orientation": 1,
+        "iccSHA256": null
+      },
+      "exactProfilePreserved": false,
+      "diagnostics": {
+        "meanAbsoluteChannelError": [
+          0.6502278645833334,
+          0.6502278645833334,
+          0.6502278645833334
+        ],
+        "channelRMSE": [
+          1.1922874985366017,
+          1.1922874985366017,
+          1.1922874985366017
+        ],
+        "maximumChannelError": [
+          8,
+          8,
+          8
+        ]
+      }
+    },
+    {
+      "input": "jpeg/color-profile/jpeg-icc-cmyk.jpg",
+      "original": {
+        "bytes": 16432,
+        "sha256": "e051ee60ad1d86f8579c6121990d1e6788108ee52122fd03497334cee91bf3a7",
+        "mode": "CMYK",
+        "size": [
+          128,
+          96
+        ],
+        "orientation": 1,
+        "iccSHA256": "73e1ba37d2bad5bab2a964f40a9eed96209666efc067c3322626214bbef234a0"
+      },
+      "observedExitCode": 1,
+      "status": "failed"
+    },
+    {
+      "input": "jpeg/color-profile/jpeg-icc-display-p3.jpg",
+      "original": {
+        "bytes": 3829,
+        "sha256": "b29a2b5fabddd97ff4c39537209fa27604f7ed636bfced71b10036e0ee315e3d",
+        "mode": "RGB",
+        "size": [
+          128,
+          96
+        ],
+        "orientation": 1,
+        "iccSHA256": "cb51de38e482ee974c0c76b9689e16aad04bad16e226fed2f30c842d15ff3a3d"
+      },
+      "observedExitCode": 0,
+      "status": "output",
+      "candidate": {
+        "bytes": 1994,
+        "sha256": "aae18ed735f7aa00f2575b25dc9075c73c4836e4d87577ac6324ce67ce1a0c8f",
+        "mode": "RGB",
+        "size": [
+          128,
+          96
+        ],
+        "orientation": 1,
+        "iccSHA256": "cb51de38e482ee974c0c76b9689e16aad04bad16e226fed2f30c842d15ff3a3d"
+      },
+      "exactProfilePreserved": true,
+      "diagnostics": {
+        "meanAbsoluteChannelError": [
+          1.292236328125,
+          0.9921875,
+          2.4937337239583335
+        ],
+        "channelRMSE": [
+          2.2521871603417716,
+          1.5016809158128988,
+          3.1850608518846752
+        ],
+        "maximumChannelError": [
+          31,
+          14,
+          18
+        ]
+      }
+    }
+  ],
+  "completionMeaning": "All comparison outcomes captured; failed candidate controls are not passing capabilities or backend acceptance.",
+  "interpretation": "Matched actual bytes and managed sRGB diagnostics; not perceptual acceptance. Untagged RGB assumes sRGB; untagged CMYK is unmanaged.",
+  "applicationVersion": {
+    "commit": "1137e1ac8fca83bd9d472d337a310dd183f4d632",
+    "distribution": "source",
+    "platform": "linux/amd64",
+    "schemaVersion": 1,
+    "version": "0.1.0-dev"
+  },
+  "ended": 1792615552.4002824
+}

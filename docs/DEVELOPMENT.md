@@ -104,7 +104,7 @@ Graphical clipboard, drag/drop, native notifications, windowless launch/console 
 
 ## JPEG backend comparison
 
-`tools/qualify/jpeg-backends.py` is a separate native calibration journey for [Issue #57](https://github.com/Wolfsblvt/smolpng/issues/57), not an application runtime or an ordinary Go unit suite. It needs Python 3.12 with Pillow 12.3.0/LittleCMS, an already-built smolpng, jpegoptim and a separately built candidate cjpegli. The selected Python boundary supplies independent decoding, profile conversion and lossless pixel-crop artifacts without adding another application codec or runtime. The `JPEG backend comparison` workflow selects those tools on one disposable Ubuntu 24.04 host, pins upstream jpegli/Highway/skcms sources and retains build identities. It runs only manually or for changes to its own workflow/helper.
+`tools/qualify/jpeg-backends.py` is a separate native calibration journey for [Issue #57](https://github.com/Wolfsblvt/smolpng/issues/57), not an application runtime or an ordinary Go unit suite. It needs Python 3.12 with Pillow 12.3.0/LittleCMS, an already-built smolpng, jpegoptim and a separately built candidate cjpegli. The selected Python boundary supplies independent decoding, profile conversion and lossless pixel-crop artifacts without adding another application codec or runtime. The `JPEG backend comparison` workflow selects those tools on one disposable Ubuntu 24.04 host, pins upstream jpegli/Highway/skcms/libjpeg-turbo sources and retains build identities. It runs only manually or for changes to its own workflow/helper.
 
 ```sh
 python tools/qualify/jpeg-backends.py --source . --smolpng /path/to/smolpng \
