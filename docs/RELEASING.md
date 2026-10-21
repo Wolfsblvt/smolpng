@@ -40,6 +40,25 @@ Use `smolpng-qualify` against the built candidate and separately installed real 
 
 The repository source is already public under its selected licences. A public application release still requires separate exact authority for release upload, package-manager or Store submission, production signing and update-feed operation, website deployment, donations and spend. Pin and review release-tool dependencies when that machinery is selected. Do not publish install commands for unregistered packages or claim a signed binary when none was signed. Native platform observations, legal brand/artist grant, optimizer distribution composition and current package-manager acceptance remain distinct checks.
 
+## Windows signing sequence
+
+Wolf selected the open-source signing route on 21 October 2026. The first public Preview may be distributed **unsigned** when its release page, checksums and Windows guidance say so plainly. An unsigned Preview is not a signed release with an inconvenient warning attached; do not claim an authenticated publisher or SmartScreen reputation that does not exist.
+
+After the first documented public release, smolpng may apply to SignPath Foundation. Treat provider acceptance as unobserved until it happens. At the decision date, the published route expects an already released and documented open-source project, a public code-signing policy, MFA, trusted source/build provenance and manual approval for each release; recheck the current terms at application and activation time. The certificate publisher is SignPath Foundation rather than Wolfsblvt Works.
+
+Before a SignPath-signed cut, carry one coherent signing contribution:
+
+- add maintained Windows version resources with consistent ProductName, CompanyName, FileVersion and ProductVersion values derived from the exact release identity;
+- inspect the actual PE resources on x64 and ARM64;
+- publish the code-signing policy and bind the trusted build/origin route;
+- configure no signing secret outside the accepted provider custody;
+- sign only exact accepted artifacts and read back the resulting signatures and certificate subject; and
+- keep Authenticode, SHA-256 checksums and the Ed25519 standalone-update manifest as distinct trust layers.
+
+Microsoft Azure Artifact Signing is deferred, not selected. It may be reconsidered if Wolfsblvt Works later has an eligible legal organization and the paid Azure operating consequence is deliberately accepted. Traditional commercial certificates and self-signed public artifacts are not the current route.
+
+The machine-version posture remains a separate owner choice. Nyxara currently recommends machine version `0.3.0` with the user-facing label **Public Preview**, preserving `1.0.0` for the complete qualified destination. No signing decision silently settles that version choice.
+
 ## Executable local builder
 
 `go run ./tools/release --version 0.2.0-dev.1 --out artifacts/candidate` now creates the exact platform packages and checksum/index files described here. `--base-url` plus a stable version additionally authors package-manager inputs and a narrow standalone update payload. A separate `tools/sign-update` command requires an already held protected key; normal candidate builds do not sign. See [Packaging](packaging.md) for the implemented invocation and strict publication boundary.
