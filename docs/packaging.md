@@ -35,6 +35,8 @@ VERSIONINFO is descriptive metadata, not a signature or an authenticated publish
 
 An unsigned Preview remains unsigned after this metadata is embedded. The separate signing sequence and retained release decisions are in [Releasing](RELEASING.md#windows-signing-sequence).
 
+[Native qualification](reference/2026-10-21-windows-version-resources.md) records six exact-source files, matching stage/archive receipts, hosted execution of the amd64 CLI and Windows 11 resource reads. ARM64 execution and graphical use remain distinct.
+
 ## Package-manager inputs
 
 For a separately authorized stable distribution, use the same builder with a real selected asset base URL:

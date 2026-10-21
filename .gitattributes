@@ -7,3 +7,7 @@
 *.bundle binary
 
 *.bin binary
+
+# Retain the exact native report bytes addressed by the dated qualification record.
+docs/reference/2026-10-21-windows-version-resources/hosted-report.json -text whitespace=cr-at-eol
+docs/reference/2026-10-21-windows-version-resources/windows-11-report.json -text whitespace=cr-at-eol
