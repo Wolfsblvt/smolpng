@@ -1,0 +1,118 @@
+name: JPEG backend comparison
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/jpeg-backends.yml
+      - tools/qualify/jpeg-backends.py
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  compare:
+    # Match the existing Linux optimizer qualification's native environment.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    env:
+      SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      JPEGLI_COMMIT: 031a0077f5799a6041004267fc12b956c1f52a20
+      OMP_NUM_THREADS: '1'
+      CGO_ENABLED: '0'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ env.SOURCE_COMMIT }}
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Select guest build and independent observation tools
+        run: |
+          evidence="$GITHUB_WORKSPACE/artifacts/validation/jpeg-backends"
+          mkdir -p "$evidence"
+          printf 'EVIDENCE=%s\n' "$evidence" >> "$GITHUB_ENV"
+          git rev-parse HEAD > "$evidence/source.txt"
+          test "$(cat "$evidence/source.txt")" = "$SOURCE_COMMIT"
+          cat /etc/os-release > "$evidence/os-release.txt"
+          uname -srm > "$evidence/kernel.txt"
+          printf '%s\n%s\n' "${ImageOS:-unknown}" "${ImageVersion:-unknown}" > "$evidence/runner-image.txt"
+          sudo apt-get update -qq
+          sudo apt-get install --yes --no-install-recommends cmake ninja-build pkg-config libjpeg-dev libpng-dev libbrotli-dev zlib1g-dev
+          python -m pip install --disable-pip-version-check --no-deps 'Pillow==12.3.0'
+          python --version > "$evidence/python.txt"
+          python -m pip freeze > "$evidence/python-packages.txt"
+          cmake --version > "$evidence/cmake.txt"
+          c++ --version > "$evidence/compiler.txt"
+          go env -json GOVERSION GOOS GOARCH > "$evidence/go-env.json"
+      - name: Build only pinned upstream cjpegli
+        run: |
+          native="$RUNNER_TEMP/smolpng-jpegli"
+          mkdir -p "$native"
+          download() {
+            repo="$1"; revision="$2"; destination="$3"
+            archive="$native/$revision.tar.gz"
+            curl --fail --location --show-error --silent "https://codeload.github.com/$repo/tar.gz/$revision" -o "$archive"
+            sha256sum "$archive" >> "$EVIDENCE/upstream-archives.sha256"
+            printf '%s %s\n' "$repo" "$revision" >> "$EVIDENCE/upstream-sources.txt"
+            mkdir -p "$destination"
+            tar -xzf "$archive" --strip-components=1 -C "$destination"
+          }
+          download google/jpegli "$JPEGLI_COMMIT" "$native/source"
+          download google/highway 271a9a0ed9de1232d9117f1572c3fe28f8542ec1 "$native/source/third_party/highway"
+          download google/skcms 96d9171c94b937a1b5f0293de7309ac16311b722 "$native/source/third_party/skcms"
+          # jpegli.cmake also copies these pinned API headers when the shared
+          # libjpeg replacement is disabled; the system decoder is insufficient.
+          download libjpeg-turbo/libjpeg-turbo 8ecba3647edb6dd940463fedf38ca33a8e2a73d1 "$native/source/third_party/libjpeg-turbo"
+          cp "$native/source/LICENSE" "$EVIDENCE/jpegli-LICENSE"
+          cp "$native/source/third_party/highway/LICENSE" "$EVIDENCE/highway-LICENSE"
+          cp "$native/source/third_party/skcms/LICENSE" "$EVIDENCE/skcms-LICENSE"
+          cp "$native/source/third_party/libjpeg-turbo/LICENSE.md" "$EVIDENCE/libjpeg-turbo-LICENSE.md"
+          cmake -S "$native/source" -B "$native/build" -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF \
+            -DJPEGLI_ENABLE_TOOLS=ON -DJPEGLI_ENABLE_DEVTOOLS=OFF \
+            -DJPEGLI_ENABLE_FUZZERS=OFF -DJPEGLI_ENABLE_BENCHMARK=OFF \
+            -DJPEGLI_ENABLE_JPEGLI_LIBJPEG=OFF -DJPEGLI_ENABLE_SJPEG=OFF \
+            -DJPEGLI_ENABLE_SKCMS=ON -DJPEGLI_ENABLE_DOXYGEN=OFF -DJPEGLI_ENABLE_MANPAGES=OFF \
+            > "$EVIDENCE/configure.log" 2>&1
+          cmake --build "$native/build" --target cjpegli --parallel 2 > "$EVIDENCE/build.log" 2>&1
+          cp "$native/build/CMakeCache.txt" "$EVIDENCE/cmake-cache.txt"
+          jpegli="$native/build/tools/cjpegli"
+          sha256sum "$jpegli" > "$EVIDENCE/jpegli.sha256"
+          ldd "$jpegli" > "$EVIDENCE/jpegli-libraries.txt"
+          printf 'JPEGLI=%s\n' "$jpegli" >> "$GITHUB_ENV"
+      - name: Build current application and select existing jpegoptim
+        run: |
+          app="$RUNNER_TEMP/smolpng-jpeg-backends"
+          go mod verify
+          go build -trimpath -ldflags "-X github.com/Wolfsblvt/smolpng/internal/cli.Commit=$SOURCE_COMMIT" -o "$app" ./cmd/smolpng
+          sha256sum "$app" > "$EVIDENCE/application.sha256"
+          bootstrap="$RUNNER_TEMP/smolpng-jpegoptim-home"
+          "$app" --home "$bootstrap" --no-project deps install jpegoptim --json > "$EVIDENCE/jpegoptim-preview.json"
+          "$app" --home "$bootstrap" --no-project deps install jpegoptim --apply --json > "$EVIDENCE/jpegoptim-install.json"
+          jpegoptim=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["managed"]["path"])' "$EVIDENCE/jpegoptim-install.json")
+          printf 'APPLICATION=%s\nJPEGOPTIM=%s\n' "$app" "$jpegoptim" >> "$GITHUB_ENV"
+      - name: Compare matched byte budgets and preservation controls
+        run: |
+          python tools/qualify/jpeg-backends.py \
+            --source "$GITHUB_WORKSPACE" --smolpng "$APPLICATION" \
+            --jpegoptim "$JPEGOPTIM" --jpegli "$JPEGLI" --jpegli-source "$JPEGLI_COMMIT" \
+            --output "$EVIDENCE/comparison"
+          # Complete comparison evidence may contain failed candidate controls;
+          # it never declares that jpegli satisfies the application's contracts.
+          python -c 'import json,sys; r=json.load(open(sys.argv[1])); assert r["complete"] and len(r["photos"])==2 and len(r["controls"])==4' "$EVIDENCE/comparison/report.json"
+      - name: Retain comparison evidence, including failed attempts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: jpeg-backends-${{ env.SOURCE_COMMIT }}-${{ github.run_id }}
+          path: artifacts/validation/jpeg-backends/
+          if-no-files-found: error
+          retention-days: 14
