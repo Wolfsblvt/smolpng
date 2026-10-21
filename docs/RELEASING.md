@@ -24,7 +24,7 @@ On Linux/macOS, build `cmd/smolpng` and `tools/qualify` with the corresponding l
 
 ## What accompanies a candidate
 
-A runnable platform archive includes the console application, Windows windowless launcher when applicable, native qualification helper, primary license, complete third-party license notices, relevant usage/qualification documents, original CC0 test corpus, and a manifest of file hashes plus source SHA. It must contain no Go toolchain/cache, credentials, private agent Profile, personal config, external optimizer executable or commissioned brand asset. Standard packages do not bundle pngquant or OxiPNG.
+A runnable platform archive includes the console application, Windows windowless launcher when applicable, native qualification helper, version-bound Agent Skill source, primary license, complete third-party license notices, relevant usage/qualification documents, original CC0 test corpus, and a manifest of file hashes plus source SHA. It must contain no Go toolchain/cache, credentials, private agent Profile, personal config, external optimizer executable or commissioned brand asset. Standard packages do not bundle pngquant, OxiPNG or jpegoptim.
 
 The source recovery ZIP includes the complete Git repository and a second Git bundle. A plain working-tree ZIP is not a substitute for recoverable commit history. Verify archive integrity and the extracted source's Git object database; recheck HEAD and a clean working tree. Preserve a separate SHA-256 checksum for each download.
 
@@ -38,7 +38,7 @@ Use `smolpng-qualify` against the built candidate and separately installed real 
 
 ## Remaining outward effects
 
-A public release requires separate exact authority for repository visibility, release upload, packages, signing, website deployment, donations and Store effects. Pin and review release-tool dependencies when that machinery is selected. Do not publish install commands for unregistered packages or claim a signed binary when none was signed. Native platform observations, legal brand/artist grant, optimizer distribution composition and current package-manager acceptance remain distinct checks.
+The repository source is already public under its selected licences. A public application release still requires separate exact authority for release upload, package-manager or Store submission, production signing and update-feed operation, website deployment, donations and spend. Pin and review release-tool dependencies when that machinery is selected. Do not publish install commands for unregistered packages or claim a signed binary when none was signed. Native platform observations, legal brand/artist grant, optimizer distribution composition and current package-manager acceptance remain distinct checks.
 
 ## Executable local builder
 
@@ -49,3 +49,5 @@ The builder uses the application's direct process constructor for Git and Go. On
 The [private dev.9 record](reference/2026-10-19-private-candidate-dev9.md) binds one completed six-platform build to source restoration, 63 native Windows checks, dependency/Skill lifecycle and actual interrupted-update recovery. Its explicit remaining joined-desktop and other-host boundaries still govern; a completed build is not complete candidate acceptance. A later documentation-only record does not change the observed candidate source or require rebuilding it to include its own evidence.
 
 The [private dev.10 record](reference/2026-10-19-private-candidate-dev10.md) binds the later macOS catalog repair to a fresh six-platform build, independent archive/source restoration and dependency/Skill lifecycle. Native invocation failures and their focused reproductions remain explicit; related earlier observations do not become a clean new joined candidate. The application's per-image timeout and the qualifier's whole-invocation deadline are distinct budgets.
+
+The [private dev.11 record](reference/2026-10-20-private-candidate-dev11.md) binds the next exact six-platform archive set to source restoration, a clean 63-check Windows run, dependency/Skill lifecycle, update interruption/recovery, active cancellation, hidden-terminal control flow and tracked shortcut installation/removal. Later native platform and Linux package lifecycle records strengthen their own source boundaries. Dev.11 remains a private behavior specimen rather than the final joined human/script/agent candidate after current embedded Skill guidance changed; the next complete candidate must include the accepted current source.
