@@ -42,7 +42,7 @@ These are the source modules reached by the current Windows/Linux/macOS executab
 | `golang.org/x/sync v0.21.0` | BSD-3-Clause | [golang.org-x-sync-PATENTS.txt](LICENSES/golang.org-x-sync-PATENTS.txt), [golang.org-x-sync-LICENSE.txt](LICENSES/golang.org-x-sync-LICENSE.txt) |
 | `golang.org/x/sys v0.49.0` | BSD-3-Clause | [golang.org-x-sys-PATENTS.txt](LICENSES/golang.org-x-sys-PATENTS.txt), [golang.org-x-sys-LICENSE.txt](LICENSES/golang.org-x-sys-LICENSE.txt) |
 | `golang.org/x/term v0.47.0` | BSD-3-Clause | [golang.org-x-term-PATENTS.txt](LICENSES/golang.org-x-term-PATENTS.txt), [golang.org-x-term-LICENSE.txt](LICENSES/golang.org-x-term-LICENSE.txt) |
-| Go runtime/standard library 1.26.6 | BSD-3-Clause | [Go](LICENSES/go.txt) |
+| Go runtime/standard library (module minimum 1.26.6; builder version recorded per artifact) | BSD-3-Clause | [Go](LICENSES/go.txt) |
 
 TOML uses pinned go-toml 2.4.3 with strict decoding; the settings editor uses that same version's byte-range AST to preserve handwritten comments. Unknown-field, inheritance and permission behavior belongs to smolpng. Huh 2.0.3/Bubble Tea 2.0.8 supply keyboard/forms and terminal lifecycle rather than a homemade terminal driver. Their transitive width/color/key libraries are retained above. The atotto clipboard dependency is used by text-field paste behavior, not smolpng's smart multi-format output. `golang.design/x/clipboard` 0.11.0 provides native PNG/files/text representations through a single write; its actual graphical behavior must be qualified per host. Go's term package detects genuine terminal sessions.
 
