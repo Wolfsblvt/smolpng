@@ -32,6 +32,8 @@ Native Windows PNG/JPEG compression and application-created shortcut activation 
 
 ## Continuation
 
+The existing native qualifier now repeats the grayscale/CMYK/Display P3 controls, validates JPEG profiles/component models and checks supported resizing and reason-specific no-output refusal. [Its corrected native runs](reference/2026-10-21-native-jpeg-color-qualifier.md) passed all 79 PNG/JPEG checks on Linux amd64, both macOS architectures and Windows ARM64, plus 51 JPEG checks on Windows amd64. This closes a repeatability gap in the shipped tooling; it does not complete graphical qualification or mint another private candidate.
+
 [Native Windows output-lock qualification](reference/2026-10-17-windows-output-locks.md) passed all four PNG/JPEG overwrite/in-place refusal and retry cases. The attempted private clipboard station was unavailable before any clipboard access; the later [owner-authorized Paint journey](reference/2026-10-19-windows-clipboard-alpha.md) separately qualified PNG image paste and its alpha repair. These bounded observations do not substitute for the remaining real desktop journey.
 
 Wolf clarified on 16 October 2026: “The general goal is implement everything that was planned anyway.” The complete Vision remains the destination without an urgency-driven temporary scope. His selected first everyday Windows workflow is “Drop files onto a shortcut”; that orders native qualification without replacing the remaining product plan.

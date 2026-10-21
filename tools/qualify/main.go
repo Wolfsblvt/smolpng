@@ -175,6 +175,9 @@ func run(ctx context.Context, o options) (err error) {
 			sample = "flat-icon.png"
 		} else {
 			corpus = testutil.JPEGCorpus()
+			for name, data := range testutil.JPEGColorCorpus() {
+				corpus[name] = data
+			}
 			sample = "jpeg-baseline.jpg"
 		}
 		for name, data := range corpus {
@@ -216,7 +219,7 @@ func run(ctx context.Context, o options) (err error) {
 				if e != nil {
 					c.Errors = append(c.Errors, "output file is unavailable")
 				} else {
-					c.Errors = append(c.Errors, validateImage(fixtures[name], output, result, preset == "lossless")...)
+					c.Errors = append(c.Errors, validateImage(fixtures[name], output, result, imageExpectation{Lossless: preset == "lossless"})...)
 				}
 				now, e := os.ReadFile(source)
 				if e != nil || !bytes.Equal(now, fixtures[name]) {
@@ -233,6 +236,13 @@ func run(ctx context.Context, o options) (err error) {
 		s.exerciseOutputs(ctx, sourceDir, sample, fixtures)
 		if e = s.save(); e != nil {
 			return e
+		}
+	}
+	for _, format := range formats {
+		if format == "jpeg" {
+			if e = s.exerciseJPEGColors(ctx, sourceDir); e != nil {
+				return e
+			}
 		}
 	}
 	if len(samples) > 1 {
@@ -296,7 +306,7 @@ func (s *suite) exerciseOutputs(ctx context.Context, sourceDir, name string, fix
 				if e != nil {
 					c.Errors = append(c.Errors, "accepted target result lacks an artifact")
 				} else {
-					c.Errors = append(c.Errors, validateImage(fixtures[name], output, result, false)...)
+					c.Errors = append(c.Errors, validateImage(fixtures[name], output, result, imageExpectation{})...)
 				}
 			}
 		}
@@ -319,7 +329,7 @@ func (s *suite) exerciseOutputs(ctx context.Context, sourceDir, name string, fix
 	} else if data, err := os.ReadFile(report.Results[0].Output); err != nil {
 		partial.Errors = append(partial.Errors, "successful partial item lacks its artifact")
 	} else {
-		partial.Errors = append(partial.Errors, validateImage(fixtures[name], data, report.Results[0], false)...)
+		partial.Errors = append(partial.Errors, validateImage(fixtures[name], data, report.Results[0], imageExpectation{})...)
 	}
 	s.add(partial)
 }
@@ -351,7 +361,7 @@ func (s *suite) exerciseMixedBatch(ctx context.Context, sourceDir string, names 
 				c.Errors = append(c.Errors, "mixed batch lacks a successful artifact in its output directory")
 				continue
 			}
-			c.Errors = append(c.Errors, validateImage(original, data, result, false)...)
+			c.Errors = append(c.Errors, validateImage(original, data, result, imageExpectation{})...)
 		}
 		if len(pending) != 0 {
 			c.Errors = append(c.Errors, "mixed batch omitted a requested input")
@@ -407,7 +417,14 @@ func (s *suite) save() error {
 	}
 	return fsutil.AtomicWrite(context.Background(), filepath.Join(s.root, "report.json"), append(b, '\n'), 0600, true)
 }
-func validateImage(original, output []byte, r domain.Result, strict bool) []string {
+
+type imageExpectation struct {
+	Lossless bool
+	Resize   domain.Dimensions
+	StripICC bool
+}
+
+func validateImage(original, output []byte, r domain.Result, want imageExpectation) []string {
 	failures := []string{}
 	a, before, e := decodeImage(original)
 	if e != nil {
@@ -420,16 +437,21 @@ func validateImage(original, output []byte, r domain.Result, strict bool) []stri
 	if after.Format != before.Format || r.Format != before.Format {
 		failures = append(failures, "artifact/report format differs from source")
 	}
-	if after.Animated || after.Dimensions != before.Dimensions || r.Dimensions.Before != before.Dimensions || r.Dimensions.After != after.Dimensions {
+	dimensions := before.Dimensions
+	orientation := before.Orientation
+	if want.Resize.Area() > 0 {
+		dimensions, orientation = want.Resize, 1
+	}
+	if after.Animated || after.Dimensions != dimensions || r.Dimensions.Before != before.Dimensions || r.Dimensions.After != after.Dimensions {
 		failures = append(failures, "dimensions/animation differ from the promised source")
 	}
-	if before.Orientation != after.Orientation {
+	if orientation != after.Orientation {
 		failures = append(failures, "orientation changed without a requested geometry change")
 	}
 	if before.Transparency && !after.Transparency {
 		failures = append(failures, "transparency was discarded")
 	}
-	if strict && !pngimage.PixelEqual(a, b) {
+	if want.Lossless && !pngimage.PixelEqual(a, b) {
 		failures = append(failures, "strict lossless changed decoded pixels, including hidden RGB")
 	}
 	if len(output) > len(original) {
@@ -443,6 +465,9 @@ func validateImage(original, output []byte, r domain.Result, strict bool) []stri
 	}
 	if r.RemoteUsed {
 		failures = append(failures, "local recipe reports remote use")
+	}
+	if before.Format == "jpeg" && after.Format == "jpeg" {
+		failures = append(failures, validateJPEGColor(original, output, want)...)
 	}
 	return failures
 }
