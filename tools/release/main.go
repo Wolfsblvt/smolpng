@@ -147,6 +147,15 @@ func run() error {
 			if e != nil {
 				return e
 			}
+			if goos == "windows" {
+				b, e = packaging.VersionWindowsExecutable(b, name, *version, sha)
+				if e != nil {
+					return e
+				}
+				if e = os.WriteFile(filepath.Join(stage, name), b, 0755); e != nil {
+					return e
+				}
+			}
 			files[name] = packaging.Content{Data: b, Executable: true}
 			return nil
 		}

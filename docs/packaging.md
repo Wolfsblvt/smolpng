@@ -18,6 +18,23 @@ Candidate compilation isolates the Go command from ambient workspaces, per-user 
 
 The archive receipt binds individual member hashes. `SHA256SUMS` binds every archive. `build-index.json` is written incrementally and marks complete only after the entire selected build succeeds. Failure leaves inspectable local output and returns nonzero, not a nominal release.
 
+## Windows executable identity
+
+The local builder adds VERSIONINFO to `smolpng.exe`, `smolpngw.exe` and `smolpng-qualify.exe` on both Windows architectures, before member/archive hashes are calculated. ProductName is `smolpng`; CompanyName is the descriptive maker label `Wolfsblvt Works`. Each file has its own description, original filename and internal name. FileVersion and ProductVersion strings retain the complete explicit semantic version, including its prerelease suffix; Comments retains the exact source commit and standalone distribution.
+
+The platform's fixed numeric version is `MAJOR.MINOR.PATCH.0`. Each component must fit Windows' 16-bit field; an unrepresentable version fails instead of wrapping. Prerelease builds set the prerelease flag. The full strings distinguish prereleases sharing one numeric tuple; Windows file-version numbers are not smolpng's update-selection contract.
+
+Resource processing uses pinned Go build tooling, not an additional native compiler or an application runtime dependency. Existing non-version resources are preserved. No generated `.syso` file is written into the source tree, and the builder does not alter manifest/DPI/privilege settings or add an icon. Ordinary direct `go build` remains a development build without these release resources.
+
+VERSIONINFO is descriptive metadata, not a signature or an authenticated publisher. Source compilation does not prove Windows can read the actual files; inspect the built PE resources, machine type and subsystem on x64 and ARM64 as part of candidate qualification. For a headless native string read on Windows:
+
+```powershell
+[Diagnostics.FileVersionInfo]::GetVersionInfo('C:\ABSOLUTE\BUILD\stage\windows-amd64\smolpng.exe') |
+    Select-Object ProductName, CompanyName, FileVersion, ProductVersion, OriginalFilename, Comments, IsPreRelease
+```
+
+An unsigned Preview remains unsigned after this metadata is embedded. The separate signing sequence and retained release decisions are in [Releasing](RELEASING.md#windows-signing-sequence).
+
 ## Package-manager inputs
 
 For a separately authorized stable distribution, use the same builder with a real selected asset base URL:

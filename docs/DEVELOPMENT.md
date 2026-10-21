@@ -102,6 +102,18 @@ The expanded [JPEG color-model qualifier](reference/2026-10-21-native-jpeg-color
 
 Graphical clipboard, drag/drop, native notifications, windowless launch/console allocation and visual TUI behavior still require the manual checks in the candidate's local qualification packet. [Four real Windows locked-output cases](reference/2026-10-17-windows-output-locks.md) now establish PNG/JPEG overwrite/in-place refusal, byte preservation, temporary-file cleanup and successful retry after unlock. Other-host locks remain separately qualified. The helper exercises rather than rebuilds the app.
 
+## Windows artifact identity
+
+The `Windows artifact identity` workflow runs a separate exact-source packaging journey on Windows. It builds only Windows amd64/ARM64 with the deliberately non-release version `0.0.0-resource-test.1`, reads all six executables through native `FileVersionInfo`, checks machine/subsystem and absence of an embedded certificate, joins stage/ZIP/member/index hashes, and runs the amd64 CLI version command. It retains reports and fixture archives, without signing or publishing a release. It runs manually or for changes to its packaging source/workflow and module inputs.
+
+For an existing new local Windows build, the same headless reader is available in PowerShell 7:
+
+```powershell
+./tools/release/qualify-windows.ps1 -BuildPath C:\ABSOLUTE\BUILD -ExpectedVersion 0.0.0-resource-test.1 -ExpectedCommit FULL_SOURCE_SHA -ReportPath artifacts/validation/windows-identity/report.json
+```
+
+The report path must be new; partial observations survive a failure. This proves native resource reads and archive identity, not graphical behavior or execution on an ARM64 processor. Ordinary Go tests separately cover semantic-version mapping and, on Windows, preserve the already-built test runner's PE code, machine/subsystem/entry point and non-version resource while adding version data. That regression compiles no extra fixture application.
+
 ## JPEG backend comparison
 
 `tools/qualify/jpeg-backends.py` is a separate native calibration journey for [Issue #57](https://github.com/Wolfsblvt/smolpng/issues/57), not an application runtime or an ordinary Go unit suite. It needs Python 3.12 with Pillow 12.3.0/LittleCMS, an already-built smolpng, jpegoptim and a separately built candidate cjpegli. The selected Python boundary supplies independent decoding, profile conversion and lossless pixel-crop artifacts without adding another application codec or runtime. The `JPEG backend comparison` workflow selects those tools on one disposable Ubuntu 24.04 host, pins upstream jpegli/Highway/skcms/libjpeg-turbo sources and retains build identities. It runs only manually or for changes to its own workflow/helper.
