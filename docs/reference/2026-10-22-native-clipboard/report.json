@@ -1,0 +1,266 @@
+{
+  "meaning": "Captured native consumer/CLI qualification evidence joined from the four exact-source CI artifacts; UTF-8 field values retain original file bytes and their hashes.",
+  "source": "283a76aeee8df5f69b9f2fd70bc3a0855f671cbb",
+  "run": "https://github.com/Wolfsblvt/smolpng/actions/runs/39690082395",
+  "hosts": [
+    {
+      "platform": "macos-amd64",
+      "files": {
+        "report.json": {
+          "sha256": "443f341daaf427d4b8908af4a05ea5c27bc6a7819ef7eac328a7beff758d6a51",
+          "utf8": "{\"complete\":true,\"passed\":true,\"meaning\":\"Native protocol/API consumers; no rendered desktop or graphical paste claim.\"}\n"
+        },
+        "test.log": {
+          "sha256": "e64e093c01c64c27435e999fc1898c078f194f6efef86f3b068b2d892fe9ab5b",
+          "utf8": "=== RUN   TestNativeClipboardSmartRepresentations\n    clipboard_native_test.go:302: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:312: smart output: 1 file(s), native ordered file-list and exact path text agree; modes [image files path-text]\n    clipboard_native_test.go:312: smart output: 2 file(s), native ordered file-list and exact path text agree; modes [files path-text]\n--- PASS: TestNativeClipboardSmartRepresentations (0.19s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/image\n    clipboard_native_test.go:350: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:352: foreign image -> real CLI -> 1 committed PNG artifact(s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/files\n    clipboard_native_test.go:350: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:350: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:352: foreign files -> real CLI -> 2 committed PNG artifact(s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/text\n    clipboard_native_test.go:350: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:350: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:352: foreign text -> real CLI -> 2 committed PNG artifact(s)\n--- PASS: TestNativeClipboardForeignSourcesReachCLI (0.47s)\n    --- PASS: TestNativeClipboardForeignSourcesReachCLI/image (0.17s)\n    --- PASS: TestNativeClipboardForeignSourcesReachCLI/files (0.13s)\n    --- PASS: TestNativeClipboardForeignSourcesReachCLI/text (0.10s)\n=== RUN   TestNativeClipboardCLIOwnershipEndsOnReplacement\n    clipboard_native_test.go:368: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:372: macOS image and native file URLs persist after the CLI writer exits\n--- PASS: TestNativeClipboardCLIOwnershipEndsOnReplacement (0.19s)\nPASS\n"
+        },
+        "source.txt": {
+          "sha256": "7ce714d489692eff7a663bffd8b76d2eb6563e5ba21413c44106dfa0e75a2db4",
+          "utf8": "283a76aeee8df5f69b9f2fd70bc3a0855f671cbb\n"
+        },
+        "go-env.json": {
+          "sha256": "bf02183cb57dcd0987585719af68a9313447abd2e62d2bfc1bed6e6651ce1c78",
+          "utf8": "{\n\t\"CGO_ENABLED\": \"0\",\n\t\"GOARCH\": \"amd64\",\n\t\"GOOS\": \"darwin\",\n\t\"GOVERSION\": \"go1.26.6\"\n}\n"
+        },
+        "os-release.txt": {
+          "sha256": "65d64dac219c6f8889e5d23ad99d56b412cc9b2d9d82f663de36a69a05c82aa2",
+          "utf8": "ProductName:\t\tmacOS\nProductVersion:\t\t26.6.1\nBuildVersion:\t\t25G76\n"
+        },
+        "kernel.txt": {
+          "sha256": "78d88804d04159670fd3cf32ccd3ef8c1a50d3ff6450013c0b4257b858b8da3a",
+          "utf8": "Darwin 25.6.0 x86_64\n"
+        },
+        "runner-image.txt": {
+          "sha256": "1387bd5227b1d060d03b7eb266dd1674d3afd538400cd5fd3f9ee95c65eb278b",
+          "utf8": "macos26\n20260824.0517.1\n"
+        },
+        "native-tools.txt": {
+          "sha256": "94c4c327428d284bdb4a4e7a36c320e96012abee788ce0e295a0bbda865dde42",
+          "utf8": "Apple Swift version 6.3.3 (swiftlang-6.3.3.1.3 clang-2100.1.1.101)\nTarget: x86_64-apple-macosx26.0\n"
+        },
+        "executables.sha256": {
+          "sha256": "f194a1449dd1b65882201d1498a4e06c39364539901bc6fee7b9f7e647bf1186",
+          "utf8": "ca36b947e1370ccc32e349464bdccf096e0903b20b15a083cd9708da26cd318a  /Users/runner/work/smolpng/smolpng/artifacts/bin/native-clipboard/clipboard-consumer\n7f17d362f7c41169db2aeec19b93e9e1afbbfb5c5b2d8e7acdb798a78c13ae38  /Users/runner/work/smolpng/smolpng/artifacts/bin/native-clipboard/clipboard.test\n7ed9df69385d7ecf049b2fc482dbedd386db1a94cbf99ca6316913f6f3ee37a6  /Users/runner/work/smolpng/smolpng/artifacts/bin/native-clipboard/smolpng\n"
+        },
+        "transport.txt": {
+          "sha256": "cce7f6cdc26174a7ae70ce1cfca91829fcaf07a7afd5f899c0f0c91f0e159b7f",
+          "utf8": "macos\nunset\nunset\n"
+        },
+        "application-version.json": {
+          "sha256": "cdd001ac1e34b9bc933bec67a33f90be45be800d4c5ca3cbee6c811d6ce4fbef",
+          "utf8": "{\n  \"commit\": \"283a76aeee8df5f69b9f2fd70bc3a0855f671cbb\",\n  \"distribution\": \"source\",\n  \"platform\": \"darwin/amd64\",\n  \"schemaVersion\": 1,\n  \"version\": \"0.1.0-dev\"\n}\n"
+        },
+        "swift-compiler.txt": {
+          "sha256": "4f59ef9fb9d939c2a58083df471a65bc8f0ad45239c1ab563dfbf7c239b2f03b",
+          "utf8": "/Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc\n"
+        }
+      }
+    },
+    {
+      "platform": "macos-arm64",
+      "files": {
+        "report.json": {
+          "sha256": "443f341daaf427d4b8908af4a05ea5c27bc6a7819ef7eac328a7beff758d6a51",
+          "utf8": "{\"complete\":true,\"passed\":true,\"meaning\":\"Native protocol/API consumers; no rendered desktop or graphical paste claim.\"}\n"
+        },
+        "test.log": {
+          "sha256": "12a40796c48cbfa6efb5c23c19c5059d1b523c5d6d9c63db029e518252befc7f",
+          "utf8": "=== RUN   TestNativeClipboardSmartRepresentations\n    clipboard_native_test.go:302: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:312: smart output: 1 file(s), native ordered file-list and exact path text agree; modes [image files path-text]\n    clipboard_native_test.go:312: smart output: 2 file(s), native ordered file-list and exact path text agree; modes [files path-text]\n--- PASS: TestNativeClipboardSmartRepresentations (0.29s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/image\n    clipboard_native_test.go:350: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:352: foreign image -> real CLI -> 1 committed PNG artifact(s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/files\n    clipboard_native_test.go:350: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:350: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:352: foreign files -> real CLI -> 2 committed PNG artifact(s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/text\n    clipboard_native_test.go:350: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:350: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:352: foreign text -> real CLI -> 2 committed PNG artifact(s)\n--- PASS: TestNativeClipboardForeignSourcesReachCLI (0.59s)\n    --- PASS: TestNativeClipboardForeignSourcesReachCLI/image (0.15s)\n    --- PASS: TestNativeClipboardForeignSourcesReachCLI/files (0.21s)\n    --- PASS: TestNativeClipboardForeignSourcesReachCLI/text (0.12s)\n=== RUN   TestNativeClipboardCLIOwnershipEndsOnReplacement\n    clipboard_native_test.go:368: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:372: macOS image and native file URLs persist after the CLI writer exits\n--- PASS: TestNativeClipboardCLIOwnershipEndsOnReplacement (0.28s)\nPASS\n"
+        },
+        "source.txt": {
+          "sha256": "7ce714d489692eff7a663bffd8b76d2eb6563e5ba21413c44106dfa0e75a2db4",
+          "utf8": "283a76aeee8df5f69b9f2fd70bc3a0855f671cbb\n"
+        },
+        "go-env.json": {
+          "sha256": "ed8272f2268f095390f553ea3fa8e5b4b6a20f595e2b3e4a521d531b4e8b5d94",
+          "utf8": "{\n\t\"CGO_ENABLED\": \"0\",\n\t\"GOARCH\": \"arm64\",\n\t\"GOOS\": \"darwin\",\n\t\"GOVERSION\": \"go1.26.6\"\n}\n"
+        },
+        "os-release.txt": {
+          "sha256": "cd5d6399b3785b04ceaae75045a9ca9f80f0bbc3526eff9d0c36b170ed1ec348",
+          "utf8": "ProductName:\t\tmacOS\nProductVersion:\t\t26.6.2\nBuildVersion:\t\t25G83\n"
+        },
+        "kernel.txt": {
+          "sha256": "83e116757bf361ada87a922313265a945238521f4545fae6f59034fd27807374",
+          "utf8": "Darwin 25.6.0 arm64\n"
+        },
+        "runner-image.txt": {
+          "sha256": "f9e2f9fbcb503cb211fd4aab44e639f069e5088e254bef58b369c195db4f64d9",
+          "utf8": "macos26\n20261013.0424.1\n"
+        },
+        "native-tools.txt": {
+          "sha256": "b674f79b747370a1c05ae7cec551fffe557816c6c807f35f39f933ecbcca80d7",
+          "utf8": "Apple Swift version 6.3.3 (swiftlang-6.3.3.1.3 clang-2100.1.1.101)\nTarget: arm64-apple-macosx26.0\n"
+        },
+        "executables.sha256": {
+          "sha256": "73ed73d7c504c1747a67540565842f0c022eb0e31ecaba7a280942ab79d0b08e",
+          "utf8": "89802b7c09a625ea0e0a1b4b2a19a39f351673f916a45d5299d4e305c3299571  /Users/runner/work/smolpng/smolpng/artifacts/bin/native-clipboard/clipboard-consumer\n396461adfd4e43749daa72dc8cd50d19d164b915843bcca2e497606810790151  /Users/runner/work/smolpng/smolpng/artifacts/bin/native-clipboard/clipboard.test\n24c50e5e823845c324413d6ba471357f787b184a07b1de1464a6815e69f65b99  /Users/runner/work/smolpng/smolpng/artifacts/bin/native-clipboard/smolpng\n"
+        },
+        "transport.txt": {
+          "sha256": "cce7f6cdc26174a7ae70ce1cfca91829fcaf07a7afd5f899c0f0c91f0e159b7f",
+          "utf8": "macos\nunset\nunset\n"
+        },
+        "application-version.json": {
+          "sha256": "1d7df334aa6285a590ef2a87024caa2e30bc62e66ef4e920a4f53543181aac84",
+          "utf8": "{\n  \"commit\": \"283a76aeee8df5f69b9f2fd70bc3a0855f671cbb\",\n  \"distribution\": \"source\",\n  \"platform\": \"darwin/arm64\",\n  \"schemaVersion\": 1,\n  \"version\": \"0.1.0-dev\"\n}\n"
+        },
+        "swift-compiler.txt": {
+          "sha256": "4f59ef9fb9d939c2a58083df471a65bc8f0ad45239c1ab563dfbf7c239b2f03b",
+          "utf8": "/Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc\n"
+        }
+      }
+    },
+    {
+      "platform": "wayland-amd64",
+      "files": {
+        "report.json": {
+          "sha256": "443f341daaf427d4b8908af4a05ea5c27bc6a7819ef7eac328a7beff758d6a51",
+          "utf8": "{\"complete\":true,\"passed\":true,\"meaning\":\"Native protocol/API consumers; no rendered desktop or graphical paste claim.\"}\n"
+        },
+        "test.log": {
+          "sha256": "39457a2976f53194feb233b277103094732792e131689c79110bf95144771382",
+          "utf8": "=== RUN   TestNativeClipboardSmartRepresentations\n    clipboard_native_test.go:302: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:312: smart output: 1 file(s), native ordered file-list and exact path text agree; modes [image files path-text]\n    clipboard_native_test.go:312: smart output: 2 file(s), native ordered file-list and exact path text agree; modes [files path-text]\n--- PASS: TestNativeClipboardSmartRepresentations (0.38s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/image\n    clipboard_native_test.go:350: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:352: foreign image -> real CLI -> 1 committed PNG artifact(s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/files\n    clipboard_native_test.go:350: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:350: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:352: foreign files -> real CLI -> 2 committed PNG artifact(s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/text\n    clipboard_native_test.go:350: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:350: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:352: foreign text -> real CLI -> 2 committed PNG artifact(s)\n--- PASS: TestNativeClipboardForeignSourcesReachCLI (0.26s)\n    --- PASS: TestNativeClipboardForeignSourcesReachCLI/image (0.11s)\n    --- PASS: TestNativeClipboardForeignSourcesReachCLI/files (0.06s)\n    --- PASS: TestNativeClipboardForeignSourcesReachCLI/text (0.06s)\n=== RUN   TestNativeClipboardCLIOwnershipEndsOnReplacement\n    clipboard_native_test.go:403: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:418: wayland CLI served smart data while alive, then exited successfully after replacement\n--- PASS: TestNativeClipboardCLIOwnershipEndsOnReplacement (0.09s)\nPASS\n"
+        },
+        "source.txt": {
+          "sha256": "7ce714d489692eff7a663bffd8b76d2eb6563e5ba21413c44106dfa0e75a2db4",
+          "utf8": "283a76aeee8df5f69b9f2fd70bc3a0855f671cbb\n"
+        },
+        "go-env.json": {
+          "sha256": "2aca5ea942a8be404589bf619ec6e489287e3a3a7ecdebce52328cc4f579b530",
+          "utf8": "{\n\t\"CGO_ENABLED\": \"0\",\n\t\"GOARCH\": \"amd64\",\n\t\"GOOS\": \"linux\",\n\t\"GOVERSION\": \"go1.26.6\"\n}\n"
+        },
+        "os-release.txt": {
+          "sha256": "87458b3b1f1ca0e5c693ade771de7007c3783bdc692fa6b39eb6414bf2af2763",
+          "utf8": "PRETTY_NAME=\"Ubuntu 24.04.5 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"24.04\"\nVERSION=\"24.04.5 LTS (Noble Numbat)\"\nVERSION_CODENAME=noble\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=noble\nLOGO=ubuntu-logo\n"
+        },
+        "kernel.txt": {
+          "sha256": "37ae4eeffcb8d58539ed7db6ca4ddd746d72ec8194ec753b221c3355a1bc2193",
+          "utf8": "Linux 7.0.0-1017-azure x86_64\n"
+        },
+        "runner-image.txt": {
+          "sha256": "f589ed82e0871db6b8c864b040396fb7c3ba366512ab7e4da0a9ac79ec44c899",
+          "utf8": "ubuntu24\n20261018.339.1\n"
+        },
+        "native-tools.txt": {
+          "sha256": "e42ed18e8b8503f653965adb7e4dc6b0ea3aa623db9403a6c798f6a23b918fbd",
+          "utf8": "sway\t1.9-1build2\nwl-clipboard\t2.2.1-1build1\n"
+        },
+        "executables.sha256": {
+          "sha256": "adbccf837a6645b7ce53f7f8550588b51668761e4932f6cd0660c42b2cce8207",
+          "utf8": "67d2c8bac5389ddf9ff102a74a1b9f0287a666693a968c5ecd164e7a1a0a7305  /home/runner/work/smolpng/smolpng/artifacts/bin/native-clipboard/clipboard.test\nc34ea488223a94fc7ff51507c9dd987c57bd818c61172a84075e88930e2eb95a  /home/runner/work/smolpng/smolpng/artifacts/bin/native-clipboard/smolpng\n"
+        },
+        "transport.txt": {
+          "sha256": "0f5d92809f37bffbc1a8b187875d268a77d0b53464dc602fc76de00642d6a314",
+          "utf8": "wayland\nunset\nwayland-1\n"
+        },
+        "application-version.json": {
+          "sha256": "6771ee59abce11754c3347b3fa1c2e1e81913bdd3c0466d5730d09c0c12e1c91",
+          "utf8": "{\n  \"commit\": \"283a76aeee8df5f69b9f2fd70bc3a0855f671cbb\",\n  \"distribution\": \"source\",\n  \"platform\": \"linux/amd64\",\n  \"schemaVersion\": 1,\n  \"version\": \"0.1.0-dev\"\n}\n"
+        },
+        "sway.conf": {
+          "sha256": "812f6246d519bb355dbd08b7587c1083accc66b09033ee70b3c808a406b419ac",
+          "utf8": "xwayland disable\nseat seat0 fallback true\n"
+        },
+        "display.log": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "utf8": ""
+        }
+      }
+    },
+    {
+      "platform": "x11-amd64",
+      "files": {
+        "report.json": {
+          "sha256": "443f341daaf427d4b8908af4a05ea5c27bc6a7819ef7eac328a7beff758d6a51",
+          "utf8": "{\"complete\":true,\"passed\":true,\"meaning\":\"Native protocol/API consumers; no rendered desktop or graphical paste claim.\"}\n"
+        },
+        "test.log": {
+          "sha256": "0f2908e9519caccc9e8961c5344e7e506d89f7e73a18f55e7e38d27ab067a961",
+          "utf8": "=== RUN   TestNativeClipboardSmartRepresentations\n    clipboard_native_test.go:302: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:312: smart output: 1 file(s), native ordered file-list and exact path text agree; modes [image files path-text]\n    clipboard_native_test.go:312: smart output: 2 file(s), native ordered file-list and exact path text agree; modes [files path-text]\n--- PASS: TestNativeClipboardSmartRepresentations (0.25s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/image\n    clipboard_native_test.go:350: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:352: foreign image -> real CLI -> 1 committed PNG artifact(s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/files\n    clipboard_native_test.go:350: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:350: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:352: foreign files -> real CLI -> 2 committed PNG artifact(s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/text\n    clipboard_native_test.go:350: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:350: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:352: foreign text -> real CLI -> 2 committed PNG artifact(s)\n--- PASS: TestNativeClipboardForeignSourcesReachCLI (0.18s)\n    --- PASS: TestNativeClipboardForeignSourcesReachCLI/image (0.04s)\n    --- PASS: TestNativeClipboardForeignSourcesReachCLI/files (0.05s)\n    --- PASS: TestNativeClipboardForeignSourcesReachCLI/text (0.05s)\n=== RUN   TestNativeClipboardCLIOwnershipEndsOnReplacement\n    clipboard_native_test.go:403: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:418: x11 CLI served smart data while alive, then exited successfully after replacement\n--- PASS: TestNativeClipboardCLIOwnershipEndsOnReplacement (0.10s)\nPASS\n"
+        },
+        "source.txt": {
+          "sha256": "7ce714d489692eff7a663bffd8b76d2eb6563e5ba21413c44106dfa0e75a2db4",
+          "utf8": "283a76aeee8df5f69b9f2fd70bc3a0855f671cbb\n"
+        },
+        "go-env.json": {
+          "sha256": "2aca5ea942a8be404589bf619ec6e489287e3a3a7ecdebce52328cc4f579b530",
+          "utf8": "{\n\t\"CGO_ENABLED\": \"0\",\n\t\"GOARCH\": \"amd64\",\n\t\"GOOS\": \"linux\",\n\t\"GOVERSION\": \"go1.26.6\"\n}\n"
+        },
+        "os-release.txt": {
+          "sha256": "87458b3b1f1ca0e5c693ade771de7007c3783bdc692fa6b39eb6414bf2af2763",
+          "utf8": "PRETTY_NAME=\"Ubuntu 24.04.5 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"24.04\"\nVERSION=\"24.04.5 LTS (Noble Numbat)\"\nVERSION_CODENAME=noble\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=noble\nLOGO=ubuntu-logo\n"
+        },
+        "kernel.txt": {
+          "sha256": "5f15e8173f638f5f96ef8bfafc344c7149df384e09b770a085703159cb746bf6",
+          "utf8": "Linux 6.17.0-1022-azure x86_64\n"
+        },
+        "runner-image.txt": {
+          "sha256": "a1d3181c7eea18cc78392aac6f54b4c47df28a7bc4d5f8e104a9a76dfb875d5f",
+          "utf8": "ubuntu24\n20261012.334.1\n"
+        },
+        "native-tools.txt": {
+          "sha256": "89a16b8fce10aaf5322ca3624bc2d42d13ca589c94eca21227125125aafa274c",
+          "utf8": "xclip\t0.13-3\nxvfb\t2:21.1.12-1ubuntu1.9\n"
+        },
+        "executables.sha256": {
+          "sha256": "adbccf837a6645b7ce53f7f8550588b51668761e4932f6cd0660c42b2cce8207",
+          "utf8": "67d2c8bac5389ddf9ff102a74a1b9f0287a666693a968c5ecd164e7a1a0a7305  /home/runner/work/smolpng/smolpng/artifacts/bin/native-clipboard/clipboard.test\nc34ea488223a94fc7ff51507c9dd987c57bd818c61172a84075e88930e2eb95a  /home/runner/work/smolpng/smolpng/artifacts/bin/native-clipboard/smolpng\n"
+        },
+        "transport.txt": {
+          "sha256": "3f3d81caccea918a7007ca983d7f05a3e12d409a1e1e066ea0c718aef4fee28c",
+          "utf8": "x11\n:0.0\nunset\n"
+        },
+        "application-version.json": {
+          "sha256": "6771ee59abce11754c3347b3fa1c2e1e81913bdd3c0466d5730d09c0c12e1c91",
+          "utf8": "{\n  \"commit\": \"283a76aeee8df5f69b9f2fd70bc3a0855f671cbb\",\n  \"distribution\": \"source\",\n  \"platform\": \"linux/amd64\",\n  \"schemaVersion\": 1,\n  \"version\": \"0.1.0-dev\"\n}\n"
+        }
+      }
+    }
+  ],
+  "earlierAttempts": [
+    {
+      "source": "76c0fa3f28392be9dffd8496e2856d7d25e2da89",
+      "run": "https://github.com/Wolfsblvt/smolpng/actions/runs/39687136462",
+      "platform": "x11",
+      "testLog": {
+        "sha256": "6486dd0c405756c442aafeaf7ee25bec3a17e51c9c36921cb3cac9f69954e0b9",
+        "utf8": "=== RUN   TestNativeClipboardSmartRepresentations\n    clipboard_native_test.go:267: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:277: smart output: 1 file(s), native ordered file-list and exact path text agree; modes [image files path-text]\n    clipboard_native_test.go:277: smart output: 2 file(s), native ordered file-list and exact path text agree; modes [files path-text]\n--- PASS: TestNativeClipboardSmartRepresentations (0.30s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/image\n    clipboard_native_test.go:310: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:312: foreign image -> real CLI -> 1 committed PNG artifact(s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/files\n    clipboard_native_test.go:294: /home/runner/work/smolpng/smolpng/artifacts/bin/native-clipboard/smolpng [\"--home\" \"/tmp/TestNativeClipboardForeignSourcesReachCLIfiles3089038544/001/home\" \"--no-project\" \"compress\" \"--clipboard\" \"--target-size\" \"1MiB\" \"--strip\" \"keep\" \"--output-dir\" \"/tmp/TestNativeClipboardForeignSourcesReachCLIfiles3089038544/001/outputs\" \"--json\"]: exit status 3; \n=== RUN   TestNativeClipboardForeignSourcesReachCLI/text\n    clipboard_native_test.go:294: /home/runner/work/smolpng/smolpng/artifacts/bin/native-clipboard/smolpng [\"--home\" \"/tmp/TestNativeClipboardForeignSourcesReachCLItext2824394689/001/home\" \"--no-project\" \"compress\" \"--clipboard\" \"--target-size\" \"1MiB\" \"--strip\" \"keep\" \"--output-dir\" \"/tmp/TestNativeClipboardForeignSourcesReachCLItext2824394689/001/outputs\" \"--json\"]: exit status 3; \n--- FAIL: TestNativeClipboardForeignSourcesReachCLI (0.22s)\n    --- PASS: TestNativeClipboardForeignSourcesReachCLI/image (0.07s)\n    --- FAIL: TestNativeClipboardForeignSourcesReachCLI/files (0.06s)\n    --- FAIL: TestNativeClipboardForeignSourcesReachCLI/text (0.05s)\n=== RUN   TestNativeClipboardCLIOwnershipEndsOnReplacement\n    clipboard_native_test.go:363: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:378: x11 CLI served smart data while alive, then exited successfully after replacement\n--- PASS: TestNativeClipboardCLIOwnershipEndsOnReplacement (0.10s)\nFAIL\n"
+      }
+    },
+    {
+      "source": "76c0fa3f28392be9dffd8496e2856d7d25e2da89",
+      "run": "https://github.com/Wolfsblvt/smolpng/actions/runs/39687136462",
+      "platform": "macos-arm64",
+      "testLog": {
+        "sha256": "d96eb587a783671fde4e6fe556acf548301da204e7646d3881770160c326ee67",
+        "utf8": "=== RUN   TestNativeClipboardSmartRepresentations\n    clipboard_native_test.go:267: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:272: native file-list [\"/var/folders/n6/hn37q6pj7sj_9dmqqc2113800000gn/T/TestNativeClipboardSmartRepresentations2621728111/001/image space # % ü.png\"], want [\"/var/folders/n6/hn37q6pj7sj_9dmqqc2113800000gn/T/TestNativeClipboardSmartRepresentations2621728111/001/image space # % ü.png\"]\n--- FAIL: TestNativeClipboardSmartRepresentations (0.34s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/image\n    clipboard_native_test.go:310: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:312: foreign image -> real CLI -> 1 committed PNG artifact(s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/files\n    clipboard_native_test.go:294: /Users/runner/work/smolpng/smolpng/artifacts/bin/native-clipboard/smolpng [\"--home\" \"/var/folders/n6/hn37q6pj7sj_9dmqqc2113800000gn/T/TestNativeClipboardForeignSourcesReachCLIfiles102543758/002/home\" \"--no-project\" \"compress\" \"--clipboard\" \"--target-size\" \"1MiB\" \"--strip\" \"keep\" \"--output-dir\" \"/var/folders/n6/hn37q6pj7sj_9dmqqc2113800000gn/T/TestNativeClipboardForeignSourcesReachCLIfiles102543758/002/outputs\" \"--json\"]: exit status 3; \n=== RUN   TestNativeClipboardForeignSourcesReachCLI/text\n    clipboard_native_test.go:310: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:310: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:312: foreign text -> real CLI -> 2 committed PNG artifact(s)\n--- FAIL: TestNativeClipboardForeignSourcesReachCLI (0.48s)\n    --- PASS: TestNativeClipboardForeignSourcesReachCLI/image (0.16s)\n    --- FAIL: TestNativeClipboardForeignSourcesReachCLI/files (0.12s)\n    --- PASS: TestNativeClipboardForeignSourcesReachCLI/text (0.14s)\n=== RUN   TestNativeClipboardCLIOwnershipEndsOnReplacement\n    clipboard_native_test.go:328: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:330: native file-list did not persist after CLI exit [/var/folders/n6/hn37q6pj7sj_9dmqqc2113800000gn/T/TestNativeClipboardCLIOwnershipEndsOnReplacement1211747116/002/outputs/owner ü.smol.png]\n--- FAIL: TestNativeClipboardCLIOwnershipEndsOnReplacement (0.29s)\nFAIL\n"
+      }
+    },
+    {
+      "source": "0df901bcdac10109cd3111bf8a4ba7da60958586",
+      "run": "https://github.com/Wolfsblvt/smolpng/actions/runs/39687953677",
+      "platform": "macos-arm64",
+      "testLog": {
+        "sha256": "22dd9f6fe21eca339a53d9634db6519a5739e7f1d9360e7f0ca242cdac4998f9",
+        "utf8": "=== RUN   TestNativeClipboardSmartRepresentations\n    clipboard_native_test.go:293: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:303: smart output: 1 file(s), native ordered file-list and exact path text agree; modes [image files path-text]\n    clipboard_native_test.go:303: smart output: 2 file(s), native ordered file-list and exact path text agree; modes [files path-text]\n--- PASS: TestNativeClipboardSmartRepresentations (1.05s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/image\n    clipboard_native_test.go:336: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:338: foreign image -> real CLI -> 1 committed PNG artifact(s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/files\n    clipboard_native_test.go:320: /Users/runner/work/smolpng/smolpng/artifacts/bin/native-clipboard/smolpng [\"--home\" \"/var/folders/n6/hn37q6pj7sj_9dmqqc2113800000gn/T/TestNativeClipboardForeignSourcesReachCLIfiles1446563886/002/home\" \"--no-project\" \"compress\" \"--clipboard\" \"--target-size\" \"1MiB\" \"--strip\" \"keep\" \"--output-dir\" \"/var/folders/n6/hn37q6pj7sj_9dmqqc2113800000gn/T/TestNativeClipboardForeignSourcesReachCLIfiles1446563886/002/outputs\" \"--json\"]: exit status 3; stdout: {\"schemaVersion\":1,\"results\":[{\"schemaVersion\":1,\"status\":\"failed\",\"input\":\"\\u003cinvocation\\u003e\",\"originalBytes\":0,\"outputBytes\":0,\"savedBytes\":0,\"savingPercent\":0,\"format\":\"\",\"recipe\":\"\",\"dimensions\":{\"before\":{\"width\":0,\"height\":0},\"after\":{\"width\":0,\"height\":0}},\"pipeline\":[],\"resizeUsed\":false,\"remoteUsed\":false,\"warnings\":[],\"error\":\"cannot read clipboard\",\"exitCode\":3}],\"summary\":{\"total\":1,\"succeeded\":0,\"failed\":1,\"skipped\":0,\"originalBytes\":0,\"outputBytes\":0},\"exitCode\":3}\n        ; stderr: \n=== RUN   TestNativeClipboardForeignSourcesReachCLI/text\n    clipboard_native_test.go:336: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:336: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:338: foreign text -> real CLI -> 2 committed PNG artifact(s)\n--- FAIL: TestNativeClipboardForeignSourcesReachCLI (0.55s)\n    --- PASS: TestNativeClipboardForeignSourcesReachCLI/image (0.19s)\n    --- FAIL: TestNativeClipboardForeignSourcesReachCLI/files (0.15s)\n    --- PASS: TestNativeClipboardForeignSourcesReachCLI/text (0.15s)\n=== RUN   TestNativeClipboardCLIOwnershipEndsOnReplacement\n    clipboard_native_test.go:354: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:358: macOS image and native file URLs persist after the CLI writer exits\n--- PASS: TestNativeClipboardCLIOwnershipEndsOnReplacement (0.39s)\nFAIL\n"
+      }
+    },
+    {
+      "source": "28a6901e5c6fdb3c174e24d1b405b495e5e57749",
+      "run": "https://github.com/Wolfsblvt/smolpng/actions/runs/39688872239",
+      "platform": "macos-arm64",
+      "testLog": {
+        "sha256": "f76026cc67b81465375a40f2a7e2a811d851b91d877c588e9f767ef37f2ec0be",
+        "utf8": "=== RUN   TestNativeClipboardSmartRepresentations\n    clipboard_native_test.go:293: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:303: smart output: 1 file(s), native ordered file-list and exact path text agree; modes [image files path-text]\n    clipboard_native_test.go:303: smart output: 2 file(s), native ordered file-list and exact path text agree; modes [files path-text]\n--- PASS: TestNativeClipboardSmartRepresentations (0.70s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/image\n    clipboard_native_test.go:341: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:343: foreign image -> real CLI -> 1 committed PNG artifact(s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/files\n    clipboard_native_test.go:321: independent NSURL producer/consumer disagree: [], want [\"/var/folders/n6/hn37q6pj7sj_9dmqqc2113800000gn/T/TestNativeClipboardForeignSourcesReachCLI253589968/002/source 雪.png\" \"/var/folders/n6/hn37q6pj7sj_9dmqqc2113800000gn/T/TestNativeClipboardForeignSourcesReachCLI253589968/001/source # % ü.png\"]\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/text\n    clipboard_native_test.go:341: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:341: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:343: foreign text -> real CLI -> 2 committed PNG artifact(s)\n--- FAIL: TestNativeClipboardForeignSourcesReachCLI (0.46s)\n    --- PASS: TestNativeClipboardForeignSourcesReachCLI/image (0.13s)\n    --- FAIL: TestNativeClipboardForeignSourcesReachCLI/files (0.14s)\n    --- PASS: TestNativeClipboardForeignSourcesReachCLI/text (0.13s)\n=== RUN   TestNativeClipboardCLIOwnershipEndsOnReplacement\n    clipboard_native_test.go:359: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:363: macOS image and native file URLs persist after the CLI writer exits\n--- PASS: TestNativeClipboardCLIOwnershipEndsOnReplacement (0.22s)\nFAIL\n"
+      }
+    },
+    {
+      "source": "f3722965172475482395945a01d524535b1e80d3",
+      "run": "https://github.com/Wolfsblvt/smolpng/actions/runs/39689381843",
+      "platform": "macos-arm64",
+      "testLog": {
+        "sha256": "399472403d77c85b8f288ef1af4d7caeeadd8c12aa364576ea720fa482a0aa13",
+        "utf8": "=== RUN   TestNativeClipboardSmartRepresentations\n    clipboard_native_test.go:293: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:303: smart output: 1 file(s), native ordered file-list and exact path text agree; modes [image files path-text]\n    clipboard_native_test.go:303: smart output: 2 file(s), native ordered file-list and exact path text agree; modes [files path-text]\n--- PASS: TestNativeClipboardSmartRepresentations (0.98s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/image\n    clipboard_native_test.go:341: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:343: foreign image -> real CLI -> 1 committed PNG artifact(s)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/files\n    clipboard_native_test.go:318: osascript [\"-l\" \"JavaScript\" \"testdata/clipboard-macos.js\" \"write\" \"files\" \"/var/folders/n6/hn37q6pj7sj_9dmqqc2113800000gn/T/TestNativeClipboardForeignSourcesReachCLIfiles616580546/001/pasteboard.bin\"]: exit status 1; stdout: ; stderr: testdata/clipboard-macos.js: execution error: Error: Error: Native file URL write did not populate its items (-2700)\n=== RUN   TestNativeClipboardForeignSourcesReachCLI/text\n    clipboard_native_test.go:341: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:341: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:343: foreign text -> real CLI -> 2 committed PNG artifact(s)\n--- FAIL: TestNativeClipboardForeignSourcesReachCLI (0.56s)\n    --- PASS: TestNativeClipboardForeignSourcesReachCLI/image (0.19s)\n    --- FAIL: TestNativeClipboardForeignSourcesReachCLI/files (0.13s)\n    --- PASS: TestNativeClipboardForeignSourcesReachCLI/text (0.16s)\n=== RUN   TestNativeClipboardCLIOwnershipEndsOnReplacement\n    clipboard_native_test.go:359: PNG consumer: (0,0)-(64,64) pixels/alpha agree; encoded SHA-256 330d3e88ec6ae93d58fc5bfc616cc5866ba3ddda66c9662f969f261e8780d66b\n    clipboard_native_test.go:363: macOS image and native file URLs persist after the CLI writer exits\n--- PASS: TestNativeClipboardCLIOwnershipEndsOnReplacement (0.34s)\nFAIL\n"
+      }
+    }
+  ]
+}
