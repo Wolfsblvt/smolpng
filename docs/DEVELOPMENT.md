@@ -74,6 +74,10 @@ A Linux pseudo-terminal smoke has exercised actual menu rendering, Enter/Done, o
 
 ## Hosted verification source
 
+The separately selected [native clipboard journey](../.github/workflows/native-clipboard.yml) builds the exact source application and a Go test executable with `-tags nativeclipboard`. It replaces only disposable hosted clipboards: X11 under Xvfb, Wayland under headless Sway with XWayland disabled, and native macOS amd64/arm64 pasteboards. Independent xclip, wl-clipboard and an AppKit JavaScript-for-Automation consumer inspect PNG pixels/alpha, ordered file URLs and exact path text. Foreign native image/file/text sources enter the real CLI, which commits already-fitting target fixtures without invoking optimizers. Linux checks a live CLI owner ending on replacement; macOS checks persistence after writer exit.
+
+Ordinary `go test ./...` does not build this tagged journey and never opts into clipboard access. On a deliberately disposable Linux/macOS host, set `SMOLPNG_CLIPBOARD_BACKEND` to `x11`, `wayland` or `macos`, `SOURCE_COMMIT` to the exact source SHA and `SMOLPNG_NATIVE_APP` to the absolute matching executable, then run `go test -tags nativeclipboard -count=1 -run '^TestNativeClipboard' -timeout 90s ./internal/desktop`. The workflow owns display startup/cleanup, native tool selection, source/app/test-binary hashes and partial logs. It runs on changes to its own journey or explicit dispatch. A workflow definition is not a passing native result; protocol/API consumer evidence does not qualify rendered paste, file pickers, drag/drop, notifications or Wolf's held Windows journey.
+
 `Verify` replaces the one-time build-cache transport workflow. It runs root tests/vet/corpus checks on Windows, macOS and Linux, plus six CGO-free cross-builds and Windows GUI-launcher builds. Its three Actions are pinned to exact official upstream commits, checked on 2026-09-08. It uses read-only repository permission, persists no checkout credential, consumes no paid provider quota and publishes no release. A workflow file is not a hosted green run; do not inherit the bootstrap run's status.
 
 ## Managed optimizer qualification
