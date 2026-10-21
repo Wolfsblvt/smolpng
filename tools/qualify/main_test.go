@@ -24,15 +24,15 @@ func TestQualifierValidatesArtifactNotJustSuccessfulExit(t *testing.T) {
 	}
 	output := testutil.PNG(a.Image, png.BestCompression)
 	r := domain.Result{Format: "png", OriginalBytes: int64(len(original)), OutputBytes: int64(len(output)), Dimensions: domain.DimensionChange{Before: a.Info.Dimensions, After: a.Info.Dimensions}}
-	if errors := validateImage(original, output, r, true); len(errors) != 0 {
+	if errors := validateImage(original, output, r, imageExpectation{Lossless: true}); len(errors) != 0 {
 		t.Fatal(errors)
 	}
-	if errors := validateImage(original, []byte("not a PNG"), r, true); len(errors) == 0 {
+	if errors := validateImage(original, []byte("not a PNG"), r, imageExpectation{Lossless: true}); len(errors) == 0 {
 		t.Fatal("malformed result accepted")
 	}
 	r.RemoteUsed = true
 	r.OutputBytes++
-	if errors := validateImage(original, output, r, true); len(errors) != 2 {
+	if errors := validateImage(original, output, r, imageExpectation{Lossless: true}); len(errors) != 2 {
 		t.Fatal(errors)
 	}
 }
@@ -45,28 +45,28 @@ func TestQualifierValidatesJPEGArtifactPixelsAndOrientation(t *testing.T) {
 		t.Fatal(err)
 	}
 	r := domain.Result{Format: "jpeg", OriginalBytes: int64(len(original)), OutputBytes: int64(len(original)), Dimensions: domain.DimensionChange{Before: a.Info.Dimensions, After: a.Info.Dimensions}}
-	if failures := validateImage(original, original, r, true); len(failures) != 0 {
+	if failures := validateImage(original, original, r, imageExpectation{Lossless: true}); len(failures) != 0 {
 		t.Fatal(failures)
 	}
-	if failures := validateImage(original, []byte("not a JPEG"), r, false); len(failures) == 0 {
+	if failures := validateImage(original, []byte("not a JPEG"), r, imageExpectation{}); len(failures) == 0 {
 		t.Fatal("invalid JPEG output accepted")
 	}
 	changed := testutil.JPEG(a.Image, 70)
 	r.OutputBytes = int64(len(changed))
-	if failures := validateImage(original, changed, r, true); len(failures) == 0 {
+	if failures := validateImage(original, changed, r, imageExpectation{Lossless: true}); len(failures) == 0 {
 		t.Fatal("lossless JPEG pixel change accepted")
 	}
-	if failures := validateImage(original, changed, r, false); len(failures) != 0 {
+	if failures := validateImage(original, changed, r, imageExpectation{}); len(failures) != 0 {
 		t.Fatal("ordinary JPEG quality change rejected", failures)
 	}
 	oriented := corpus["jpeg-orientation-8.jpg"]
 	r.OriginalBytes, r.OutputBytes = int64(len(oriented)), int64(len(original))
-	if failures := validateImage(oriented, original, r, false); len(failures) == 0 {
+	if failures := validateImage(oriented, original, r, imageExpectation{}); len(failures) == 0 {
 		t.Fatal("orientation loss accepted")
 	}
 	r.OriginalBytes = int64(len(original))
 	r.Format = "png"
-	if failures := validateImage(original, original, r, false); len(failures) == 0 {
+	if failures := validateImage(original, original, r, imageExpectation{}); len(failures) == 0 {
 		t.Fatal("false format report accepted")
 	}
 }
