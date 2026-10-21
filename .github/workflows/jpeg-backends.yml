@@ -68,9 +68,13 @@ jobs:
           download google/jpegli "$JPEGLI_COMMIT" "$native/source"
           download google/highway 271a9a0ed9de1232d9117f1572c3fe28f8542ec1 "$native/source/third_party/highway"
           download google/skcms 96d9171c94b937a1b5f0293de7309ac16311b722 "$native/source/third_party/skcms"
+          # jpegli.cmake also copies these pinned API headers when the shared
+          # libjpeg replacement is disabled; the system decoder is insufficient.
+          download libjpeg-turbo/libjpeg-turbo 8ecba3647edb6dd940463fedf38ca33a8e2a73d1 "$native/source/third_party/libjpeg-turbo"
           cp "$native/source/LICENSE" "$EVIDENCE/jpegli-LICENSE"
           cp "$native/source/third_party/highway/LICENSE" "$EVIDENCE/highway-LICENSE"
           cp "$native/source/third_party/skcms/LICENSE" "$EVIDENCE/skcms-LICENSE"
+          cp "$native/source/third_party/libjpeg-turbo/LICENSE.md" "$EVIDENCE/libjpeg-turbo-LICENSE.md"
           cmake -S "$native/source" -B "$native/build" -G Ninja \
             -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF \
             -DJPEGLI_ENABLE_TOOLS=ON -DJPEGLI_ENABLE_DEVTOOLS=OFF \
