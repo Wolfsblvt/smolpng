@@ -1,0 +1,151 @@
+name: Native clipboard interoperability
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/native-clipboard.yml
+      - internal/desktop/clipboard_native_test.go
+      - internal/desktop/testdata/clipboard-macos.swift
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  clipboard:
+    name: Clipboard (${{ matrix.backend }} / ${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - backend: x11
+            runner: ubuntu-24.04
+            arch: amd64
+          - backend: wayland
+            runner: ubuntu-24.04
+            arch: amd64
+          - backend: macos
+            runner: macos-26-intel
+            arch: amd64
+          - backend: macos
+            runner: macos-26
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    env:
+      SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      SMOLPNG_CLIPBOARD_BACKEND: ${{ matrix.backend }}
+      EXPECTED_ARCH: ${{ matrix.arch }}
+      CGO_ENABLED: '0'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ env.SOURCE_COMMIT }}
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Checkpoint exact source, host and native toolchain
+        run: |
+          set -euo pipefail
+          evidence="$GITHUB_WORKSPACE/artifacts/validation/native-clipboard"
+          mkdir -p "$evidence"
+          printf '%s\n' '{"complete":false,"step":"preflight"}' > "$evidence/report.json"
+          printf 'EVIDENCE=%s\n' "$evidence" >> "$GITHUB_ENV"
+          printf 'NATIVE_BIN=%s\n' "$GITHUB_WORKSPACE/artifacts/bin/native-clipboard" >> "$GITHUB_ENV"
+          git rev-parse HEAD > "$evidence/source.txt"
+          test "$(cat "$evidence/source.txt")" = "$SOURCE_COMMIT"
+          test "$(go env GOARCH)" = "$EXPECTED_ARCH"
+          go env -json GOVERSION GOOS GOARCH CGO_ENABLED > "$evidence/go-env.json"
+          uname -srm > "$evidence/kernel.txt"
+          if [ "$RUNNER_OS" = macOS ]; then
+            sw_vers > "$evidence/os-release.txt"
+          else
+            cat /etc/os-release > "$evidence/os-release.txt"
+          fi
+          printf '%s\n%s\n' "${ImageOS:-unknown}" "${ImageVersion:-unknown}" > "$evidence/runner-image.txt"
+      - name: Install independent Linux consumers and disposable display servers
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          if [ "$SMOLPNG_CLIPBOARD_BACKEND" = x11 ]; then
+            sudo apt-get install -y --no-install-recommends xvfb xclip
+            dpkg-query -W xvfb xclip > "$EVIDENCE/native-tools.txt"
+          else
+            sudo apt-get install -y --no-install-recommends sway wl-clipboard
+            dpkg-query -W sway wl-clipboard > "$EVIDENCE/native-tools.txt"
+            ldd "$(command -v sway)" > "$EVIDENCE/native-libraries.txt"
+          fi
+      - name: Build source-bound application and native journey
+        run: |
+          set -euo pipefail
+          go mod verify
+          mkdir -p "$NATIVE_BIN"
+          go build -trimpath -ldflags "-X github.com/Wolfsblvt/smolpng/internal/cli.Commit=$SOURCE_COMMIT" -o "$NATIVE_BIN/smolpng" ./cmd/smolpng
+          go test -c -tags nativeclipboard -o "$NATIVE_BIN/clipboard.test" ./internal/desktop
+          "$NATIVE_BIN/smolpng" version --json > "$EVIDENCE/application-version.json"
+          if [ "$RUNNER_OS" = macOS ]; then
+            xcrun --find swiftc > "$EVIDENCE/swift-compiler.txt"
+            xcrun swiftc --version > "$EVIDENCE/native-tools.txt"
+            xcrun swiftc -O internal/desktop/testdata/clipboard-macos.swift -o "$NATIVE_BIN/clipboard-consumer"
+            printf 'SMOLPNG_NATIVE_CONSUMER=%s\n' "$NATIVE_BIN/clipboard-consumer" >> "$GITHUB_ENV"
+            shasum -a 256 "$NATIVE_BIN"/* > "$EVIDENCE/executables.sha256"
+          else
+            sha256sum "$NATIVE_BIN"/* > "$EVIDENCE/executables.sha256"
+          fi
+      - name: Exercise independent native consumers and real CLI sources
+        run: |
+          set -euo pipefail
+          export SMOLPNG_NATIVE_APP="$NATIVE_BIN/smolpng"
+          owner=''
+          cleanup() {
+            if [ -n "$owner" ]; then kill "$owner" 2>/dev/null || true; wait "$owner" 2>/dev/null || true; fi
+          }
+          trap cleanup EXIT
+          if [ "$SMOLPNG_CLIPBOARD_BACKEND" = x11 ]; then
+            unset WAYLAND_DISPLAY
+            Xvfb -displayfd 3 -screen 0 1024x768x24 3> "$EVIDENCE/display.txt" > "$EVIDENCE/display.log" 2>&1 &
+            owner=$!
+            for attempt in {1..100}; do
+              test -s "$EVIDENCE/display.txt" && break
+              kill -0 "$owner"
+              sleep 0.05
+            done
+            test -s "$EVIDENCE/display.txt"
+            export DISPLAY=":$(cat "$EVIDENCE/display.txt").0"
+          elif [ "$SMOLPNG_CLIPBOARD_BACKEND" = wayland ]; then
+            unset DISPLAY WAYLAND_DISPLAY
+            export XDG_RUNTIME_DIR="$RUNNER_TEMP/smolpng-wayland-runtime"
+            mkdir -m 700 "$XDG_RUNTIME_DIR"
+            printf '%s\n' 'xwayland disable' 'seat seat0 fallback true' > "$EVIDENCE/sway.conf"
+            WLR_BACKENDS=headless WLR_RENDERER=pixman WLR_LIBINPUT_NO_DEVICES=1 sway --unsupported-gpu -c "$EVIDENCE/sway.conf" > "$EVIDENCE/display.log" 2>&1 &
+            owner=$!
+            socket=''
+            for attempt in {1..100}; do
+              socket=$(find "$XDG_RUNTIME_DIR" -maxdepth 1 -type s -name 'wayland-*' -print -quit)
+              test -n "$socket" && break
+              kill -0 "$owner"
+              sleep 0.05
+            done
+            test -n "$socket"
+            export WAYLAND_DISPLAY="$(basename "$socket")"
+          fi
+          printf '%s\n%s\n%s\n' "$SMOLPNG_CLIPBOARD_BACKEND" "${DISPLAY:-unset}" "${WAYLAND_DISPLAY:-unset}" > "$EVIDENCE/transport.txt"
+          printf '%s\n' '{"complete":false,"step":"native-journey"}' > "$EVIDENCE/report.json"
+          cd internal/desktop
+          "$NATIVE_BIN/clipboard.test" -test.v -test.run '^TestNativeClipboard' -test.timeout 90s | tee "$EVIDENCE/test.log"
+          cd ../..
+          test -z "$(git status --porcelain)"
+          printf '%s\n' '{"complete":true,"passed":true,"meaning":"Native protocol/API consumers; no rendered desktop or graphical paste claim."}' > "$EVIDENCE/report.json"
+      - name: Retain exact reports, including incomplete native attempts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: clipboard-${{ matrix.backend }}-${{ matrix.arch }}-${{ env.SOURCE_COMMIT }}-${{ github.run_id }}
+          path: artifacts/validation/native-clipboard/
+          if-no-files-found: error
+          retention-days: 14

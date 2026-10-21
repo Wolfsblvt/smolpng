@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"time"
 
@@ -57,7 +58,22 @@ func (NativeClipboard) Read(ctx context.Context) (input.Snapshot, error) {
 		return input.Snapshot{}, e
 	}
 	s := input.Snapshot{}
-	image, e1 := native.Read(ctx, native.FmtImage)
+	var image []byte
+	var e1 error
+	// Some X11 owners answer even an unadvertised target with their payload.
+	// Asking those text/file owners for PNG misclassifies their bytes as an
+	// image. An unavailable format list retains the existing read fallback.
+	readImage := true
+	if runtime.GOOS == "linux" {
+		formats, err := native.Formats(ctx)
+		if err != nil {
+			return s, err
+		}
+		readImage = len(formats) == 0 || slices.Contains(formats, native.FmtImage)
+	}
+	if readImage {
+		image, e1 = native.Read(ctx, native.FmtImage)
+	}
 	files, e2 := native.ReadFiles(ctx)
 	text, e3 := native.Read(ctx, native.FmtText)
 	if len(image) > 64<<20 || len(text) > 1<<20 || len(files) > 1024 {
