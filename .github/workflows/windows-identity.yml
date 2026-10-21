@@ -1,0 +1,69 @@
+name: Windows artifact identity
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/windows-identity.yml
+      - tools/release/**
+      - internal/packaging/**
+      - go.mod
+      - go.sum
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  windows-identity:
+    # Native Windows APIs inspect both PE architectures; this is not ARM execution.
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      FIXTURE_VERSION: 0.0.0-resource-test.1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ env.SOURCE_COMMIT }}
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Build the exact unsigned Windows fixture
+        run: |
+          $evidence = Join-Path $env:GITHUB_WORKSPACE 'artifacts/validation/windows-identity'
+          New-Item -ItemType Directory -Path $evidence | Out-Null
+          "EVIDENCE=$evidence" >> $env:GITHUB_ENV
+          $build = Join-Path $env:RUNNER_TEMP 'smolpng-windows-identity'
+          "BUILD=$build" >> $env:GITHUB_ENV
+          go env -json GOVERSION GOOS GOARCH > (Join-Path $evidence 'go-env.json')
+          if ($LASTEXITCODE -ne 0) { throw 'Go environment observation failed' }
+          go mod download
+          if ($LASTEXITCODE -ne 0) { throw 'Module download failed' }
+          go mod verify
+          if ($LASTEXITCODE -ne 0) { throw 'Module verification failed' }
+          go run ./tools/release --version $env:FIXTURE_VERSION --platforms 'windows/amd64,windows/arm64' --out $build
+          if ($LASTEXITCODE -ne 0) { throw 'Windows fixture build failed' }
+      - name: Read native metadata and join archive receipts
+        run: |
+          ./tools/release/qualify-windows.ps1 -BuildPath $env:BUILD -ExpectedVersion $env:FIXTURE_VERSION -ExpectedCommit $env:SOURCE_COMMIT -ReportPath (Join-Path $env:EVIDENCE 'report.json')
+          $application = Join-Path $env:BUILD 'stage/windows-amd64/smolpng.exe'
+          $version = & $application version --json
+          if ($LASTEXITCODE -ne 0) { throw 'Versioned native CLI did not run' }
+          $version | Set-Content -LiteralPath (Join-Path $env:EVIDENCE 'application-version.json')
+          $observed = $version | ConvertFrom-Json
+          if ($observed.commit -cne $env:SOURCE_COMMIT -or $observed.version -cne $env:FIXTURE_VERSION -or $observed.distribution -cne 'standalone') { throw 'Native CLI identity differs' }
+          $dirty = git status --porcelain
+          if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'Build changed source checkout' }
+          Copy-Item -Path (Join-Path $env:BUILD '*.zip'), (Join-Path $env:BUILD 'build-index.json'), (Join-Path $env:BUILD 'SHA256SUMS') -Destination $env:EVIDENCE
+      - name: Retain fixture evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-identity-${{ env.SOURCE_COMMIT }}-${{ github.run_id }}
+          path: artifacts/validation/windows-identity/
+          if-no-files-found: error
+          retention-days: 14

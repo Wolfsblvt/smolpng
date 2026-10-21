@@ -1,0 +1,160 @@
+{
+  "complete": true,
+  "version": "0.0.0-resource-test.1",
+  "source": "7da5d9fc1e4d7e3ca27b9b954dfda10ce702f286",
+  "windows": "Microsoft Windows NT 10.0.26200.0",
+  "powershell": "7.6.5",
+  "files": [
+    {
+      "platform": "windows-amd64",
+      "name": "smolpng.exe",
+      "sha256": "85bd214553ea0dd552b35975b4fd5a83aa0b3c0eb4a30fda965cbd2c502aac3e",
+      "bytes": 20341248,
+      "machine": 34404,
+      "subsystem": 3,
+      "embeddedCertificatePresent": false,
+      "productName": "smolpng",
+      "companyName": "Wolfsblvt Works",
+      "fileVersion": "0.0.0-resource-test.1",
+      "productVersion": "0.0.0-resource-test.1",
+      "originalFilename": "smolpng.exe",
+      "description": "smolpng image compressor",
+      "comments": "Source commit: 7da5d9fc1e4d7e3ca27b9b954dfda10ce702f286; distribution: standalone",
+      "prerelease": true,
+      "numericVersion": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "platform": "windows-amd64",
+      "name": "smolpngw.exe",
+      "sha256": "6a03cd1cb3976a581c40df04da9d837241e41f63e09a8b0f52363e0453f5451b",
+      "bytes": 20347904,
+      "machine": 34404,
+      "subsystem": 2,
+      "embeddedCertificatePresent": false,
+      "productName": "smolpng",
+      "companyName": "Wolfsblvt Works",
+      "fileVersion": "0.0.0-resource-test.1",
+      "productVersion": "0.0.0-resource-test.1",
+      "originalFilename": "smolpngw.exe",
+      "description": "smolpng windowless launcher",
+      "comments": "Source commit: 7da5d9fc1e4d7e3ca27b9b954dfda10ce702f286; distribution: standalone",
+      "prerelease": true,
+      "numericVersion": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "platform": "windows-amd64",
+      "name": "smolpng-qualify.exe",
+      "sha256": "0de45e8c5dec6201b0b832a87ba7f15d091b23ea3417b470f7616f521261d4ff",
+      "bytes": 7363584,
+      "machine": 34404,
+      "subsystem": 3,
+      "embeddedCertificatePresent": false,
+      "productName": "smolpng",
+      "companyName": "Wolfsblvt Works",
+      "fileVersion": "0.0.0-resource-test.1",
+      "productVersion": "0.0.0-resource-test.1",
+      "originalFilename": "smolpng-qualify.exe",
+      "description": "smolpng native qualification helper",
+      "comments": "Source commit: 7da5d9fc1e4d7e3ca27b9b954dfda10ce702f286; distribution: standalone",
+      "prerelease": true,
+      "numericVersion": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "platform": "windows-arm64",
+      "name": "smolpng.exe",
+      "sha256": "cfdbddbd4dead96100dad374b5086c259a9784f917186da0392305e9d53e70b5",
+      "bytes": 18669056,
+      "machine": 43620,
+      "subsystem": 3,
+      "embeddedCertificatePresent": false,
+      "productName": "smolpng",
+      "companyName": "Wolfsblvt Works",
+      "fileVersion": "0.0.0-resource-test.1",
+      "productVersion": "0.0.0-resource-test.1",
+      "originalFilename": "smolpng.exe",
+      "description": "smolpng image compressor",
+      "comments": "Source commit: 7da5d9fc1e4d7e3ca27b9b954dfda10ce702f286; distribution: standalone",
+      "prerelease": true,
+      "numericVersion": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "platform": "windows-arm64",
+      "name": "smolpngw.exe",
+      "sha256": "17973254eecb12b199d2d537068d1a3290ede7aca9cafee0b4ddccaa7627cef9",
+      "bytes": 18673664,
+      "machine": 43620,
+      "subsystem": 2,
+      "embeddedCertificatePresent": false,
+      "productName": "smolpng",
+      "companyName": "Wolfsblvt Works",
+      "fileVersion": "0.0.0-resource-test.1",
+      "productVersion": "0.0.0-resource-test.1",
+      "originalFilename": "smolpngw.exe",
+      "description": "smolpng windowless launcher",
+      "comments": "Source commit: 7da5d9fc1e4d7e3ca27b9b954dfda10ce702f286; distribution: standalone",
+      "prerelease": true,
+      "numericVersion": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "platform": "windows-arm64",
+      "name": "smolpng-qualify.exe",
+      "sha256": "707a2b6646aa211c36a7f41d3341779297bb6e3aeba6c3147e9996ee7ad565db",
+      "bytes": 6801408,
+      "machine": 43620,
+      "subsystem": 3,
+      "embeddedCertificatePresent": false,
+      "productName": "smolpng",
+      "companyName": "Wolfsblvt Works",
+      "fileVersion": "0.0.0-resource-test.1",
+      "productVersion": "0.0.0-resource-test.1",
+      "originalFilename": "smolpng-qualify.exe",
+      "description": "smolpng native qualification helper",
+      "comments": "Source commit: 7da5d9fc1e4d7e3ca27b9b954dfda10ce702f286; distribution: standalone",
+      "prerelease": true,
+      "numericVersion": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "archives": [
+    {
+      "platform": "windows-amd64",
+      "sha256": "9e3136a1b7664b1981da015ec85f77ee4b660fe03540a90e683f268297910ee1",
+      "name": "smolpng-0.0.0-resource-test.1-windows-amd64.zip"
+    },
+    {
+      "platform": "windows-arm64",
+      "sha256": "60095399a6275c26848ae39f59054d6ddd59ab06ef1d2482c0fe1912b84c4f11",
+      "name": "smolpng-0.0.0-resource-test.1-windows-arm64.zip"
+    }
+  ],
+  "meaning": "Native version-resource reads and archive identity; no graphical or native ARM64 execution claim."
+}

@@ -48,7 +48,7 @@ After the first documented public release, smolpng may apply to SignPath Foundat
 
 Before a SignPath-signed cut, carry one coherent signing contribution:
 
-- add maintained Windows version resources with consistent ProductName, CompanyName, FileVersion and ProductVersion values derived from the exact release identity;
+- verify the maintained [Windows version resources](packaging.md#windows-executable-identity), including ProductName, CompanyName, FileVersion and ProductVersion values derived from the exact candidate identity;
 - inspect the actual PE resources on x64 and ARM64;
 - publish the code-signing policy and bind the trusted build/origin route;
 - configure no signing secret outside the accepted provider custody;

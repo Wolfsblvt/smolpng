@@ -32,6 +32,8 @@ Native Windows PNG/JPEG compression and application-created shortcut activation 
 
 ## Continuation
 
+The release builder embeds exact semantic/source identity into all six Windows executables before archive/member hashing. [Native version-resource qualification](reference/2026-10-21-windows-version-resources.md) joins actual x64/ARM64 files and archive receipts, hosted amd64 CLI execution and Windows 11 metadata reads. This removes the empty executable-properties gap without choosing a public version or supplying a signature; ARM64 execution and graphical use remain distinct.
+
 The existing native qualifier now repeats the grayscale/CMYK/Display P3 controls, validates JPEG profiles/component models and checks supported resizing and reason-specific no-output refusal. [Its corrected native runs](reference/2026-10-21-native-jpeg-color-qualifier.md) passed all 79 PNG/JPEG checks on Linux amd64, both macOS architectures and Windows ARM64, plus 51 JPEG checks on Windows amd64. This closes a repeatability gap in the shipped tooling; it does not complete graphical qualification or mint another private candidate.
 
 [Native Windows output-lock qualification](reference/2026-10-17-windows-output-locks.md) passed all four PNG/JPEG overwrite/in-place refusal and retry cases. The attempted private clipboard station was unavailable before any clipboard access; the later [owner-authorized Paint journey](reference/2026-10-19-windows-clipboard-alpha.md) separately qualified PNG image paste and its alpha repair. These bounded observations do not substitute for the remaining real desktop journey.
