@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"os"
@@ -9,8 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Wolfsblvt/smolpng/internal/cli"
 	"github.com/Wolfsblvt/smolpng/internal/domain"
 	"github.com/Wolfsblvt/smolpng/internal/jpegimage"
+	"github.com/Wolfsblvt/smolpng/internal/paths"
 	"github.com/Wolfsblvt/smolpng/internal/process"
 	"github.com/Wolfsblvt/smolpng/internal/testutil"
 )
@@ -92,9 +95,32 @@ func TestJPEGColorRefusalMustExplainBoundaryAndLeaveNoArtifact(t *testing.T) {
 	for _, mode := range []string{"correct", "wrong-reason", "committed-output"} {
 		t.Run(mode, func(t *testing.T) {
 			root := t.TempDir()
+			sources := filepath.Join(root, "sources")
+			if err := os.Mkdir(sources, 0700); err != nil {
+				t.Fatal(err)
+			}
+			for name, data := range testutil.JPEGColorCorpus() {
+				if err := os.WriteFile(filepath.Join(sources, name), data, 0600); err != nil {
+					t.Fatal(err)
+				}
+			}
 			s := suite{root: root, opt: options{Timeout: time.Second}, data: evidence{Passed: true},
-				runner: runnerFunc(func(_ context.Context, invocation process.Invocation) (process.Result, error) {
+				runner: runnerFunc(func(ctx context.Context, invocation process.Invocation) (process.Result, error) {
 					args := invocation.Args
+					// Plan the exact command through the real CLI before modeling
+					// optimizer output, so a permissive fake cannot hide invalid flags.
+					var out, stderr bytes.Buffer
+					code := cli.Run(ctx, append(append([]string{}, args...), "--dry-run"), cli.Environment{
+						Out: &out, Err: &stderr, CWD: root, In: bytes.NewReader(nil),
+						Paths: &paths.Paths{Config: filepath.Join(root, "config.toml"), Data: filepath.Join(root, "data"), State: filepath.Join(root, "state"), Cache: filepath.Join(root, "cache"), Downloads: filepath.Join(root, "downloads")},
+						Runner: runnerFunc(func(context.Context, process.Invocation) (process.Result, error) {
+							t.Fatal("dry-run must not invoke an external process")
+							return process.Result{}, nil
+						}),
+					})
+					if code != domain.Success {
+						return process.Result{ExitCode: code, Stdout: out.String(), Stderr: stderr.String()}, nil
+					}
 					arg := func(key string) string {
 						for i := range args {
 							if args[i] == key && i+1 < len(args) {
@@ -111,7 +137,7 @@ func TestJPEGColorRefusalMustExplainBoundaryAndLeaveNoArtifact(t *testing.T) {
 					}
 					dest := arg("--output")
 					var result domain.Result
-					code := domain.Success
+					code = domain.Success
 					if arg("--resize") != "" && before.Components != 3 && len(before.ICC()) > 0 {
 						code = domain.InvalidArguments
 						result = domain.Result{ExitCode: code, Error: "non-RGB ICC JPEG requires a managed encoder"}
@@ -151,7 +177,7 @@ func TestJPEGColorRefusalMustExplainBoundaryAndLeaveNoArtifact(t *testing.T) {
 					}
 					return process.Result{ExitCode: code, Stdout: string(payload)}, nil
 				})}
-			if err := s.exerciseJPEGColors(context.Background(), filepath.Join(root, "sources")); err != nil {
+			if err := s.exerciseJPEGColors(context.Background(), sources); err != nil {
 				t.Fatal(err)
 			}
 			if len(s.data.Checks) != 8 || s.data.Passed != (mode == "correct") {

@@ -40,7 +40,7 @@ func (s *suite) exerciseJPEGColors(ctx context.Context, sourceDir string) error 
 			want := imageExpectation{StripICC: true}
 			code := domain.Success
 			if action == "strip-all" {
-				args = append(args, "--metadata", "all")
+				args = append(args, "--strip", "all")
 			} else {
 				args = append(args, "--resize", "64x48")
 				want = imageExpectation{Resize: domain.Dimensions{Width: 64, Height: 48}}
