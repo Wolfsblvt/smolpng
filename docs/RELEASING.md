@@ -57,7 +57,9 @@ Before a SignPath-signed cut, carry one coherent signing contribution:
 
 Microsoft Azure Artifact Signing is deferred, not selected. It may be reconsidered if Wolfsblvt Works later has an eligible legal organization and the paid Azure operating consequence is deliberately accepted. Traditional commercial certificates and self-signed public artifacts are not the current route.
 
-The machine-version posture remains a separate owner choice. Nyxara currently recommends machine version `0.3.0` with the user-facing label **Public Preview**, preserving `1.0.0` for the complete qualified destination. No signing decision silently settles that version choice.
+The current pre-1.0 machine and product posture is **`0.3.0` Public Preview**. This is a provisional maturity identity, not release authorization and not a smaller destination. Finish every ratified application capability and its honest qualification first. Wolf then owns the final public-experience workshop and acceptance: website, documentation voice and language, and the actual icon/brand identity. The official stable release is **`1.0.0`** only after the complete product and that public experience are accepted and publication is explicitly authorized. Green source, packages or native evidence do not promote the version by themselves.
+
+Current packages still have placeholder visual identity. No accepted `.ico`/`.icns` or brand asset is present; Windows shortcut creation sets no explicit `IconLocation`, while Linux desktop entries use `image-x-generic`. The maintained Windows VERSIONINFO resources identify executable product/version/source facts, but they do not supply the final Squishling/app icon. Keep these seams replaceable until Wolf's design workshop and accepted artist/icon package.
 
 ## Executable local builder
 
