@@ -4,6 +4,7 @@ set -eu
 : "${PACKAGE_FORMAT:?PACKAGE_FORMAT is required}"
 : "${PACKAGE_FILE:?PACKAGE_FILE is required}"
 : "${SOURCE_COMMIT:?SOURCE_COMMIT is required}"
+: "${ARCH:?ARCH is required}"
 : "${EVIDENCE:=/workspace/artifacts/validation/linux-package-lifecycle}"
 : "${PACKAGE_INPUTS:=/workspace/artifacts/package-fixture}"
 : "${RUNNER_TEMP:=/runner-temp}"
@@ -12,16 +13,21 @@ package="$EVIDENCE/$PACKAGE_FILE"
 home="$RUNNER_TEMP/smolpng-package-home"
 toolroot="$RUNNER_TEMP/smolpng-optimizers"
 package_installed=false
+case "$ARCH" in
+	amd64) native_arch=x86_64 ;;
+	arm64) native_arch=aarch64 ;;
+	*) printf 'Unsupported architecture: %s\n' "$ARCH" >&2; exit 2 ;;
+esac
 
 record_host() {
 	cat /etc/os-release > "$EVIDENCE/container-os-release.txt"
 	uname -srm > "$EVIDENCE/container-kernel.txt"
-	test "$(uname -m)" = x86_64
+	test "$(uname -m)" = "$native_arch"
 	printf 'FORMAT=%s\n' "$PACKAGE_FORMAT" > "$EVIDENCE/package-format.txt"
 	case "$PACKAGE_FORMAT" in
 		rpm) grep -q '^ID=fedora$' /etc/os-release ;;
 		apk) grep -q '^ID=alpine$' /etc/os-release ;;
-		archlinux) grep -q '^ID=arch$' /etc/os-release ;;
+		archlinux) test "$ARCH" = amd64; grep -q '^ID=arch$' /etc/os-release ;;
 		*) return 2 ;;
 	esac
 }
@@ -86,6 +92,9 @@ mkdir -p "$home" "$toolroot"
 case "$PACKAGE_FORMAT" in
 	rpm)
 		dnf install --assumeyes ca-certificates coreutils curl diffutils findutils gcc gzip jq libpng-devel make tar zlib-devel > "$EVIDENCE/container-tools-install.txt"
+		if [ "$ARCH" = arm64 ]; then
+			dnf install --assumeyes libjpeg-turbo-devel > "$EVIDENCE/jpegoptim-build-dependency-install.txt"
+		fi
 		dnf --version > "$EVIDENCE/package-manager-version.txt"
 		gcc --version > "$EVIDENCE/pngquant-compiler-version.txt"
 		make --version > "$EVIDENCE/pngquant-make-version.txt"
@@ -108,7 +117,7 @@ case "$PACKAGE_FORMAT" in
 		pngquant="$toolroot/pngquant-install/bin/pngquant"
 		rpm -qp --queryformat '%{NAME} %{VERSION} %{ARCH}\n' "$package" > "$EVIDENCE/package-fields.txt"
 		test "$(rpm -qp --queryformat '%{NAME}' "$package")" = smolpng
-		test "$(rpm -qp --queryformat '%{ARCH}' "$package")" = x86_64
+		test "$(rpm -qp --queryformat '%{ARCH}' "$package")" = "$native_arch"
 		rpm -qpl "$package" > "$EVIDENCE/package-contents.txt"
 		package_installed=true
 		dnf install --assumeyes --nogpgcheck "$package" > "$EVIDENCE/install.txt"
@@ -121,7 +130,7 @@ case "$PACKAGE_FORMAT" in
 		make --version > "$EVIDENCE/make-version.txt"
 		tar --extract --to-stdout --gzip --file "$package" .PKGINFO > "$EVIDENCE/package-fields.txt"
 		grep -qx 'pkgname = smolpng' "$EVIDENCE/package-fields.txt"
-		grep -qx 'arch = x86_64' "$EVIDENCE/package-fields.txt"
+		grep -qx "arch = $native_arch" "$EVIDENCE/package-fields.txt"
 		tar --list --gzip --file "$package" > "$EVIDENCE/package-contents.txt"
 		package_installed=true
 		apk add --allow-untrusted "$package" > "$EVIDENCE/install.txt"
@@ -137,7 +146,7 @@ case "$PACKAGE_FORMAT" in
 		pacman -Qip "$package" > "$EVIDENCE/package-contents.txt"
 		bsdtar -tf "$package" > "$EVIDENCE/package-archive-members.txt"
 		grep -qx 'usr/share/doc/smolpng/third-party-notices.md' "$EVIDENCE/package-archive-members.txt"
-		bsdtar -xOf "$package" usr/share/doc/smolpng/third-party-notices.md | cmp - "$PACKAGE_INPUTS/stage/linux-amd64/third-party-notices.md"
+		bsdtar -xOf "$package" usr/share/doc/smolpng/third-party-notices.md | cmp - "$PACKAGE_INPUTS/stage/linux-$ARCH/third-party-notices.md"
 		pacman-conf NoExtract > "$EVIDENCE/pacman-no-extract.txt"
 		cp /etc/pacman.conf "$EVIDENCE/pacman.conf"
 		sed '/^SigLevel =/a LocalFileSigLevel = Optional' /etc/pacman.conf > "$RUNNER_TEMP/pacman.conf"
@@ -160,9 +169,9 @@ fi
 grep -q '2\.18\.0\|3\.' "$EVIDENCE/pngquant-version.txt"
 sha256sum "$pngquant" > "$EVIDENCE/pngquant.sha256"
 
-if [ "$PACKAGE_FORMAT" = apk ]; then
-	# The maintained Linux amd64 jpegoptim archive targets glibc; build the same
-	# pinned upstream source natively for Alpine's musl userland instead.
+if [ "$PACKAGE_FORMAT" = apk ] || [ "$ARCH" = arm64 ]; then
+	# The managed jpegoptim catalog has no ARM64 entry and its amd64 archive
+	# targets glibc. Build the pinned source natively for these container routes.
 	source_archive="$toolroot/jpegoptim-1.5.6.tar.gz"
 	curl --fail --location --silent --show-error \
 		https://github.com/tjko/jpegoptim/releases/download/v1.5.6/jpegoptim-1.5.6.tar.gz \
@@ -211,19 +220,19 @@ case "$PACKAGE_FORMAT" in
 		pacman -Qo /usr/bin/smolpng > "$EVIDENCE/executable-owner.txt"
 		;;
 esac
-cmp "$PACKAGE_INPUTS/stage/linux-amd64/smolpng" /usr/bin/smolpng
-cmp "$PACKAGE_INPUTS/stage/linux-amd64/LICENSE" /usr/share/licenses/smolpng/LICENSE
-diff -r "$PACKAGE_INPUTS/stage/linux-amd64/LICENSES" /usr/share/licenses/smolpng/dependencies
+cmp "$PACKAGE_INPUTS/stage/linux-$ARCH/smolpng" /usr/bin/smolpng
+cmp "$PACKAGE_INPUTS/stage/linux-$ARCH/LICENSE" /usr/share/licenses/smolpng/LICENSE
+diff -r "$PACKAGE_INPUTS/stage/linux-$ARCH/LICENSES" /usr/share/licenses/smolpng/dependencies
 if [ "$PACKAGE_FORMAT" = archlinux ] && grep -Fqx 'usr/share/doc/*' "$EVIDENCE/pacman-no-extract.txt"; then
 	grep -Fqx 'smolpng /usr/share/doc/smolpng/third-party-notices.md' "$EVIDENCE/installed-package-files.txt"
 	test ! -e /usr/share/doc/smolpng/third-party-notices.md
 	printf 'The package carries the byte-exact notices file; this pacman configuration records it as owned but applies NoExtract=usr/share/doc/*, so it is not extracted.\n' > "$EVIDENCE/notice-extraction-policy.txt"
 else
-	cmp "$PACKAGE_INPUTS/stage/linux-amd64/third-party-notices.md" /usr/share/doc/smolpng/third-party-notices.md
+	cmp "$PACKAGE_INPUTS/stage/linux-$ARCH/third-party-notices.md" /usr/share/doc/smolpng/third-party-notices.md
 fi
 sha256sum /usr/bin/smolpng > "$EVIDENCE/installed-executable.sha256"
 
-if ! "$PACKAGE_INPUTS/stage/linux-amd64/smolpng-qualify" \
+if ! "$PACKAGE_INPUTS/stage/linux-$ARCH/smolpng-qualify" \
 	-executable /usr/bin/smolpng -expected-commit "$SOURCE_COMMIT" \
 	-pngquant "$pngquant" -oxipng "$oxipng" -jpegoptim "$jpegoptim" \
 	-output "$EVIDENCE/journey"; then

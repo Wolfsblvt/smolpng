@@ -190,21 +190,34 @@ jobs:
           retention-days: 14
 
   other-formats:
-    name: ${{ matrix.distribution }} amd64 ${{ matrix.format }} lifecycle
-    runs-on: ubuntu-24.04
+    name: ${{ matrix.distribution }} ${{ matrix.arch }} ${{ matrix.format }} lifecycle
+    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - distribution: Fedora
+            arch: amd64
             image: fedora:latest
             format: rpm
             package: smolpng-fixture-amd64.rpm
+          - distribution: Fedora
+            arch: arm64
+            image: fedora:latest
+            format: rpm
+            package: smolpng-fixture-arm64.rpm
           - distribution: Alpine
+            arch: amd64
             image: alpine:latest
             format: apk
             package: smolpng-fixture-amd64.apk
+          - distribution: Alpine
+            arch: arm64
+            image: alpine:latest
+            format: apk
+            package: smolpng-fixture-arm64.apk
           - distribution: Arch Linux
+            arch: amd64
             image: archlinux:base
             format: archlinux
             package: smolpng-fixture-amd64.pkg.tar.zst
@@ -216,6 +229,7 @@ jobs:
       PACKAGE_FORMAT: ${{ matrix.format }}
       PACKAGE_FILE: ${{ matrix.package }}
       PACKAGE_IMAGE: ${{ matrix.image }}
+      ARCH: ${{ matrix.arch }}
       CGO_ENABLED: '0'
       GOTOOLCHAIN: local
       OMP_NUM_THREADS: '1'
@@ -227,7 +241,7 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
-      - name: Build exact-source amd64 package inputs
+      - name: Build exact-source native package inputs
         run: |
           evidence="$GITHUB_WORKSPACE/artifacts/validation/linux-package-lifecycle"
           inputs="$GITHUB_WORKSPACE/artifacts/package-fixture"
@@ -237,9 +251,9 @@ jobs:
           git rev-parse HEAD > "$evidence/source.txt"
           test "$(cat "$evidence/source.txt")" = "$SOURCE_COMMIT"
           go env -json GOVERSION GOOS GOARCH CGO_ENABLED > "$evidence/build-go-env.json"
-          test "$(go env GOOS)/$(go env GOARCH)" = linux/amd64
+          test "$(go env GOOS)/$(go env GOARCH)" = "linux/$ARCH"
           go mod verify > "$evidence/module-verify.txt"
-          go run ./tools/release --version 0.0.0 --platforms linux/amd64 \
+          go run ./tools/release --version 0.0.0 --platforms "linux/$ARCH" \
             --base-url https://example.invalid/smolpng-package-fixture \
             --out "$inputs" > "$evidence/build.txt"
           jq -e --arg source "$SOURCE_COMMIT" '.complete and .source == $source' "$inputs/build-index.json"
@@ -254,22 +268,24 @@ jobs:
       - name: Produce and inspect the selected package
         working-directory: ${{ env.PACKAGE_INPUTS }}
         run: |
-          "$NFPM" package --config nfpm/amd64.yaml --packager "$PACKAGE_FORMAT" --target "$EVIDENCE/$PACKAGE_FILE"
+          "$NFPM" package --config "nfpm/$ARCH.yaml" --packager "$PACKAGE_FORMAT" --target "$EVIDENCE/$PACKAGE_FILE"
           sha256sum "$EVIDENCE/$PACKAGE_FILE" > "$EVIDENCE/package.sha256"
       - name: Record the hosted container identity
         run: |
-          docker pull --platform linux/amd64 "$PACKAGE_IMAGE" > "$EVIDENCE/container-pull.txt"
+          docker pull --platform "linux/$ARCH" "$PACKAGE_IMAGE" > "$EVIDENCE/container-pull.txt"
           image_ref=$(docker image inspect --format '{{index .RepoDigests 0}}' "$PACKAGE_IMAGE")
           test -n "$image_ref"
           printf '%s\n' "$image_ref" > "$EVIDENCE/container-image.txt"
           printf 'PACKAGE_IMAGE_REF=%s\n' "$image_ref" >> "$GITHUB_ENV"
-          printf 'distribution=%s\nformat=%s\narchitecture=amd64\nhosted-runner=ubuntu-24.04\ncontainer-image=%s\n' \
-            '${{ matrix.distribution }}' "$PACKAGE_FORMAT" "$image_ref" \
+          printf 'distribution=%s\nformat=%s\narchitecture=%s\nhosted-runner=%s\ncontainer-image=%s\n' \
+            '${{ matrix.distribution }}' "$PACKAGE_FORMAT" "$ARCH" \
+            '${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}' "$image_ref" \
             > "$EVIDENCE/execution-boundary.txt"
       - name: Install, use, and remove the package in its distribution container
         run: |
           if docker run --rm --network=bridge \
-              --platform linux/amd64 \
+              --platform "linux/$ARCH" \
+              --env ARCH="$ARCH" \
               --env PACKAGE_FORMAT="$PACKAGE_FORMAT" \
               --env PACKAGE_FILE="$PACKAGE_FILE" \
               --env SOURCE_COMMIT="$SOURCE_COMMIT" \
@@ -292,7 +308,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: linux-${{ matrix.format }}-amd64-${{ env.SOURCE_COMMIT }}-${{ github.run_id }}
+          name: linux-${{ matrix.format }}-${{ matrix.arch }}-${{ env.SOURCE_COMMIT }}-${{ github.run_id }}
           path: |
             artifacts/validation/linux-package-lifecycle/*.txt
             artifacts/validation/linux-package-lifecycle/*.json
