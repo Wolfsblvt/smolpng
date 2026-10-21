@@ -45,7 +45,7 @@ func nativeCommand(t *testing.T, stdin []byte, name string, args ...string) []by
 	cmd.Stderr = &stderr
 	out, err := cmd.Output()
 	if err != nil {
-		t.Fatalf("%s %q: %v; %s", name, args, err, stderr.String())
+		t.Fatalf("%s %q: %v; stdout: %s; stderr: %s", name, args, err, out, stderr.String())
 	}
 	return out
 }
@@ -249,6 +249,32 @@ func foreignFiles(t *testing.T, paths []string) []byte {
 	return []byte(strings.Join(lines, "\r\n") + "\r\n")
 }
 
+func sameNativeFiles(t *testing.T, actual, expected []string) bool {
+	t.Helper()
+	if len(actual) != len(expected) {
+		return false
+	}
+	for index, path := range actual {
+		if path == expected[index] {
+			continue
+		}
+		// NSURL returns macOS's decomposed filesystem spelling. File identity
+		// and order matter here; path-text still has a separate exact check.
+		if runtime.GOOS != "darwin" {
+			return false
+		}
+		a, err := os.Stat(path)
+		if err != nil {
+			return false
+		}
+		b, err := os.Stat(expected[index])
+		if err != nil || !os.SameFile(a, b) {
+			return false
+		}
+	}
+	return true
+}
+
 func TestNativeClipboardSmartRepresentations(t *testing.T) {
 	nativeBackend(t)
 	a, image := clipboardFixture(t, "image space # % ü.png")
@@ -268,7 +294,7 @@ func TestNativeClipboardSmartRepresentations(t *testing.T) {
 		} else if independentHasImage(t) {
 			t.Fatal("batch clipboard retained a misleading single-image representation")
 		}
-		if actual := independentFiles(t); !reflect.DeepEqual(actual, paths) {
+		if actual := independentFiles(t); !sameNativeFiles(t, actual, paths) {
 			t.Fatalf("native file-list %q, want %q", actual, paths)
 		}
 		if actual := string(independentRead(t, "text")); actual != strings.Join(paths, "\n") {
@@ -300,7 +326,7 @@ func TestNativeClipboardForeignSourcesReachCLI(t *testing.T) {
 				t.Fatalf("foreign %s CLI report: %+v", tc.kind, report)
 			}
 			for index, result := range report.Results {
-				if result.Input != tc.inputs[index] {
+				if result.Input != tc.inputs[index] && !sameNativeFiles(t, []string{result.Input}, []string{tc.inputs[index]}) {
 					t.Fatalf("CLI source order: %q, want %q", result.Input, tc.inputs[index])
 				}
 				data, err := os.ReadFile(result.Output)
@@ -326,7 +352,7 @@ func TestNativeClipboardCLIOwnershipEndsOnReplacement(t *testing.T) {
 			t.Fatalf("CLI copy report: %v; %+v", err, report)
 		}
 		equalClipboardPixels(t, image, independentRead(t, "image"))
-		if actual := independentFiles(t); !reflect.DeepEqual(actual, []string{report.Results[0].Output}) {
+		if actual := independentFiles(t); !sameNativeFiles(t, actual, []string{report.Results[0].Output}) {
 			t.Fatal("native file-list did not persist after CLI exit", actual)
 		}
 		t.Log("macOS image and native file URLs persist after the CLI writer exits")
