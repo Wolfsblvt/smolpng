@@ -92,21 +92,31 @@ func run() error {
 	if e = os.MkdirAll(out, 0755); e != nil {
 		return e
 	}
-	names, e := git("ls-files")
+	tree := process.CommandContext(context.Background(), "git", "ls-tree", "-r", "-z", "--full-tree", sha)
+	tracked, e := tree.Output()
 	if e != nil {
 		return e
 	}
-	common := map[string]packaging.Content{}
-	for _, name := range strings.Split(names, "\n") {
-		include := name == "LICENSE" || name == "README.md" || name == "license-map.md" || name == "third-party-notices.md" || strings.HasPrefix(name, "LICENSES/") || strings.HasPrefix(name, "docs/") || strings.HasPrefix(name, "schemas/") || strings.HasPrefix(name, "presets/examples/") || strings.HasPrefix(name, "testdata/corpus/") || strings.HasPrefix(name, "skills/smolpng/")
-		if include {
-			b, e := os.ReadFile(name)
-			if e != nil {
-				return e
-			}
-			common[name] = packaging.Content{Data: b}
+	committed, e := committedFiles(tracked, func(object string) ([]byte, error) {
+		cmd := process.CommandContext(context.Background(), "git", "cat-file", "blob", object)
+		data, err := cmd.Output()
+		if err != nil {
+			return nil, fmt.Errorf("read committed Git blob %s: %w", object, err)
 		}
+		return data, nil
+	})
+	if e != nil {
+		return e
 	}
+	sourceRoot, e := os.MkdirTemp("", "smolpng-release-source-*")
+	if e != nil {
+		return e
+	}
+	defer os.RemoveAll(sourceRoot)
+	if e = materializeCommittedTree(sourceRoot, committed); e != nil {
+		return e
+	}
+	common := releaseInputs(committed)
 	artifacts := []packaging.Artifact{}
 	manifest := updates.Manifest{Schema: 1, Product: "smolpng", Version: *version, Commit: sha, Channel: "stable", Issued: time.Now().UTC(), Expires: time.Now().UTC().Add(90 * 24 * time.Hour), Assets: map[string]updates.Asset{}}
 	allHashes := map[string]string{}
@@ -136,7 +146,8 @@ func run() error {
 		}
 		build := func(pkg, name, extra string) error {
 			flags := "-X github.com/Wolfsblvt/smolpng/internal/cli.Version=" + *version + " -X github.com/Wolfsblvt/smolpng/internal/cli.Commit=" + sha + " -X github.com/Wolfsblvt/smolpng/internal/cli.Distribution=standalone -X main.Commit=" + sha + " " + extra
-			cmd := process.CommandContext(context.Background(), "go", "build", "-trimpath", "-buildvcs=false", "-ldflags", flags, "-o", filepath.Join(stage, name), pkg)
+			cmd := process.CommandContext(context.Background(), "go", "build", "-mod=readonly", "-trimpath", "-buildvcs=false", "-ldflags", flags, "-o", filepath.Join(stage, name), pkg)
+			cmd.Dir = sourceRoot
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 			cmd.Env = releaseBuildEnvironment(os.Environ(), goos, arch)
