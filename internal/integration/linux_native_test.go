@@ -32,6 +32,7 @@ type linuxJourney struct {
 	sequence                  int
 	a11y                      *dbus.Conn
 	completed                 time.Time
+	dolphinWindow             string
 }
 
 func (j *linuxJourney) write(name string, value any) {
@@ -270,14 +271,41 @@ func (j *linuxJourney) dolphin(inputs []string, actions ...string) {
 		return false
 	})
 	j.command("xdotool", "windowactivate", "--sync", window)
-	// Allow the native file view to finish selecting the supplied URLs before its
-	// context menu is opened. Presence of the menu/action is then observed below.
-	time.Sleep(500 * time.Millisecond)
-	j.command("xdotool", "key", "--clearmodifiers", "Shift+F10")
+	j.dolphinWindow = window
+	// Open the actual selected file's menu. Sending Shift+F10 to the top-level
+	// window did not target Dolphin's file view on the qualified host.
+	var bounds struct{ X, Y, Width, Height int32 }
+	j.wait("selected native file cell", func() bool {
+		for _, n := range j.tree() {
+			if n.Role != "cell" || n.Name != filepath.Base(inputs[0]) {
+				continue
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			e := j.a11y.Object(n.Ref.Bus, n.Ref.Path).CallWithContext(ctx, "org.a11y.atspi.Component.GetExtents", 0, uint32(0)).Store(&bounds)
+			cancel()
+			if e == nil && bounds.Width > 0 && bounds.Height > 0 {
+				return true
+			}
+		}
+		return false
+	})
+	j.write(fmt.Sprintf("dolphin-%02d-selected-cell.json", j.sequence), bounds)
+	j.command("xdotool", "mousemove", "--sync", fmt.Sprint(bounds.X+bounds.Width/2), fmt.Sprint(bounds.Y+bounds.Height/2), "click", "3")
 	for i, action := range actions {
 		j.screen(fmt.Sprintf("dolphin-%02d-menu-%d", j.sequence, i))
 		j.action(action)
 	}
+}
+
+func (j *linuxJourney) closeDolphin() {
+	j.t.Helper()
+	j.command("xdotool", "windowclose", j.dolphinWindow)
+	j.wait("owned Dolphin window closed", func() bool {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		return exec.CommandContext(ctx, "xdotool", "getwindowname", j.dolphinWindow).Run() != nil
+	})
+	j.dolphinWindow = ""
 }
 
 func (j *linuxJourney) refusal(args ...string) {
@@ -418,17 +446,22 @@ func TestNativeLinuxDesktop(t *testing.T) {
 	j.dolphin(inputs[:1], "Make smol")
 	j.last(inputs[:1])
 	j.screen("dolphin-single-result")
+	j.closeDolphin()
 	j.dolphin(inputs, "Make smol")
 	j.last(inputs)
+	j.closeDolphin()
 	j.interactive("desktop-interactive", inputs[:1], func() {
 		j.start("gio", "launch", filepath.Join(installed.Locations.Menu, "smolpng-interactive.desktop"), inputs[0])
 	})
 	j.cli("integrate", "shell", "install", "--mode", "submenu", "--apply", "--json")
 	j.dolphin(inputs, "smolpng", "Make smol (keep original)")
 	j.last(inputs)
+	j.closeDolphin()
 	j.dolphin(inputs, "smolpng", "Lossless (keep original)")
 	j.last(inputs)
+	j.closeDolphin()
 	j.interactive("dolphin-interactive", inputs, func() { j.dolphin(inputs, "smolpng", "Choose recipe...") })
+	j.closeDolphin()
 	j.cli("config", "set", "drop.mode", "interactive")
 	j.interactive("configured-interactive", inputs[:1], func() {
 		j.start("gio", "launch", filepath.Join(installed.Locations.Menu, "smolpng-auto.desktop"), inputs[0])
@@ -452,6 +485,7 @@ func TestNativeLinuxDesktop(t *testing.T) {
 	}
 	j.dolphin(replacements, "smolpng", "Make smol (replace original)")
 	replaced := j.last(replacements)
+	j.closeDolphin()
 	for i, result := range replaced.Report.Results {
 		if result.Output != replacements[i] {
 			t.Fatalf("explicit replacement output moved: %s", result.Output)
