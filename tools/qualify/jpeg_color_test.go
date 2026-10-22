@@ -92,6 +92,7 @@ func TestQualifierAcceptsOnlyRequestedJPEGGeometry(t *testing.T) {
 }
 
 func TestJPEGColorRefusalMustExplainBoundaryAndLeaveNoArtifact(t *testing.T) {
+	fixtures := testutil.JPEGColorCorpus()
 	for _, mode := range []string{"correct", "wrong-reason", "committed-output"} {
 		t.Run(mode, func(t *testing.T) {
 			root := t.TempDir()
@@ -99,12 +100,14 @@ func TestJPEGColorRefusalMustExplainBoundaryAndLeaveNoArtifact(t *testing.T) {
 			if err := os.Mkdir(sources, 0700); err != nil {
 				t.Fatal(err)
 			}
-			for name, data := range testutil.JPEGColorCorpus() {
+			for name, data := range fixtures {
 				if err := os.WriteFile(filepath.Join(sources, name), data, 0600); err != nil {
 					t.Fatal(err)
 				}
 			}
-			s := suite{root: root, opt: options{Timeout: time.Second}, data: evidence{Passed: true},
+			// This semantic check runs real CLI planning and filesystem work;
+			// a one-second scheduling deadline made it flaky on Windows CI.
+			s := suite{root: root, opt: options{Timeout: 30 * time.Second}, data: evidence{Passed: true},
 				runner: runnerFunc(func(ctx context.Context, invocation process.Invocation) (process.Result, error) {
 					args := invocation.Args
 					// Plan the exact command through the real CLI before modeling
@@ -130,7 +133,7 @@ func TestJPEGColorRefusalMustExplainBoundaryAndLeaveNoArtifact(t *testing.T) {
 						return ""
 					}
 					name := filepath.Base(args[1])
-					original := testutil.JPEGColorCorpus()[name]
+					original := fixtures[name]
 					before, err := jpegimage.Decode(original, 1_000_000)
 					if err != nil {
 						t.Fatal(err)
