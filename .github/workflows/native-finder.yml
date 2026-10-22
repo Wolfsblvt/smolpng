@@ -1,6 +1,14 @@
 name: Native macOS Finder integration
 on:
   workflow_dispatch:
+    inputs:
+      intel_runner:
+        description: Native Intel host (macOS 26 currently has a known image fault)
+        type: choice
+        default: macos-15-intel
+        options:
+          - macos-15-intel
+          - macos-26-intel
   pull_request:
     paths:
       - .github/workflows/native-finder.yml
@@ -17,15 +25,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-26-intel
+          - runner: ${{ inputs.intel_runner || 'macos-15-intel' }}
             arch: amd64
-            platform: macos26-amd64
+            platform: ${{ inputs.intel_runner || 'macos-15-intel' }}
           - runner: macos-26
             arch: arm64
             platform: macos26-arm64
-          - runner: macos-15-intel
-            arch: amd64
-            platform: macos15-amd64
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 20
     defaults:

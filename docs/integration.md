@@ -2,7 +2,7 @@
 
 ## Meaning
 
-smolpng can create and remove its own per-user Windows and Linux launchers and unsigned macOS development applets. Every destination is previewed before explicit application and tracked by exact SHA-256; app bundles include all owned members. This is a functional installer surface, not proof that a particular file manager supports every drop or clipboard representation. The new macOS route is undergoing native qualification.
+smolpng can create and remove its own per-user Windows and Linux launchers and unsigned macOS development applets. Every destination is previewed before explicit application and tracked by exact SHA-256; app bundles include all owned members. This is a functional installer surface, not proof that a particular file manager supports every drop or clipboard representation. [Native macOS file-open and Terminal journeys](reference/2026-10-22-macos-finder.md) passed on the exact Intel/ARM64 hosts recorded there.
 
 ```sh
 smolpng integrate install --desktop
@@ -55,7 +55,7 @@ On macOS, `integrate install --desktop` previews `.app` destinations in `~/Appli
 
 The Auto applet passes dropped files to `smolpng drop`. The interactive applet opens the existing recipe picker in Terminal. Auto also opens Terminal when the current configuration selects `drop.mode=interactive`; configuration is resolved by Go rather than a second TOML parser. The Terminal command removes its temporary script before starting the CLI. File paths remain separate arguments, including spaces, quotes and Unicode. No optimizer is bundled or executed by the applet itself.
 
-Use `smolpng last --json` to recover background outcomes, and `integrate status --json` to inspect ownership. Remove unchanged applets with `integrate remove --apply`. Native compilation, file-open events and Terminal completion are separate qualification boundaries; this source addition is not a public macOS package or a claim of physical Finder dragging.
+Use `smolpng last --json` to recover background outcomes, and `integrate status --json` to inspect ownership. Remove unchanged applets with `integrate remove --apply`. Native compilation, one/many-file events, both Terminal variants and owned lifecycle passed on macOS 15.7.9 Intel and macOS 26.6.2 ARM64. The macOS 26 Intel hosted image remained unqualified after an independently reported IconServices failure. This source addition is not a public macOS package or a claim of physical Finder dragging.
 
 ## Native behavior
 
