@@ -9,7 +9,7 @@ The repository contains executable local packaging tooling, not just proposed re
 From a clean committed source tree with Go available:
 
 ```sh
-go run ./tools/release --version 0.2.0-dev.1 --out artifacts/candidate
+go run ./tools/release --version 0.3.0-dev.1 --out artifacts/candidate
 ```
 
 The output directory must be new. All six platform targets are built by default. `--platforms linux/amd64` selects a subset. Build arguments explicitly embed version, source SHA and standalone ownership; archives use source-commit time, sorted paths and normalized modes. Files include the main CLI, Windows windowless launcher, native qualification helper, docs, legal corpus, presets, instruction-only Skill sources, license map and full dependency notices. Optimizers, toolchain caches, private profiles and credentials are never collected.

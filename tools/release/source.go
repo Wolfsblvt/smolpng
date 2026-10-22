@@ -40,7 +40,29 @@ func validObjectID(value string) bool {
 }
 
 func portableReleasePath(name string) bool {
-	return fs.ValidPath(name) && !strings.ContainsAny(name, "\\:\x00\r\n")
+	if !fs.ValidPath(name) {
+		return false
+	}
+	for _, segment := range strings.Split(name, "/") {
+		if strings.HasSuffix(segment, ".") || strings.HasSuffix(segment, " ") {
+			return false
+		}
+		for _, r := range segment {
+			if r < 0x20 || strings.ContainsRune(`<>:"\|?*`, r) {
+				return false
+			}
+		}
+		base := segment
+		if before, _, found := strings.Cut(base, "."); found {
+			base = before
+		}
+		upper := strings.ToUpper(base)
+		if upper == "CON" || upper == "PRN" || upper == "AUX" || upper == "NUL" ||
+			len(upper) == 4 && (strings.HasPrefix(upper, "COM") || strings.HasPrefix(upper, "LPT")) && upper[3] >= '1' && upper[3] <= '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // committedFiles reads exact ordinary-file blobs from the selected Git commit.
