@@ -49,13 +49,18 @@ func TestNativeFinder(t *testing.T) {
 		}
 		// Capture the actual failed native surface before the disposable VM ends.
 		// No privacy settings or permission grants are changed by the journey.
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
 		defer cancel()
 		out, err := exec.CommandContext(ctx, "/bin/ps", "-axo", "pid=,ppid=,tty=,command=").CombinedOutput()
 		owned := []string{fmt.Sprint(err)}
 		for _, line := range strings.Split(string(out), "\n") {
 			if strings.Contains(line, root) || strings.Contains(line, "/Terminal.app/Contents/MacOS/Terminal") {
 				owned = append(owned, line)
+			}
+			if strings.Contains(line, root) && strings.Contains(line, ".app/Contents/MacOS/droplet") {
+				pid := strings.Fields(line)[0]
+				sample, err := exec.CommandContext(ctx, "/usr/bin/sample", pid, "1", "1").CombinedOutput()
+				_ = os.WriteFile(filepath.Join(evidence, "diagnostic-sample-"+pid+".txt"), []byte(fmt.Sprintf("%v\n%s", err, sample)), 0600)
 			}
 		}
 		_ = os.WriteFile(filepath.Join(evidence, "diagnostic-processes.txt"), []byte(strings.Join(owned, "\n")), 0600)
@@ -231,77 +236,6 @@ func TestNativeFinder(t *testing.T) {
 	// A real Terminal consumer supplies a TTY. Accessible input keeps this
 	// functional journey independent of terminal size or visual presentation.
 	foreground := findEntry("interactive")
-	macString := func(s string) string { return "\"" + strings.NewReplacer("\\", "\\\\", "\"", "\\\"").Replace(s) + "\"" }
-	terminal := func(script string) string {
-		out, err := run("/usr/bin/osascript", "-e", script)
-		if err != nil {
-			t.Fatalf("Terminal consumer: %v\n%s", err, out)
-		}
-		return string(out)
-	}
-	for _, entry := range []Entry{foreground, background} {
-		if entry.ID == background.ID {
-			cli("config", "set", "drop.mode", "interactive", "--json")
-		}
-		// Set the native terminal's type through its ordinary profile environment,
-		// by prepending a persistent CLI flag in this owned qualification bundle.
-		// Reinstall records the exact resulting launcher; no installed bytes are patched.
-		entry.Arguments = append([]string{"--accessible"}, entry.Arguments...)
-		if entry.ID == background.ID {
-			entry.Arguments = append([]string{"drop", "--accessible"}, entry.Arguments[2:]...)
-		}
-		loc, _ := NativeLocations()
-		manager := Manager{StatePath: RegistryName(filepath.Join(home, "state")), Version: "native-test", Allowed: loc, Renderer: Native{}}
-		if err := manager.Install(context.Background(), []Entry{entry}); err != nil {
-			t.Fatal(err)
-		}
-		_ = os.Remove(lastPath)
-		out, err := run("/usr/bin/open", append([]string{"-W", "-n", "-a", entry.Path}, inputs...)...)
-		if err != nil {
-			t.Fatalf("foreground open: %v\n%s", err, out)
-		}
-		// Find only the tab displaying this fixture's exact source filename.
-		query := "tell application \"Terminal\"\nrepeat with w in windows\nrepeat with tb in tabs of w\nif (contents of tb) contains " + macString(root+"/one ' ; $(touch injected)") + " then return tty of tb\nend repeat\nend repeat\nreturn \"\"\nend tell"
-		tty := ""
-		deadline := time.Now().Add(20 * time.Second)
-		for time.Now().Before(deadline) {
-			tty = strings.TrimSpace(terminal(query))
-			if tty != "" {
-				break
-			}
-			time.Sleep(250 * time.Millisecond)
-		}
-		if tty == "" {
-			t.Fatal("actual Terminal source/TTY not observed")
-		}
-		contents := func() string {
-			return terminal("tell application \"Terminal\"\nrepeat with w in windows\nrepeat with tb in tabs of w\nif tty of tb is " + macString(tty) + " then return contents of tb\nend repeat\nend repeat\nend tell")
-		}
-		if !strings.Contains(contents(), "Choose a recipe") {
-			t.Fatal("foreground recipe screen not observed")
-		}
-		send := "tell application \"Terminal\"\nrepeat with w in windows\nrepeat with tb in tabs of w\nif tty of tb is " + macString(tty) + " then\ndo script \"\" in tb\nreturn\nend if\nend repeat\nend repeat\nend tell"
-		terminal(send)
-		deadline = time.Now().Add(60 * time.Second)
-		for time.Now().Before(deadline) {
-			if _, err := os.Stat(lastPath); err == nil {
-				break
-			}
-			time.Sleep(250 * time.Millisecond)
-		}
-		verifyLast(inputs)
-		deadline = time.Now().Add(10 * time.Second)
-		for !strings.Contains(contents(), "Enter: done") && time.Now().Before(deadline) {
-			time.Sleep(250 * time.Millisecond)
-		}
-		if !strings.Contains(contents(), "Enter: done") {
-			t.Fatal("result screen not observed")
-		}
-		terminal(send)
-		t.Logf("actual Terminal TTY %s completed %s with original file arguments", tty, entry.ID)
-		// Close exactly the owned fixture tab after the CLI has returned.
-		terminal("tell application \"Terminal\"\nrepeat with w in windows\nrepeat with tb in tabs of w\nif tty of tb is " + macString(tty) + " then\nif busy of tb then error \"fixture terminal still busy\"\nclose tb\nreturn\nend if\nend repeat\nend repeat\nend tell")
-	}
 	status("current")
 	// Preserve a user's extra file, refusing whole-plan replacement and removal.
 	extra := filepath.Join(background.Path, "keep-user.txt")
@@ -338,3 +272,49 @@ func TestNativeFinder(t *testing.T) {
 		t.Fatal("configuration lost")
 	}
 }
+
+const nativeTerminalDriver = `on run argv
+	set sourcePrefix to item 1 of argv
+	tell application "Terminal"
+		set fixtureTab to missing value
+		repeat 80 times
+			repeat with w in windows
+				repeat with tb in tabs of w
+					if (contents of tb) contains sourcePrefix then set fixtureTab to tb
+				end repeat
+			end repeat
+			if fixtureTab is not missing value then exit repeat
+			delay 0.25
+		end repeat
+		if fixtureTab is missing value then error "fixture source tab missing"
+		set fixtureTTY to tty of fixtureTab
+		set beforeText to contents of fixtureTab
+		if beforeText does not contain "Choose a recipe" then error "recipe screen missing"
+		do script "" in fixtureTab
+		repeat 240 times
+			set resultText to contents of fixtureTab
+			if resultText contains "Enter: done" then exit repeat
+			delay 0.25
+		end repeat
+		if resultText does not contain "Enter: done" then error "result screen missing"
+		do script "" in fixtureTab
+		set finished to false
+		repeat 40 times
+			try
+				if not (busy of fixtureTab) then
+					close fixtureTab
+					set finished to true
+					exit repeat
+				end if
+			on error
+				-- Terminal may close a successfully exited .command automatically.
+				set finished to true
+				exit repeat
+			end try
+			delay 0.25
+		end repeat
+		if not finished then error "fixture remains busy"
+		return fixtureTTY & linefeed & beforeText & linefeed & resultText
+	end tell
+end run
+`

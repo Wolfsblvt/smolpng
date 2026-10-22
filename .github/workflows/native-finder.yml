@@ -94,5 +94,7 @@ jobs:
             artifacts/validation/native-finder/*.log
             artifacts/validation/native-finder/diagnostic-screen.png
             artifacts/validation/native-finder/journey/command-*.json
+            artifacts/validation/native-finder/journey/terminal-driver-*.txt
+            artifacts/validation/native-finder/journey/terminal-driver-*.exit
           if-no-files-found: error
           retention-days: 14

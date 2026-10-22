@@ -5,6 +5,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -47,6 +48,17 @@ func TestMacPlanKeepsNativeModesAndArgumentBoundaries(t *testing.T) {
 	for _, entry := range entries {
 		if filepath.Ext(entry.Path) != ".app" || entry.Arguments[len(entry.Arguments)-1] != "--" {
 			t.Fatal(entry)
+		}
+	}
+}
+
+func TestMacConfigurationQueryKeepsLocationFlagsAndExcludesInputs(t *testing.T) {
+	want := []string{"--home", "/data ' ä", "--config", "/settings -- ä.toml", "--no-project"}
+	for _, prefix := range [][]string{nil, {"drop"}} {
+		args := append(slices.Clone(prefix), want...)
+		args = append(args, "--preset", "auto", "--", "--home", "this-is-an-input.png")
+		if got := macConfigurationArguments(args); !slices.Equal(got, want) {
+			t.Fatalf("configuration query: got %q, want %q", got, want)
 		}
 	}
 }
