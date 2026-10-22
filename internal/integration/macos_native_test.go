@@ -363,7 +363,10 @@ const nativeTerminalDriver = `on run argv
 			repeat with w in windows
 				repeat with tabValue in tabs of w
 					set tb to contents of tabValue
-					if (history of tb) contains sourcePrefix then set fixtureTab to tb
+					if (history of tb) contains sourcePrefix then
+						set fixtureTab to tb
+						set fixtureWindowID to id of w
+					end if
 				end repeat
 			end repeat
 			if fixtureTab is not missing value then exit repeat
@@ -385,7 +388,8 @@ const nativeTerminalDriver = `on run argv
 		repeat 40 times
 			try
 				if not (busy of fixtureTab) then
-					close fixtureTab
+					if (count of tabs of window id fixtureWindowID) is not 1 then error "fixture window contains another tab"
+					close window id fixtureWindowID
 					set finished to true
 					exit repeat
 				end if
