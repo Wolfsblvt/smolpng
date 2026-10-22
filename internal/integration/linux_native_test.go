@@ -179,6 +179,11 @@ func (j *linuxJourney) tree() []accessibleNode {
 
 func (j *linuxJourney) action(label string) {
 	j.t.Helper()
+	defer func() {
+		if j.t.Failed() {
+			j.screen("action-failure")
+		}
+	}()
 	var found accessibleNode
 	j.wait("accessible action "+label, func() bool {
 		nodes := j.tree()
@@ -290,7 +295,9 @@ func (j *linuxJourney) dolphin(inputs []string, actions ...string) {
 		return false
 	})
 	j.write(fmt.Sprintf("dolphin-%02d-selected-cell.json", j.sequence), bounds)
-	j.command("xdotool", "mousemove", "--sync", fmt.Sprint(bounds.X+bounds.Width/2), fmt.Sprint(bounds.Y+bounds.Height/2), "click", "3")
+	// Dolphin's item rectangle includes blank icon space; its visible filename
+	// occupies the bottom. A right click in blank icon space opens the folder menu.
+	j.command("xdotool", "mousemove", "--sync", fmt.Sprint(bounds.X+bounds.Width/2), fmt.Sprint(bounds.Y+bounds.Height-10), "click", "3")
 	for i, action := range actions {
 		j.screen(fmt.Sprintf("dolphin-%02d-menu-%d", j.sequence, i))
 		j.action(action)
