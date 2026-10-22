@@ -5,8 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/fs"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/Wolfsblvt/smolpng/internal/packaging"
@@ -25,11 +23,23 @@ func releaseInputPath(name string) bool {
 		strings.HasPrefix(name, "skills/smolpng/")
 }
 
-// releaseInputs reads only regular files whose tracked index mode is an ordinary
-// file. NUL-delimited index records preserve every valid Git path byte except NUL;
-// refusing symlinks/gitlinks prevents a clean checkout from importing bytes outside
-// the repository into a release archive.
-func releaseInputs(root string, index []byte) (map[string]packaging.Content, error) {
+func validObjectID(value string) bool {
+	if len(value) != 40 && len(value) != 64 {
+		return false
+	}
+	for _, c := range value {
+		if !(c >= '0' && c <= '9') && !(c >= 'a' && c <= 'f') {
+			return false
+		}
+	}
+	return true
+}
+
+// releaseInputs reads exact ordinary-file blobs from the Git index. NUL-delimited
+// records preserve every valid Git path byte except NUL. Rejecting symlink/gitlink
+// modes and never following working-tree paths prevents package content from
+// escaping the repository or changing after the clean-tree check.
+func releaseInputs(index []byte, readBlob func(string) ([]byte, error)) (map[string]packaging.Content, error) {
 	result := map[string]packaging.Content{}
 	for _, record := range bytes.Split(index, []byte{0}) {
 		if len(record) == 0 {
@@ -40,7 +50,7 @@ func releaseInputs(root string, index []byte) (map[string]packaging.Content, err
 			return nil, fmt.Errorf("invalid git index record")
 		}
 		meta := strings.Fields(string(parts[0]))
-		if len(meta) != 3 || meta[2] != "0" {
+		if len(meta) != 3 || meta[2] != "0" || !validObjectID(meta[1]) {
 			return nil, fmt.Errorf("invalid git index metadata")
 		}
 		name := string(parts[1])
@@ -56,17 +66,9 @@ func releaseInputs(root string, index []byte) (map[string]packaging.Content, err
 		if _, exists := result[name]; exists {
 			return nil, fmt.Errorf("duplicate tracked release path %q", name)
 		}
-		path := filepath.Join(root, filepath.FromSlash(name))
-		info, err := os.Lstat(path)
+		data, err := readBlob(meta[1])
 		if err != nil {
-			return nil, err
-		}
-		if info.Mode()&os.ModeSymlink != 0 || !info.Mode().IsRegular() {
-			return nil, fmt.Errorf("release input %q is not a regular file", name)
-		}
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("read release input %q: %w", name, err)
 		}
 		result[name] = packaging.Content{Data: data}
 	}

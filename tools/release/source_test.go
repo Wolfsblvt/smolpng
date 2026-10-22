@@ -3,101 +3,88 @@ package main
 
 import (
 	"bytes"
-	"os"
-	"path/filepath"
-	"runtime"
+	"fmt"
 	"strings"
 	"testing"
 )
 
-func indexRecord(mode, path string) []byte {
-	return []byte(mode + " " + strings.Repeat("0", 40) + " 0\t" + path + "\x00")
+const (
+	objectA = "1111111111111111111111111111111111111111"
+	objectB = "2222222222222222222222222222222222222222"
+	objectC = "3333333333333333333333333333333333333333"
+)
+
+func indexRecord(mode, object, path string) []byte {
+	return []byte(mode + " " + object + " 0\t" + path + "\x00")
 }
 
-func TestReleaseInputsCollectOnlyAdmittedRegularFiles(t *testing.T) {
-	root := t.TempDir()
-	write := func(name, content string, mode os.FileMode) {
-		t.Helper()
-		path := filepath.Join(root, filepath.FromSlash(name))
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-			t.Fatal(err)
+func TestReleaseInputsCollectExactAdmittedBlobs(t *testing.T) {
+	blobs := map[string][]byte{objectA: []byte("readme\n\x00bytes"), objectB: []byte("docs"), objectC: []byte("ignored")}
+	reads := []string{}
+	read := func(object string) ([]byte, error) {
+		reads = append(reads, object)
+		data, ok := blobs[object]
+		if !ok {
+			return nil, fmt.Errorf("unknown object")
 		}
-		if err := os.WriteFile(path, []byte(content), mode); err != nil {
-			t.Fatal(err)
-		}
+		return data, nil
 	}
-	write("README.md", "readme", 0o644)
-	write("docs/a name.md", "docs", 0o644)
-	write("cmd/ignored.go", "ignored", 0o644)
 	index := bytes.Join([][]byte{
-		indexRecord("100644", "README.md"),
-		indexRecord("100755", "docs/a name.md"),
-		indexRecord("100644", "cmd/ignored.go"),
+		indexRecord("100644", objectA, "README.md"),
+		indexRecord("100755", objectB, "docs/a name.md"),
+		indexRecord("100644", objectC, "cmd/ignored.go"),
 	}, nil)
-	got, err := releaseInputs(root, index)
+	got, err := releaseInputs(index, read)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(got["README.md"].Data) != "readme" || string(got["docs/a name.md"].Data) != "docs" {
-		t.Fatal("admitted release input bytes differ")
+	if !bytes.Equal(got["README.md"].Data, blobs[objectA]) || !bytes.Equal(got["docs/a name.md"].Data, blobs[objectB]) {
+		t.Fatal("admitted release input bytes differ from indexed blobs")
 	}
 	if _, ok := got["cmd/ignored.go"]; ok || len(got) != 2 {
 		t.Fatalf("unexpected release inputs: %#v", got)
 	}
+	if strings.Join(reads, ",") != objectA+","+objectB {
+		t.Fatalf("unexpected blob reads: %v", reads)
+	}
 }
 
 func TestReleaseInputsRejectTrackedSymlinkOrGitlink(t *testing.T) {
-	root := t.TempDir()
 	for _, mode := range []string{"120000", "160000"} {
 		t.Run(mode, func(t *testing.T) {
-			if err := os.MkdirAll(filepath.Join(root, "docs"), 0o755); err != nil {
-				t.Fatal(err)
-			}
-			if err := os.WriteFile(filepath.Join(root, "docs", mode), []byte("target"), 0o644); err != nil {
-				t.Fatal(err)
-			}
-			_, err := releaseInputs(root, indexRecord(mode, "docs/"+mode))
+			called := false
+			_, err := releaseInputs(indexRecord(mode, objectA, "docs/"+mode), func(string) ([]byte, error) {
+				called = true
+				return nil, nil
+			})
 			if err == nil || !strings.Contains(err.Error(), "unsupported tracked mode") {
 				t.Fatalf("expected tracked-mode refusal, got %v", err)
+			}
+			if called {
+				t.Fatal("unsupported tracked mode reached blob reader")
 			}
 		})
 	}
 }
 
-func TestReleaseInputsRejectWorkingTreeSymlink(t *testing.T) {
-	root := t.TempDir()
-	outside := filepath.Join(t.TempDir(), "outside")
-	if err := os.WriteFile(outside, []byte("outside"), 0o600); err != nil {
-		t.Fatal(err)
+func TestReleaseInputsRejectInvalidDuplicateOrUnreadableRecords(t *testing.T) {
+	cases := map[string]struct {
+		index []byte
+		read  func(string) ([]byte, error)
+	}{
+		"invalid path": {index: indexRecord("100644", objectA, "../README.md")},
+		"invalid object": {index: indexRecord("100644", "not-an-object", "README.md")},
+		"duplicate": {index: bytes.Repeat(indexRecord("100644", objectA, "README.md"), 2)},
+		"malformed": {index: []byte("100644 no-tab\x00")},
+		"unreadable": {index: indexRecord("100644", objectA, "README.md"), read: func(string) ([]byte, error) { return nil, fmt.Errorf("missing blob") }},
 	}
-	if err := os.MkdirAll(filepath.Join(root, "docs"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	link := filepath.Join(root, "docs", "link.md")
-	if err := os.Symlink(outside, link); err != nil {
-		if runtime.GOOS == "windows" {
-			t.Skipf("symlink creation unavailable: %v", err)
-		}
-		t.Fatal(err)
-	}
-	_, err := releaseInputs(root, indexRecord("100644", "docs/link.md"))
-	if err == nil || !strings.Contains(err.Error(), "not a regular file") {
-		t.Fatalf("expected working-tree symlink refusal, got %v", err)
-	}
-}
-
-func TestReleaseInputsRejectInvalidOrDuplicatePaths(t *testing.T) {
-	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "README.md"), []byte("readme"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	for name, index := range map[string][]byte{
-		"invalid":   indexRecord("100644", "../README.md"),
-		"duplicate": bytes.Repeat(indexRecord("100644", "README.md"), 2),
-		"malformed": []byte("100644 no-tab\x00"),
-	} {
+	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			if _, err := releaseInputs(root, index); err == nil {
+			read := tc.read
+			if read == nil {
+				read = func(string) ([]byte, error) { return []byte("data"), nil }
+			}
+			if _, err := releaseInputs(tc.index, read); err == nil {
 				t.Fatal("expected release input refusal")
 			}
 		})

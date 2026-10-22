@@ -97,7 +97,14 @@ func run() error {
 	if e != nil {
 		return e
 	}
-	common, e := releaseInputs(root, indexed)
+	common, e := releaseInputs(indexed, func(object string) ([]byte, error) {
+		cmd := process.CommandContext(context.Background(), "git", "cat-file", "blob", object)
+		data, err := cmd.Output()
+		if err != nil {
+			return nil, fmt.Errorf("read indexed Git blob %s: %w", object, err)
+		}
+		return data, nil
+	})
 	if e != nil {
 		return e
 	}

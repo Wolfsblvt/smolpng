@@ -18,7 +18,7 @@ Candidate compilation isolates the Go command from ambient workspaces, per-user 
 
 The archive receipt binds individual member hashes. `SHA256SUMS` binds every archive. `build-index.json` is written incrementally and marks complete only after the entire selected build succeeds. Failure leaves inspectable local output and returns nonzero, not a nominal release.
 
-Release inputs are selected from NUL-delimited Git index records rather than newline-parsed filenames. Only ordinary tracked file modes (`100644` and `100755`) are admitted, and the checked-out path must still be a regular non-symlink file before its bytes are read. A symlink, gitlink, non-regular replacement, malformed index record or path traversal refuses the build. This keeps a clean checkout from importing bytes outside the repository into a package through an admitted `docs/`, Skill, preset, schema or corpus path.
+Release inputs are selected from NUL-delimited Git index records and read from their exact indexed blob IDs. Only ordinary tracked file modes (`100644` and `100755`) are admitted. A symlink, gitlink, malformed object/path record or duplicate refuses the build; the working-tree path is never followed for package content. This keeps a clean checkout from importing outside or concurrently changed bytes through an admitted `docs/`, Skill, preset, schema or corpus path.
 
 ## Windows executable identity
 
@@ -37,7 +37,7 @@ VERSIONINFO is descriptive metadata, not a signature or an authenticated publish
 
 An unsigned Preview remains unsigned after this metadata is embedded. The separate signing sequence and retained release decisions are in [Releasing](RELEASING.md#windows-signing-sequence).
 
-[Native qualification](reference/2026-10-21-windows-version-resources.md) records six exact-source files, matching stage/archive receipts, hosted execution of the amd64 CLI and Windows 11 resource reads. ARM64 execution and graphical use remain distinct.
+[Native qualification](reference/2026-10-21-windows-version-resources.md) records six exact-source files, matching stage/archive receipts, hosted amd64 CLI execution and Windows 11 resource reads. ARM64 execution and graphical use remain distinct.
 
 ## Package-manager inputs
 
