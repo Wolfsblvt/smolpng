@@ -11,7 +11,7 @@ The maintained subjects now span product, automation, human workflows, setup and
 | Settled architecture/product choices | [Decisions](DECISIONS.md) |
 | Locate code and invariants | [Project map](PROJECT-MAP.md), [Architecture](ARCHITECTURE.md) |
 | Build, test and qualify locally | [Development](DEVELOPMENT.md) |
-| Private candidate archives and publication boundary | [Releasing](RELEASING.md), [dev.13 composition](reference/2026-10-22-private-candidate-dev13.md), [Windows lifecycle](reference/2026-10-22-windows-dev13-lifecycle.md) |
+| Private candidate archives and publication boundary | [Releasing](RELEASING.md), [dev.14 composition and Windows lifecycle](reference/2026-10-22-private-candidate-dev14.md) |
 | Stable automation interface | [CLI](cli.md) |
 | JPEG orientation, camera attachments and preservation | [JPEG](jpeg.md) |
 | Settings, provenance and shared recipes | [Presets](presets.md) |
