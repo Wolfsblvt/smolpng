@@ -24,7 +24,7 @@ A target is strict: output bytes must be less than or equal to requested bytes. 
 
 ## Complete 1.0 destination
 
-PNG and JPEG are accepted formats. PNG uses external pngquant and OxiPNG. JPEG backend selection is evidence-led, with jpegli and jpegoptim candidates; orientation must remain correct, safe metadata handling preserves ICC and removes GPS/private camera metadata without accidental rotation.
+PNG and JPEG are accepted formats. PNG uses external pngquant and OxiPNG. JPEG uses externally installed jpegoptim for ordinary local optimization; the bounded JPEGli comparison did not earn another runtime, build, and distribution surface. Orientation must remain correct, and safe metadata handling preserves ICC while removing GPS/private camera metadata without accidental rotation.
 
 Inputs include one or many files, directories, explicit globs, bounded HTTP(S) downloads, stdin, clipboard images, native file lists/URIs, text paths/URLs, and desktop drag/drop. Interactive mode may detect clipboard sources; scripts must name their input or explicitly request the clipboard.
 
