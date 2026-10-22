@@ -196,6 +196,7 @@ func (c *credentialCLI) run(t *testing.T, environment *string, input string, wan
 	if exit != wantExit {
 		t.Fatalf("CLI exit %d, expected %d; output withheld", exit, wantExit)
 	}
+	c.assertNoPlaintext(t)
 	return stdout.Bytes()
 }
 
