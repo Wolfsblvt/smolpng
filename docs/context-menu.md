@@ -69,7 +69,7 @@ On Linux, `integrate shell install --apply` writes executable service files unde
 
 Dolphin inherits `Terminal` from the service file, not an individual action. Submenu mode therefore uses one background service and one terminal-enabled interactive service grouped under the same submenu. Single mode removes the obsolete interactive service after checking ownership. The terminal is selected by KDE, not hard-coded as Konsole. User settings or desktop policy may still hide a service until enabled/refreshed in Dolphin.
 
-This is **Dolphin integration**, not a claim of universal Linux context-menu support. Nautilus/Nemo/Thunar have separate mechanisms and are not installed by this command. Actual menu rendering, terminal startup, clipboard ownership and notification behavior still need the real desktop.
+This is **Dolphin integration**, not a claim of universal Linux context-menu support. Nautilus/Nemo/Thunar have separate mechanisms and are not installed by this command. [Native Ubuntu X11 qualification](reference/2026-10-22-native-linux-desktop.md) exercised real Dolphin single/submenu actions and terminal completion. Physical desktop feel, other hosts/protocols, clipboard paste and rendered notifications remain separate.
 
 ## Data and lifecycle
 
