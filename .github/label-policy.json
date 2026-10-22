@@ -428,6 +428,7 @@
         "include": [
           "internal/integration/**",
           "internal/cli/desktop_terminal.go",
+          "internal/cli/explorer_windows*.go",
           "internal/shellmenu/**",
           "native/**",
           "internal/desktop/**",
