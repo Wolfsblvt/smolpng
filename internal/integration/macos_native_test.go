@@ -43,6 +43,25 @@ func TestNativeFinder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(func() {
+		if !t.Failed() {
+			return
+		}
+		// Capture the actual failed native surface before the disposable VM ends.
+		// No privacy settings or permission grants are changed by the journey.
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		out, err := exec.CommandContext(ctx, "/bin/ps", "-axo", "pid=,ppid=,tty=,command=").CombinedOutput()
+		owned := []string{fmt.Sprint(err)}
+		for _, line := range strings.Split(string(out), "\n") {
+			if strings.Contains(line, root) || strings.Contains(line, "/Terminal.app/Contents/MacOS/Terminal") {
+				owned = append(owned, line)
+			}
+		}
+		_ = os.WriteFile(filepath.Join(evidence, "diagnostic-processes.txt"), []byte(strings.Join(owned, "\n")), 0600)
+		out, err = exec.CommandContext(ctx, "/usr/sbin/screencapture", "-x", filepath.Join(evidence, "diagnostic-screen.png")).CombinedOutput()
+		_ = os.WriteFile(filepath.Join(evidence, "diagnostic-screen.txt"), []byte(fmt.Sprintf("%v\n%s", err, out)), 0600)
+	})
 	user := filepath.Join(root, "user ' ä")
 	home := filepath.Join(root, "data ' ä")
 	for _, dir := range []string{user, filepath.Join(home, "state")} {
