@@ -1,0 +1,92 @@
+name: Native macOS Finder integration
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/native-finder.yml
+      - internal/integration/**
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  finder:
+    name: Finder (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-26-intel
+            arch: amd64
+          - runner: macos-26
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    env:
+      SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      EXPECTED_ARCH: ${{ matrix.arch }}
+      CGO_ENABLED: '0'
+      OMP_NUM_THREADS: '1'
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+      HOMEBREW_NO_INSTALL_CLEANUP: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ env.SOURCE_COMMIT }}
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Checkpoint exact native host and source
+        run: |
+          set -euo pipefail
+          evidence="$GITHUB_WORKSPACE/artifacts/validation/native-finder"
+          mkdir -p "$evidence"
+          printf '%s\n' '{"complete":false,"step":"preflight"}' > "$evidence/report.json"
+          printf 'EVIDENCE=%s\n' "$evidence" >> "$GITHUB_ENV"
+          printf 'NATIVE_BIN=%s\n' "$GITHUB_WORKSPACE/artifacts/bin/native-finder" >> "$GITHUB_ENV"
+          git rev-parse HEAD > "$evidence/source.txt"
+          test "$(cat "$evidence/source.txt")" = "$SOURCE_COMMIT"
+          test "$(go env GOARCH)" = "$EXPECTED_ARCH"
+          sw_vers > "$evidence/os-release.txt"
+          uname -srm > "$evidence/kernel.txt"
+          go env -json GOVERSION GOOS GOARCH CGO_ENABLED > "$evidence/go-env.json"
+          printf '%s\n%s\n' "${ImageOS:-unknown}" "${ImageVersion:-unknown}" > "$evidence/runner-image.txt"
+      - name: Prepare native application and explicitly separate tools
+        run: |
+          set -euo pipefail
+          go mod verify
+          mkdir -p "$NATIVE_BIN"
+          go build -trimpath -ldflags "-X github.com/Wolfsblvt/smolpng/internal/cli.Commit=$SOURCE_COMMIT" -o "$NATIVE_BIN/smolpng" ./cmd/smolpng
+          go test -c -tags nativefinder -o "$NATIVE_BIN/finder.test" ./internal/integration
+          "$NATIVE_BIN/smolpng" version --json > "$EVIDENCE/application-version.json"
+          brew install pngquant jpegoptim
+          brew info --json=v2 pngquant jpegoptim > "$EVIDENCE/brew-formulas.json"
+          brew config > "$EVIDENCE/brew-config.txt"
+          printf 'PNGQUANT=%s\n' "$(brew --prefix pngquant)/bin/pngquant" >> "$GITHUB_ENV"
+          printf 'JPEGOPTIM=%s\n' "$(brew --prefix jpegoptim)/bin/jpegoptim" >> "$GITHUB_ENV"
+          "$NATIVE_BIN/smolpng" --home "$RUNNER_TEMP/finder-bootstrap" --no-project deps install oxipng --apply --json > "$EVIDENCE/oxipng-install.json"
+          oxipng=$(jq -er '.managed | select(.state == "current") | .path' "$EVIDENCE/oxipng-install.json")
+          printf 'OXIPNG=%s\n' "$oxipng" >> "$GITHUB_ENV"
+          shasum -a 256 "$NATIVE_BIN"/* "$oxipng" "$(brew --prefix pngquant)/bin/pngquant" "$(brew --prefix jpegoptim)/bin/jpegoptim" > "$EVIDENCE/executables.sha256"
+      - name: Exercise actual file-open events and owned native bundles
+        run: |
+          set -euo pipefail
+          export SMOLPNG_NATIVE_APP="$NATIVE_BIN/smolpng"
+          export SMOLPNG_DISPOSABLE_MAC=yes
+          printf '%s\n' '{"complete":false,"step":"native-journey"}' > "$EVIDENCE/report.json"
+          "$NATIVE_BIN/finder.test" -test.v -test.run '^TestNativeFinder$' -test.timeout 8m | tee "$EVIDENCE/test.log"
+          test -z "$(git status --porcelain)"
+          printf '%s\n' '{"complete":true,"passed":true,"meaning":"Unsigned native bundles, Launch Services file-open events, background compression and actual Terminal consumer; no physical Finder drag or public signing claim."}' > "$EVIDENCE/report.json"
+      - name: Retain exact evidence, including incomplete attempts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: finder-${{ matrix.arch }}-${{ env.SOURCE_COMMIT }}-${{ github.run_id }}
+          path: artifacts/validation/native-finder/
+          if-no-files-found: error
+          retention-days: 14

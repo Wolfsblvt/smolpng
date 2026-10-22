@@ -35,8 +35,8 @@ type Request struct {
 var identifier = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$`)
 
 func Plan(loc Locations, q Request) ([]Entry, error) {
-	if q.OS != "windows" && q.OS != "linux" {
-		return nil, fmt.Errorf("launcher installation is implemented for Windows and Linux; macOS uses the CLI/TUI")
+	if q.OS != "windows" && q.OS != "linux" && q.OS != "darwin" {
+		return nil, fmt.Errorf("launcher installation is unavailable on %s", q.OS)
 	}
 	if q.Preset == "" {
 		q.Preset = "auto"
@@ -82,6 +82,8 @@ func Plan(loc Locations, q Request) ([]Entry, error) {
 		extension := ".desktop"
 		if q.OS == "windows" {
 			extension = ".lnk"
+		} else if q.OS == "darwin" {
+			extension = ".app"
 		}
 		return Entry{ID: id, Path: filepath.Join(dir, "smolpng-"+id+extension), Name: name, Executable: program, Arguments: args, WorkingDirectory: q.WorkingDirectory, Terminal: interactive}, nil
 	}
