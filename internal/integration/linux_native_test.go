@@ -204,24 +204,20 @@ func (j *linuxJourney) action(label string) {
 		j.command("xdotool", "key", "--clearmodifiers", lastKey)
 		return
 	}
-	var found accessibleNode
-	j.wait("accessible action "+label, func() bool {
-		nodes := j.tree()
-		j.write("accessibility-current.json", nodes)
-		for _, n := range nodes {
-			if strings.ReplaceAll(n.Name, "&", "") == label && strings.Contains(n.Role, "menu") {
-				found = n
-				return true
-			}
-		}
-		return false
-	})
-	var accepted bool
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if e := j.a11y.Object(found.Ref.Bus, found.Ref.Path).CallWithContext(ctx, "org.a11y.atspi.Action.DoAction", 0, int32(0)).Store(&accepted); e != nil || !accepted {
-		j.t.Fatalf("activate %q: accepted %v, error %v", label, accepted, e)
+	// Right opens the observed submenu with its first action already selected.
+	// These are native menu positions on the recorded Dolphin host, not a claim
+	// that Qt exposes its popup actions through the accessibility child tree.
+	positions := map[string]int{"Make smol (keep original)": 0, "Choose recipe...": 1, "Lossless (keep original)": 2, "Make smol (replace original)": 3}
+	position, ok := positions[label]
+	if !ok {
+		j.t.Fatalf("unknown observed native menu action %q", label)
 	}
+	keys := []string{"key", "--clearmodifiers"}
+	for range position {
+		keys = append(keys, "Down")
+	}
+	keys = append(keys, "Return")
+	j.command("xdotool", keys...)
 }
 
 func (j *linuxJourney) terminalText() string {
@@ -485,7 +481,12 @@ func TestNativeLinuxDesktop(t *testing.T) {
 	j.last(inputs)
 	j.closeDolphin()
 	j.dolphin(inputs, "smolpng", "Lossless (keep original)")
-	j.last(inputs)
+	lossless := j.last(inputs)
+	for _, result := range lossless.Report.Results {
+		if result.Recipe != "lossless" {
+			t.Fatalf("native lossless action selected recipe %q", result.Recipe)
+		}
+	}
 	j.closeDolphin()
 	j.interactive("dolphin-interactive", inputs, func() { j.dolphin(inputs, "smolpng", "Choose recipe...") })
 	j.closeDolphin()
