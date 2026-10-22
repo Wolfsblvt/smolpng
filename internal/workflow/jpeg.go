@@ -116,7 +116,9 @@ func (e Engine) optimizeJPEG(ctx context.Context, data []byte, r domain.Recipe) 
 			warn(err)
 			return
 		}
-		args := []string{"--force", "--overwrite", "--keep-all", "--dest=" + destDir, "--all-progressive"}
+		// --keep-all is a newer alias; --strip-none also works on the admitted
+		// jpegoptim 1.4 line. Metadata policy is applied by our shared filter.
+		args := []string{"--force", "--overwrite", "--strip-none", "--dest=" + destDir, "--all-progressive"}
 		if !strict {
 			args = append(args, fmt.Sprintf("--max=%d", quality))
 		}

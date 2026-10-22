@@ -1,0 +1,124 @@
+name: Native Linux desktop workflows
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/native-linux-desktop.yml
+      - internal/integration/**
+      - internal/shellmenu/**
+      - internal/cli/integrate.go
+      - internal/cli/cli.go
+      - internal/cli/desktop_terminal.go
+      - internal/cli/human.go
+      - internal/cli/shell.go
+      - internal/cli/results.go
+      - internal/workflow/jpeg.go
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  desktop:
+    name: Dolphin and desktop entries (Ubuntu 24.04 X11)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    env:
+      SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      CGO_ENABLED: '0'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ env.SOURCE_COMMIT }}
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Checkpoint exact source and disposable host
+        run: |
+          set -euo pipefail
+          evidence="$GITHUB_WORKSPACE/artifacts/validation/native-linux-desktop"
+          mkdir -p "$evidence"
+          printf '%s\n' '{"complete":false,"step":"preflight"}' > "$evidence/report.json"
+          printf 'EVIDENCE=%s\n' "$evidence" >> "$GITHUB_ENV"
+          printf 'NATIVE_BIN=%s\n' "$GITHUB_WORKSPACE/artifacts/bin/native-linux-desktop" >> "$GITHUB_ENV"
+          git rev-parse HEAD > "$evidence/source.txt"
+          test "$(cat "$evidence/source.txt")" = "$SOURCE_COMMIT"
+          go env -json GOVERSION GOOS GOARCH CGO_ENABLED > "$evidence/go-env.json"
+          uname -srm > "$evidence/kernel.txt"
+          cat /etc/os-release > "$evidence/os-release.txt"
+          printf '%s\n%s\n' "${ImageOS:-unknown}" "${ImageVersion:-unknown}" > "$evidence/runner-image.txt"
+      - name: Install independent native desktop consumers
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends xvfb openbox dolphin konsole dbus-x11 at-spi2-core xdotool scrot desktop-file-utils pngquant jpegoptim strace
+          dpkg-query -W xvfb openbox dolphin konsole dbus-x11 at-spi2-core xdotool scrot desktop-file-utils pngquant jpegoptim strace libglib2.0-0t64 > "$EVIDENCE/native-tools.txt"
+          QT_QPA_PLATFORM=offscreen dolphin --version > "$EVIDENCE/dolphin-version.txt"
+          QT_QPA_PLATFORM=offscreen dolphin --help > "$EVIDENCE/dolphin-help.txt"
+          sha256sum /usr/bin/dolphin /usr/bin/konsole /usr/bin/pngquant /usr/bin/jpegoptim > "$EVIDENCE/native-tools.sha256"
+          set +e
+          jpegoptim --keep-all --version > "$EVIDENCE/jpegoptim-new-alias.txt" 2>&1
+          printf '%s\n' "$?" > "$EVIDENCE/jpegoptim-new-alias-exit.txt"
+          set -e
+          jpegoptim --strip-none --version > "$EVIDENCE/jpegoptim-compatible-flag.txt" 2>&1
+      - name: Build source-bound application and native journey
+        run: |
+          set -euo pipefail
+          go mod verify
+          mkdir -p "$NATIVE_BIN"
+          go build -trimpath -ldflags "-X github.com/Wolfsblvt/smolpng/internal/cli.Commit=$SOURCE_COMMIT" -o "$NATIVE_BIN/smolpng" ./cmd/smolpng
+          go build -trimpath -ldflags "-X main.Commit=$SOURCE_COMMIT" -o "$NATIVE_BIN/smolpng-qualify" ./tools/qualify
+          go test -c -tags nativedesktop -o "$NATIVE_BIN/desktop.test" ./internal/integration
+          "$NATIVE_BIN/smolpng" version --json > "$EVIDENCE/application-version.json"
+          sha256sum "$NATIVE_BIN"/* > "$EVIDENCE/executables.sha256"
+      - name: Qualify the repaired system jpegoptim 1.4 contract
+        run: |
+          set -euo pipefail
+          "$NATIVE_BIN/smolpng-qualify" -executable "$NATIVE_BIN/smolpng" -expected-commit "$SOURCE_COMMIT" -formats jpeg -jpegoptim /usr/bin/jpegoptim -output "$EVIDENCE/jpegoptim14"
+      - name: Exercise real GLib and Dolphin consumers on a private X11 display
+        run: |
+          set -euo pipefail
+          export SMOLPNG_DISPOSABLE_LINUX=yes
+          export SMOLPNG_NATIVE_APP="$NATIVE_BIN/smolpng"
+          export SMOLPNG_NATIVE_EVIDENCE="$EVIDENCE"
+          export HOME="$RUNNER_TEMP/smolpng-desktop-home"
+          export XDG_CONFIG_HOME="$HOME/.config" XDG_DATA_HOME="$HOME/.local/share" XDG_CACHE_HOME="$HOME/.cache"
+          export XDG_RUNTIME_DIR="$RUNNER_TEMP/smolpng-desktop-runtime"
+          mkdir -p "$HOME/Desktop" "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" "$XDG_CACHE_HOME"
+          mkdir -m 700 "$XDG_RUNTIME_DIR"
+          printf 'XDG_DESKTOP_DIR="%s/Desktop"\n' "$HOME" > "$XDG_CONFIG_HOME/user-dirs.dirs"
+          export QT_ACCESSIBILITY=1 QT_LINUX_ACCESSIBILITY_ALWAYS_ON=1 LANG=C.UTF-8
+          unset WAYLAND_DISPLAY
+          owner=''
+          cleanup() { if [ -n "$owner" ]; then kill "$owner" 2>/dev/null || true; wait "$owner" 2>/dev/null || true; fi; }
+          trap cleanup EXIT
+          Xvfb -displayfd 3 -screen 0 1280x960x24 3> "$EVIDENCE/display.txt" > "$EVIDENCE/display.log" 2>&1 &
+          owner=$!
+          for attempt in {1..100}; do
+            test -s "$EVIDENCE/display.txt" && break
+            kill -0 "$owner"
+            sleep 0.05
+          done
+          test -s "$EVIDENCE/display.txt"
+          export DISPLAY=":$(cat "$EVIDENCE/display.txt").0"
+          printf '%s\n' "$DISPLAY" > "$EVIDENCE/transport.txt"
+          strace -f -e trace=execve -o "$EVIDENCE/native-exec.log" dbus-run-session -- bash -c '
+            set -euo pipefail
+            openbox > "$EVIDENCE/window-manager.log" 2>&1 &
+            wm=$!
+            trap "kill $wm 2>/dev/null || true; wait $wm 2>/dev/null || true" EXIT
+            "$NATIVE_BIN/desktop.test" -test.v -test.run "^TestNativeLinuxDesktop$" -test.timeout 5m | tee "$EVIDENCE/test.log"
+          '
+          test -z "$(git status --porcelain)"
+      - name: Retain reports and disposable desktop observations
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: linux-desktop-${{ env.SOURCE_COMMIT }}-${{ github.run_id }}
+          path: artifacts/validation/native-linux-desktop/
+          if-no-files-found: error
+          retention-days: 14

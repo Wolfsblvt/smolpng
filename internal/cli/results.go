@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/Wolfsblvt/smolpng/internal/config"
@@ -53,6 +54,29 @@ func (a *app) finishHuman(ctx context.Context, report domain.Report, eff config.
 	}
 	return receipt, warnings
 }
+
+// A failed foreground handoff has no child to retain its result or notify.
+// Keep that failure on the same completion path as ordinary background jobs.
+func (a *app) finishDrop(ctx context.Context, report domain.Report, eff config.Effective, mode string) (desktop.CopyReceipt, []string) {
+	receipt, warnings := a.finishHuman(ctx, report, eff, mode)
+	if eff.Notify && a.env.Desktop != nil {
+		if err := a.env.Desktop.Notify(ctx, "smolpng", dropNotification(report)); err != nil {
+			warnings = append(warnings, "Desktop notification unavailable: "+err.Error())
+		}
+	}
+	if len(warnings) > 0 {
+		dirs, err := a.dirs()
+		if err != nil {
+			return receipt, append(warnings, "Could not retain updated result warnings: "+err.Error())
+		}
+		last := state.Last{SchemaVersion: 1, AppVersion: Version, Completed: time.Now().UTC(), Report: report, Warnings: warnings}
+		if err := state.Write(ctx, filepath.Join(dirs.State, "last-result.json"), last); err != nil {
+			warnings = append(warnings, "Could not retain updated result warnings: "+err.Error())
+		}
+	}
+	return receipt, warnings
+}
+
 func (a *app) dropCommand() *cobra.Command {
 	f := &compressFlags{}
 	c := &cobra.Command{Use: "drop [INPUT...]", Short: "Configured background compression, clipboard result and last-result recovery"}
@@ -82,6 +106,18 @@ func (a *app) dropCommand() *cobra.Command {
 			return domain.E(2, "clipboard-hold must be 0..30m", nil)
 		}
 		if eff.DropMode == "interactive" && !a.json && !a.jsonl {
+			if runtime.GOOS == "linux" && a.env.Prompt == nil && !ui.IsTerminal(a.env.In, a.env.Out) {
+				err := a.launchLinuxInteractiveDrop(c.Context())
+				if err != nil && !f.DryRun {
+					failed := domain.NewResult("<drop>", f.Preset)
+					failed.Fail(err)
+					_, warnings := a.finishDrop(c.Context(), domain.Summarize([]domain.Result{failed}), eff, "none")
+					for _, warning := range warnings {
+						fmt.Fprintln(a.env.Err, "Warning:", warning)
+					}
+				}
+				return err
+			}
 			return a.interactive(c, args, f)
 		}
 		if !c.Flags().Changed("preset") {
@@ -116,19 +152,7 @@ func (a *app) dropCommand() *cobra.Command {
 					mode = *p
 				}
 			}
-			receipt, warnings = a.finishHuman(c.Context(), result, effective, mode)
-			if effective.Notify && a.env.Desktop != nil {
-				body := dropNotification(result)
-				if er := a.env.Desktop.Notify(c.Context(), "smolpng", body); er != nil {
-					warnings = append(warnings, "Desktop notification unavailable: "+er.Error())
-				}
-			}
-		}
-		if !f.DryRun && len(warnings) > 0 {
-			last := state.Last{SchemaVersion: 1, AppVersion: Version, Completed: time.Now().UTC(), Report: result, Warnings: warnings}
-			if er := state.Write(c.Context(), filepath.Join(dirs.State, "last-result.json"), last); er != nil {
-				warnings = append(warnings, "Could not retain updated result warnings: "+er.Error())
-			}
+			receipt, warnings = a.finishDrop(c.Context(), result, effective, mode)
 		}
 		if len(result.Results) > 0 {
 			result.Results[0].Warnings = append(result.Results[0].Warnings, warnings...)

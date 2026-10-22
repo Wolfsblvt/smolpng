@@ -25,4 +25,6 @@ The maintained subjects now span product, automation, human workflows, setup and
 
 ## Refinement and native image menus
 
+[Native Linux desktop qualification](reference/2026-10-22-native-linux-desktop.md) records actual GLib/Dolphin PNG/JPEG and foreground/background journeys on the bounded hosted Ubuntu X11 consumer, with its repaired failures and retained original evidence.
+
 [Local comparison](comparison.md) measures presets and PNG tool contributions with saved offline reports; [matte preparation](background.md) documents explicit alpha flattening. The [classified regression corpus](../testdata/corpus/README.md) distinguishes structural fixtures from visual calibration gaps. [Context menus](context-menu.md) owns Windows 11 native addon and Dolphin installation boundaries. [ChatGPT execution](chatgpt-execution.md) separates measured native execution from supported Skill-upload claims.

@@ -427,6 +427,7 @@
       "paths": {
         "include": [
           "internal/integration/**",
+          "internal/cli/desktop_terminal.go",
           "internal/shellmenu/**",
           "native/**",
           "internal/desktop/**",
@@ -547,6 +548,10 @@
       {
         "glob": "LICENSES/**",
         "reason": "Unchanged upstream license texts; notice integration remains counted"
+      },
+      {
+        "glob": "docs/reference/2026-10-22-native-linux-desktop/**",
+        "reason": "Generated native qualification payload and screenshot; the adjacent authored Markdown account remains counted"
       }
     ],
     "forceInclude": [],
