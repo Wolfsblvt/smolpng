@@ -33,6 +33,7 @@ type linuxJourney struct {
 	a11y                      *dbus.Conn
 	completed                 time.Time
 	dolphinWindow             string
+	dolphinStop               func()
 }
 
 func (j *linuxJourney) write(name string, value any) {
@@ -86,7 +87,7 @@ func (j *linuxJourney) screen(name string) {
 	j.command("scrot", "--overwrite", filepath.Join(j.evidence, name+".png"))
 }
 
-func (j *linuxJourney) start(program string, args ...string) {
+func (j *linuxJourney) start(program string, args ...string) func() {
 	j.t.Helper()
 	f, e := os.Create(filepath.Join(j.evidence, fmt.Sprintf("process-%s-%d.log", filepath.Base(program), j.sequence)))
 	if e != nil {
@@ -99,9 +100,9 @@ func (j *linuxJourney) start(program string, args ...string) {
 		f.Close()
 		j.t.Fatal(e)
 	}
-	done := make(chan error, 1)
-	go func() { done <- cmd.Wait(); f.Close() }()
-	j.t.Cleanup(func() {
+	done := make(chan struct{})
+	go func() { _ = cmd.Wait(); f.Close(); close(done) }()
+	stop := func() {
 		select {
 		case <-done:
 			return
@@ -114,7 +115,9 @@ func (j *linuxJourney) start(program string, args ...string) {
 			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 			<-done
 		}
-	})
+	}
+	j.t.Cleanup(stop)
+	return stop
 }
 
 type accessibleRef struct {
@@ -273,7 +276,7 @@ func (j *linuxJourney) dolphin(inputs []string, actions ...string) {
 	for _, id := range strings.Fields(string(before)) {
 		previous[id] = true
 	}
-	j.start("dolphin", append([]string{"--new-window", "--select"}, inputs...)...)
+	j.dolphinStop = j.start("dolphin", append([]string{"--new-window", "--select"}, inputs...)...)
 	var window string
 	j.wait("visible Dolphin", func() bool {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -329,6 +332,10 @@ func (j *linuxJourney) closeDolphin() {
 		return exec.CommandContext(ctx, "xdotool", "getwindowname", j.dolphinWindow).Run() != nil
 	})
 	j.dolphinWindow = ""
+	// Closing the X11 window alone leaves Dolphin's process and accessibility
+	// objects alive. End this fixture-owned process group before the next case.
+	j.dolphinStop()
+	j.dolphinStop = nil
 }
 
 func (j *linuxJourney) refusal(args ...string) {
