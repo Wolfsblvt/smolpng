@@ -74,6 +74,10 @@ func (j *linuxJourney) wait(description string, test func() bool) {
 		}
 		time.Sleep(150 * time.Millisecond)
 	}
+	j.screen("wait-failure")
+	if j.a11y != nil {
+		j.write("wait-failure-accessibility.json", j.tree())
+	}
 	j.t.Fatalf("timed out: %s", description)
 }
 
