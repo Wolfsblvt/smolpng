@@ -146,7 +146,7 @@ func run() error {
 		}
 		build := func(pkg, name, extra string) error {
 			flags := "-X github.com/Wolfsblvt/smolpng/internal/cli.Version=" + *version + " -X github.com/Wolfsblvt/smolpng/internal/cli.Commit=" + sha + " -X github.com/Wolfsblvt/smolpng/internal/cli.Distribution=standalone -X main.Commit=" + sha + " " + extra
-			cmd := process.CommandContext(context.Background(), "go", "build", "-trimpath", "-buildvcs=false", "-ldflags", flags, "-o", filepath.Join(stage, name), pkg)
+			cmd := process.CommandContext(context.Background(), "go", "build", "-mod=readonly", "-trimpath", "-buildvcs=false", "-ldflags", flags, "-o", filepath.Join(stage, name), pkg)
 			cmd.Dir = sourceRoot
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
