@@ -552,6 +552,10 @@
       {
         "glob": "docs/reference/2026-10-22-native-linux-desktop/**",
         "reason": "Generated native qualification payload and screenshot; the adjacent authored Markdown account remains counted"
+      },
+      {
+        "glob": "docs/reference/2026-10-22-private-candidate-dev13/report.json",
+        "reason": "Generated join of retained candidate reports; the adjacent authored Markdown account remains counted"
       }
     ],
     "forceInclude": [],
