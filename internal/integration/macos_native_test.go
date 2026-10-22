@@ -16,7 +16,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -159,7 +158,15 @@ func TestNativeFinder(t *testing.T) {
 			t.Fatalf("last-result: %v %+v", err, last)
 		}
 		for _, result := range last.Report.Results {
-			if !slices.Contains(paths, result.Input) || result.Output == "" {
+			// Native aliases may return decomposed Unicode on macOS. Compare
+			// actual file identity, not an assumed normalization of its name.
+			matched := false
+			actual, statErr := os.Stat(result.Input)
+			for _, path := range paths {
+				wanted, err := os.Stat(path)
+				matched = matched || statErr == nil && err == nil && os.SameFile(actual, wanted)
+			}
+			if !matched || result.Output == "" {
 				t.Fatalf("file handoff: %+v", result)
 			}
 			out, err := os.ReadFile(result.Output)
@@ -235,7 +242,7 @@ func TestNativeFinder(t *testing.T) {
 			t.Fatalf("foreground open: %v\n%s", err, out)
 		}
 		// Find only the tab displaying this fixture's exact source filename.
-		query := "tell application \"Terminal\"\nrepeat with w in windows\nrepeat with tb in tabs of w\nif (contents of tb) contains " + macString(filepath.Base(inputs[0])) + " then return tty of tb\nend repeat\nend repeat\nreturn \"\"\nend tell"
+		query := "tell application \"Terminal\"\nrepeat with w in windows\nrepeat with tb in tabs of w\nif (contents of tb) contains " + macString(root+"/one ' ; $(touch injected)") + " then return tty of tb\nend repeat\nend repeat\nreturn \"\"\nend tell"
 		tty := ""
 		deadline := time.Now().Add(20 * time.Second)
 		for time.Now().Before(deadline) {
