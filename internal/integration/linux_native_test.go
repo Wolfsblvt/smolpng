@@ -191,14 +191,17 @@ func (j *linuxJourney) action(label string) {
 	// On the selected Dolphin 23.08 host, the rendered service action is
 	// immediately above Properties, but Qt omits this transient popup from AT-SPI
 	// child traversal. Its bulk cache is an unimplemented empty response in Qt 5.
-	// Use the observed native menu position; downstream output/last checks, rather
-	// than key delivery, establish that the correct action actually ran.
+	// Qt 5's End key only scrolls a menu; it does not select its final action.
+	// From the unselected popup, Up selects Properties and a second Up reaches
+	// the service. Downstream output/last checks establish the actual launch.
 	if label == "Make smol" || label == "smolpng" {
 		lastKey := "Return"
 		if label == "smolpng" {
 			lastKey = "Right"
 		}
-		j.command("xdotool", "key", "--clearmodifiers", "End", "Up", lastKey)
+		j.command("xdotool", "key", "--clearmodifiers", "Up", "Up")
+		j.screen(fmt.Sprintf("dolphin-%02d-selected-action", j.sequence))
+		j.command("xdotool", "key", "--clearmodifiers", lastKey)
 		return
 	}
 	var found accessibleNode

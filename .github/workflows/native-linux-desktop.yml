@@ -68,9 +68,14 @@ jobs:
           go mod verify
           mkdir -p "$NATIVE_BIN"
           go build -trimpath -ldflags "-X github.com/Wolfsblvt/smolpng/internal/cli.Commit=$SOURCE_COMMIT" -o "$NATIVE_BIN/smolpng" ./cmd/smolpng
+          go build -trimpath -ldflags "-X main.Commit=$SOURCE_COMMIT" -o "$NATIVE_BIN/smolpng-qualify" ./tools/qualify
           go test -c -tags nativedesktop -o "$NATIVE_BIN/desktop.test" ./internal/integration
           "$NATIVE_BIN/smolpng" version --json > "$EVIDENCE/application-version.json"
           sha256sum "$NATIVE_BIN"/* > "$EVIDENCE/executables.sha256"
+      - name: Qualify the repaired system jpegoptim 1.4 contract
+        run: |
+          set -euo pipefail
+          "$NATIVE_BIN/smolpng-qualify" -executable "$NATIVE_BIN/smolpng" -expected-commit "$SOURCE_COMMIT" -formats jpeg -jpegoptim /usr/bin/jpegoptim -output "$EVIDENCE/jpegoptim14"
       - name: Exercise real GLib and Dolphin consumers on a private X11 display
         run: |
           set -euo pipefail
