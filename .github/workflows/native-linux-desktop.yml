@@ -7,6 +7,9 @@ on:
       - internal/integration/**
       - internal/shellmenu/**
       - internal/cli/integrate.go
+      - internal/cli/cli.go
+      - internal/cli/desktop_terminal.go
+      - internal/cli/human.go
       - internal/cli/shell.go
       - internal/cli/results.go
       - internal/workflow/jpeg.go

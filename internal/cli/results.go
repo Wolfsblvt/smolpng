@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/Wolfsblvt/smolpng/internal/config"
@@ -82,6 +83,9 @@ func (a *app) dropCommand() *cobra.Command {
 			return domain.E(2, "clipboard-hold must be 0..30m", nil)
 		}
 		if eff.DropMode == "interactive" && !a.json && !a.jsonl {
+			if runtime.GOOS == "linux" && a.env.Prompt == nil && !ui.IsTerminal(a.env.In, a.env.Out) {
+				return a.launchLinuxInteractiveDrop(c.Context())
+			}
 			return a.interactive(c, args, f)
 		}
 		if !c.Flags().Changed("preset") {

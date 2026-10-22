@@ -64,6 +64,7 @@ type Environment struct {
 // Environment has only invocation and external-resource seams, not a second engine.
 type app struct {
 	env                                         Environment
+	invocation                                  []string
 	json, jsonl, quiet, verbose, portable, auto bool
 	home, configPath                            string
 	noProject                                   bool
@@ -99,7 +100,7 @@ func Run(ctx context.Context, args []string, env Environment) int {
 			env.Copy = copy
 		}
 	}
-	a := &app{env: env}
+	a := &app{env: env, invocation: append([]string(nil), args...)}
 	defer func() {
 		if a.terminalRelease != nil {
 			a.terminalRelease()

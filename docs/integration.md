@@ -63,6 +63,8 @@ Windows uses Known Folders for user Programs, Desktop and Send To. Windows Scrip
 
 Linux uses user XDG applications and Desktop locations. Desktop files quote executable and argument values according to the desktop-entry specification, append a standalone `%F` for file lists, and select `Terminal=true` only for interactive operation. No shell wrapper or MIME default is installed. Some desktops still require a user to mark a desktop launcher trusted, or choose their preferred terminal. That is a native qualification step, not silently automated security-policy changes.
 
+If an Auto entry is already running without a terminal and the current configuration selects `drop.mode=interactive`, smolpng hands the same invocation to GLib's `gio launch` through a private temporary `Terminal=true` entry. The desktop chooses the terminal; the temporary entry is removed after the launch request. This configured foreground route requires `gio` and a configured terminal. Background mode creates neither. A successful launch request is not a completed compression; the opened workflow and `smolpng last` carry that result.
+
 The working directory is the user's home, not the binary folder. Launchers ignore transient project settings through `--no-project` and retain an explicitly selected config file. Explicit portable installation records its data root through `--home`; relocating the application requires reinstalling its app-owned launchers.
 
 ## Modification and interruption safety

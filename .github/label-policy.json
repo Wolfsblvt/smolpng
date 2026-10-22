@@ -427,6 +427,7 @@
       "paths": {
         "include": [
           "internal/integration/**",
+          "internal/cli/desktop_terminal.go",
           "internal/shellmenu/**",
           "native/**",
           "internal/desktop/**",
