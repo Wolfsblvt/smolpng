@@ -1,0 +1,124 @@
+name: Native credential-store qualification
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/native-keyring.yml
+      - internal/secret/credentials_native_test.go
+      - tools/qualify/native-keyring-linux.sh
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  native:
+    name: Native keyring (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-amd64
+            runner: ubuntu-24.04
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+          - platform: windows-amd64
+            runner: windows-latest
+          - platform: windows-arm64
+            runner: windows-11-arm
+          - platform: macos-amd64
+            runner: macos-26-intel
+          - platform: macos-arm64
+            runner: macos-26
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    env:
+      SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      CGO_ENABLED: '0'
+      GOTOOLCHAIN: local
+      SMOLPNG_NATIVE_KEYRING: disposable-host
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ env.SOURCE_COMMIT }}
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Build exact-source application and isolated native test
+        run: |
+          evidence="$GITHUB_WORKSPACE/artifacts/validation/native-keyring"
+          bin="$GITHUB_WORKSPACE/artifacts/bin/native-keyring"
+          mkdir -p "$evidence" "$bin"
+          printf 'KEYRING_EVIDENCE=%s\nKEYRING_BIN=%s\n' "$evidence" "$bin" >> "$GITHUB_ENV"
+          git rev-parse HEAD > "$evidence/source.txt"
+          test "$(cat "$evidence/source.txt")" = "$SOURCE_COMMIT"
+          go env -json GOVERSION GOOS GOARCH CGO_ENABLED > "$evidence/go-env.json"
+          printf '%s\n%s\n' "${ImageOS:-unknown}" "${ImageVersion:-unknown}" > "$evidence/runner-image.txt"
+          uname -srm > "$evidence/kernel.txt"
+          if [ "$RUNNER_OS" = macOS ]; then
+            sw_vers > "$evidence/os-release.txt"
+          elif [ "$RUNNER_OS" = Linux ]; then
+            cat /etc/os-release > "$evidence/os-release.txt"
+          else
+            powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -Command \
+              'Get-CimInstance Win32_OperatingSystem | Select-Object Caption,Version,BuildNumber,OSArchitecture | ConvertTo-Json' \
+              > "$evidence/os-release.txt"
+          fi
+          go mod verify > "$evidence/module-verify.txt"
+          suffix=""
+          if [ "$RUNNER_OS" = Windows ]; then suffix=.exe; fi
+          go build -trimpath -ldflags "-X github.com/Wolfsblvt/smolpng/internal/cli.Commit=$SOURCE_COMMIT" \
+            -o "$bin/smolpng$suffix" ./cmd/smolpng
+          go test -c -tags nativekeyring -o "$bin/keyring-test$suffix" ./internal/secret
+          printf 'SMOLPNG_KEYRING_CLI=%s\nSMOLPNG_KEYRING_HOME=%s\n' \
+            "$bin/smolpng$suffix" "$RUNNER_TEMP/smolpng-keyring-home" >> "$GITHUB_ENV"
+          "$bin/smolpng$suffix" version --json > "$evidence/application-version.json"
+          if [ "$RUNNER_OS" = macOS ]; then
+            shasum -a 256 "$bin"/* > "$evidence/executables.sha256"
+          else
+            sha256sum "$bin"/* > "$evidence/executables.sha256"
+          fi
+      - name: Prepare disposable Linux Secret Service
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update > "$KEYRING_EVIDENCE/service-package-update.txt"
+          sudo apt-get install --yes --no-install-recommends dbus gnome-keyring libglib2.0-bin \
+            > "$KEYRING_EVIDENCE/service-package-install.txt"
+          dpkg-query -W -f='${Package} ${Version} ${Architecture}\n' dbus gnome-keyring libglib2.0-bin \
+            > "$KEYRING_EVIDENCE/service-packages.txt"
+          export XDG_DATA_HOME="$RUNNER_TEMP/smolpng-keyring-data"
+          export XDG_RUNTIME_DIR="$RUNNER_TEMP/smolpng-keyring-runtime"
+          mkdir -p "$XDG_DATA_HOME" "$XDG_RUNTIME_DIR"
+          chmod 700 "$XDG_RUNTIME_DIR"
+          dbus-run-session -- bash tools/qualify/native-keyring-linux.sh
+      - name: Exercise Windows or macOS native credential store
+        if: runner.os != 'Linux'
+        run: |
+          suffix=""
+          if [ "$RUNNER_OS" = Windows ]; then suffix=.exe; fi
+          go tool test2json -p github.com/Wolfsblvt/smolpng/internal/secret -t \
+            "$KEYRING_BIN/keyring-test$suffix" -test.v=test2json \
+            -test.run '^TestNativeCredentialsLifecycle$' -test.timeout 120s \
+            > "$KEYRING_EVIDENCE/native-tests.jsonl"
+      - name: Exercise the unavailable Linux store and explicit environment route
+        if: runner.os == 'Linux'
+        run: |
+          export SMOLPNG_KEYRING_MODE=unavailable
+          export SMOLPNG_KEYRING_HOME="$RUNNER_TEMP/smolpng-unavailable-keyring-home"
+          export DBUS_SESSION_BUS_ADDRESS="unix:path=$SMOLPNG_KEYRING_HOME/nonexistent-bus"
+          go tool test2json -p github.com/Wolfsblvt/smolpng/internal/secret -t \
+            "$KEYRING_BIN/keyring-test" -test.v=test2json \
+            -test.run '^TestNativeUnavailableCredentials$' -test.timeout 120s \
+            > "$KEYRING_EVIDENCE/unavailable-tests.jsonl"
+      - name: Retain non-secret evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: native-keyring-${{ matrix.platform }}-${{ env.SOURCE_COMMIT }}-${{ github.run_id }}
+          path: artifacts/validation/native-keyring/
+          if-no-files-found: error
+          retention-days: 14
