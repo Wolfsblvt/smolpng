@@ -18,7 +18,7 @@ Candidate compilation isolates the Go command from ambient workspaces, per-user 
 
 The archive receipt binds individual member hashes. `SHA256SUMS` binds every archive. `build-index.json` is written incrementally and marks complete only after the entire selected build succeeds. Failure leaves inspectable local output and returns nonzero, not a nominal release.
 
-Release inputs are selected from NUL-delimited Git index records and read from their exact indexed blob IDs. Only ordinary tracked file modes (`100644` and `100755`) are admitted. A symlink, gitlink, malformed object/path record or duplicate refuses the build; the working-tree path is never followed for package content. This keeps a clean checkout from importing outside or concurrently changed bytes through an admitted `docs/`, Skill, preset, schema or corpus path.
+Release inputs are enumerated from the exact selected commit with NUL-delimited `git ls-tree` records and read from their committed blob IDs. Only ordinary file modes (`100644` and `100755`) are admitted. A symlink, gitlink, malformed object/path record or duplicate refuses the build; the mutable index and working-tree paths are never used for common package content. This binds docs, Skills, presets, schemas, corpus and notices to the same source commit named in the receipt.
 
 ## Windows executable identity
 

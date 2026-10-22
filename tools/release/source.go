@@ -35,23 +35,23 @@ func validObjectID(value string) bool {
 	return true
 }
 
-// releaseInputs reads exact ordinary-file blobs from the Git index. NUL-delimited
-// records preserve every valid Git path byte except NUL. Rejecting symlink/gitlink
-// modes and never following working-tree paths prevents package content from
-// escaping the repository or changing after the clean-tree check.
-func releaseInputs(index []byte, readBlob func(string) ([]byte, error)) (map[string]packaging.Content, error) {
+// releaseInputs reads exact ordinary-file blobs from the selected Git commit.
+// NUL-delimited tree records preserve every valid Git path byte except NUL.
+// Rejecting symlink/gitlink modes and never following working-tree paths binds
+// common package content to the same commit named by the release receipt.
+func releaseInputs(tree []byte, readBlob func(string) ([]byte, error)) (map[string]packaging.Content, error) {
 	result := map[string]packaging.Content{}
-	for _, record := range bytes.Split(index, []byte{0}) {
+	for _, record := range bytes.Split(tree, []byte{0}) {
 		if len(record) == 0 {
 			continue
 		}
 		parts := bytes.SplitN(record, []byte{'\t'}, 2)
 		if len(parts) != 2 {
-			return nil, fmt.Errorf("invalid git index record")
+			return nil, fmt.Errorf("invalid git tree record")
 		}
 		meta := strings.Fields(string(parts[0]))
-		if len(meta) != 3 || meta[2] != "0" || !validObjectID(meta[1]) {
-			return nil, fmt.Errorf("invalid git index metadata")
+		if len(meta) != 3 || !validObjectID(meta[2]) {
+			return nil, fmt.Errorf("invalid git tree metadata")
 		}
 		name := string(parts[1])
 		if !fs.ValidPath(name) {
@@ -60,13 +60,13 @@ func releaseInputs(index []byte, readBlob func(string) ([]byte, error)) (map[str
 		if !releaseInputPath(name) {
 			continue
 		}
-		if meta[0] != "100644" && meta[0] != "100755" {
-			return nil, fmt.Errorf("release input %q has unsupported tracked mode %s", name, meta[0])
+		if (meta[0] != "100644" && meta[0] != "100755") || meta[1] != "blob" {
+			return nil, fmt.Errorf("release input %q has unsupported tracked mode/type %s %s", name, meta[0], meta[1])
 		}
 		if _, exists := result[name]; exists {
 			return nil, fmt.Errorf("duplicate tracked release path %q", name)
 		}
-		data, err := readBlob(meta[1])
+		data, err := readBlob(meta[2])
 		if err != nil {
 			return nil, fmt.Errorf("read release input %q: %w", name, err)
 		}

@@ -92,16 +92,16 @@ func run() error {
 	if e = os.MkdirAll(out, 0755); e != nil {
 		return e
 	}
-	index := process.CommandContext(context.Background(), "git", "ls-files", "--stage", "-z")
-	indexed, e := index.Output()
+	tree := process.CommandContext(context.Background(), "git", "ls-tree", "-r", "-z", "--full-tree", sha)
+	tracked, e := tree.Output()
 	if e != nil {
 		return e
 	}
-	common, e := releaseInputs(indexed, func(object string) ([]byte, error) {
+	common, e := releaseInputs(tracked, func(object string) ([]byte, error) {
 		cmd := process.CommandContext(context.Background(), "git", "cat-file", "blob", object)
 		data, err := cmd.Output()
 		if err != nil {
-			return nil, fmt.Errorf("read indexed Git blob %s: %w", object, err)
+			return nil, fmt.Errorf("read committed Git blob %s: %w", object, err)
 		}
 		return data, nil
 	})
