@@ -561,6 +561,10 @@
       {
         "glob": "docs/reference/2026-10-22-windows-dev13-lifecycle/report.json",
         "reason": "Generated join of original lifecycle reports; the adjacent authored Markdown account remains counted"
+      },
+      {
+        "glob": "docs/reference/2026-10-22-private-candidate-dev14/report.json",
+        "reason": "Generated join of retained candidate reports; the adjacent authored Markdown account remains counted"
       }
     ],
     "forceInclude": [],
