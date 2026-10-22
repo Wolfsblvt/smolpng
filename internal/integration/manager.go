@@ -14,13 +14,18 @@ import (
 )
 
 type Record struct {
-	Entry   Entry  `json:"entry"`
-	SHA256  string `json:"sha256"`
-	Version string `json:"version"`
+	Entry   Entry    `json:"entry"`
+	SHA256  string   `json:"sha256"`
+	Version string   `json:"version"`
+	Members []string `json:"members,omitempty"`
 }
 type Pending struct {
-	Next   Record `json:"next"`
-	Before string `json:"before,omitempty"`
+	Next     Record  `json:"next"`
+	Before   string  `json:"before,omitempty"`
+	Previous *Record `json:"previous,omitempty"`
+	Stage    string  `json:"stage,omitempty"`
+	Backup   string  `json:"backup,omitempty"`
+	Removing bool    `json:"removing,omitempty"`
 }
 type Registry struct {
 	Schema  int      `json:"schema"`
@@ -35,6 +40,8 @@ type Manager struct {
 	StatePath, Version string
 	Allowed            Locations
 	Renderer           Renderer
+	// Keep the atomic directory transfer at one boundary, including fault qualification.
+	moveBundle func(string, string) error
 }
 
 func digest(b []byte) string { return fmt.Sprintf("%x", sha256.Sum256(b)) }
@@ -78,7 +85,7 @@ func (m Manager) validate(x Entry) error {
 		return fmt.Errorf("invalid managed launcher record")
 	}
 	extension := filepath.Ext(x.Path)
-	if extension != ".lnk" && extension != ".desktop" && !(extension == ".ini" && x.ID == "shell-menu" && filepath.Dir(x.Path) == m.Allowed.ShellState) {
+	if extension != ".lnk" && extension != ".desktop" && extension != ".app" && !(extension == ".ini" && x.ID == "shell-menu" && filepath.Dir(x.Path) == m.Allowed.ShellState) {
 		return fmt.Errorf("invalid launcher extension")
 	}
 	if filepath.Base(x.Path) != "smolpng-"+x.ID+extension {
@@ -116,10 +123,16 @@ func (m Manager) load() (Registry, error) {
 		if seen[rec.Entry.Path] || len(rec.SHA256) != 64 {
 			return s, fmt.Errorf("invalid duplicate/hash in launcher registry")
 		}
+		if e = validateMembers(rec); e != nil {
+			return s, e
+		}
 		seen[rec.Entry.Path] = true
 	}
 	if s.Pending != nil {
 		if e = m.validate(s.Pending.Next.Entry); e != nil {
+			return s, e
+		}
+		if e = validateBundlePending(s.Pending); e != nil {
 			return s, e
 		}
 	}
@@ -139,7 +152,7 @@ func (m Manager) Status() ([]Status, bool, error) {
 	}
 	out := []Status{}
 	for _, r := range s.Records {
-		h, e := hashFile(r.Entry.Path)
+		h, e := hashRecord(r)
 		state := "current"
 		if e != nil {
 			state = "unreadable"
@@ -173,7 +186,13 @@ func (m Manager) mutate(ctx context.Context, fn func(*Registry) error) error {
 	}
 	if s.Pending != nil {
 		p := s.Pending
-		h, e := hashFile(p.Next.Entry.Path)
+		if p.Stage != "" {
+			if e = m.recoverBundle(ctx, &s); e != nil {
+				return e
+			}
+			return fn(&s)
+		}
+		h, e := hashRecord(p.Next)
 		if e != nil {
 			return e
 		}
@@ -205,7 +224,7 @@ func (m Manager) Install(ctx context.Context, entries []Entry) error {
 			if e := m.validate(x); e != nil {
 				return e
 			}
-			before, e := hashFile(x.Path)
+			before, e := hashRecord(recordFor(*s, x))
 			if e != nil {
 				return e
 			}
@@ -229,6 +248,12 @@ func (m Manager) Install(ctx context.Context, entries []Entry) error {
 		for _, x := range entries {
 			if m.Renderer == nil {
 				return fmt.Errorf("launcher renderer unavailable")
+			}
+			if filepath.Ext(x.Path) == ".app" {
+				if e := m.installBundle(ctx, s, x); e != nil {
+					return e
+				}
+				continue
 			}
 			b, e := m.Renderer.Render(ctx, x)
 			if e != nil {
@@ -271,7 +296,7 @@ func (m Manager) Remove(ctx context.Context, id string) error {
 				kept = append(kept, rec)
 				continue
 			}
-			h, e := hashFile(rec.Entry.Path)
+			h, e := hashRecord(rec)
 			if e != nil {
 				return e
 			}
@@ -279,8 +304,14 @@ func (m Manager) Remove(ctx context.Context, id string) error {
 				return fmt.Errorf("preserving modified shortcut: %s", rec.Entry.Path)
 			}
 		}
-		for _, rec := range s.Records {
+		for _, rec := range slices.Clone(s.Records) {
 			if id != "" && rec.Entry.ID != id {
+				continue
+			}
+			if filepath.Ext(rec.Entry.Path) == ".app" {
+				if e := m.removeBundle(ctx, s, rec); e != nil {
+					return e
+				}
 				continue
 			}
 			if e := os.Remove(rec.Entry.Path); e != nil && !errors.Is(e, os.ErrNotExist) {

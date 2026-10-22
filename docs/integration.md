@@ -2,7 +2,7 @@
 
 ## Meaning
 
-smolpng can create and remove its own per-user Windows and Linux launchers. Every file is previewed before explicit application and tracked by exact SHA-256. This is a functional installer surface, not proof that a particular file manager supports every drop or clipboard representation.
+smolpng can create and remove its own per-user Windows and Linux launchers and unsigned macOS development applets. Every destination is previewed before explicit application and tracked by exact SHA-256; app bundles include all owned members. This is a functional installer surface, not proof that a particular file manager supports every drop or clipboard representation. [Native macOS file-open and Terminal journeys](reference/2026-10-22-macos-finder.md) passed on the exact Intel/ARM64 hosts recorded there.
 
 ```sh
 smolpng integrate install --desktop
@@ -49,18 +49,28 @@ Native shortcut creation and Windows activation with file arguments have passed.
 
 `--send-to` is Windows-specific. Ordinary installation creates a menu entry opening the TUI and an Auto entry running the background workflow. Optional desktop targets provide both variants. A custom preset shortcut can use `--interactive` to start the recipe picker instead. The preset must exist in built-ins or installed user settings when created; project-only definitions must first be imported into user storage. It is resolved by name when the launcher runs. No preset definition or credential is embedded.
 
+## macOS development applets
+
+On macOS, `integrate install --desktop` previews `.app` destinations in `~/Applications` and `~/Desktop`; repeat with `--apply` to create them. The built-in AppleScript compiler creates native file-open/drop handlers around the installed `smolpng` executable. Keep that executable at its recorded location. The applets use the operating system's provisional appearance and carry no production signing, notarization or accepted product icon.
+
+The Auto applet passes dropped files to `smolpng drop`. The interactive applet opens the existing recipe picker in Terminal. Auto also opens Terminal when the current configuration selects `drop.mode=interactive`; configuration is resolved by Go rather than a second TOML parser. The Terminal command removes its temporary script before starting the CLI. File paths remain separate arguments, including spaces, quotes and Unicode. No optimizer is bundled or executed by the applet itself.
+
+Use `smolpng last --json` to recover background outcomes, and `integrate status --json` to inspect ownership. Remove unchanged applets with `integrate remove --apply`. Native compilation, one/many-file events, both Terminal variants and owned lifecycle passed on macOS 15.7.9 Intel and macOS 26.6.2 ARM64. The macOS 26 Intel hosted image remained unqualified after an independently reported IconServices failure. This source addition is not a public macOS package or a claim of physical Finder dragging.
+
 ## Native behavior
 
 Windows uses Known Folders for user Programs, Desktop and Send To. Windows Script Host produces a `.lnk` in a private temporary directory through a fixed, encoded PowerShell program. Fields are quoted, never evaluated as user script. The completed link is installed atomically. Background links target the adjacent `smolpngw.exe`, whose entry point explicitly supplies `drop`; interactive links target `smolpng.exe`. Missing companion binaries stop installation. No administrator elevation, PATH mutation, registry context menu or default-file association occurs.
 
 Linux uses user XDG applications and Desktop locations. Desktop files quote executable and argument values according to the desktop-entry specification, append a standalone `%F` for file lists, and select `Terminal=true` only for interactive operation. No shell wrapper or MIME default is installed. Some desktops still require a user to mark a desktop launcher trusted, or choose their preferred terminal. That is a native qualification step, not silently automated security-policy changes.
 
-The working directory is the user's home, not the binary folder. Launchers ignore transient project settings through `--no-project` and retain an explicitly selected config file. Explicit portable installation records its data root through `--home`; relocating the application requires reinstalling its app-owned launchers. macOS Finder wrappers are not installed by this command.
+The working directory is the user's home, not the binary folder. Launchers ignore transient project settings through `--no-project` and retain an explicitly selected config file. Explicit portable installation records its data root through `--home`; relocating the application requires reinstalling its app-owned launchers.
 
 ## Modification and interruption safety
 
 `integrations.json` lives under the smolpng state directory. The registry records destinations, arguments, app version and installed hashes. Reinstall only replaces an unchanged app-owned file. Removal never deletes modified or unrelated files. An OS lock prevents concurrent integration operations.
 
 A pending journal precedes publication. `integrate repair --apply` recognizes only exact old/new hashes from that journal; ambiguous or user-modified bytes stop automatic recovery. A partially completed multi-file operation can be inspected and resumed without deleting unowned files. Moving native user folders may require manual disposition of old recorded destinations rather than authorizing deletion in an unexpected path.
+
+Directory-based macOS applets record the complete member list and content/permission digest. Added user files make a bundle modified without reading those files' contents. Removal and replacement journal the operation, then atomically move the existing applet into a private sibling workspace before verifying its ownership. A late edit is restored when the destination is absent. If another object has appeared there, both objects are preserved and the operation refuses. Replacement publishes only after that verification; removal deletes only the verified quarantined bundle. Interrupted recovery reconciles the destination before cleanup, and an already-cleaned workspace does not leave the operation stuck. Symlinks, changed transaction contents and ambiguous destinations still stop automatic replacement or deletion. This protects ordinary named-path changes, not a hostile same-user process deliberately mutating retained open handles inside the private workspace.
 
 Sources: Microsoft Windows Script Host shortcut documentation and the freedesktop Desktop Entry Specification, consulted during implementation. Tests exercise generated command lines, quoting, preview, ownership protection, interruption recovery and actual temporary filesystem writes. Native Windows `.lnk` creation and ShellExecute activation with appended PNG/JPEG file arguments have now passed, including collision handling and last-result recovery; see the [dated native record](reference/2026-10-16-windows-shortcut-qualification.md). The GUI entry point discards terminal reports and retains results for `smolpng last`. [PNG clipboard paste in Paint](reference/2026-10-19-windows-clipboard-alpha.md) now has a real Windows consumer observation, including correct alpha compositing after writer exit. Physical Explorer dragging, rendered notifications, file-list/text paste and other-host clipboard behavior remain unobserved.
