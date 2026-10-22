@@ -97,7 +97,7 @@ func run() error {
 	if e != nil {
 		return e
 	}
-	common, e := releaseInputs(tracked, func(object string) ([]byte, error) {
+	committed, e := committedFiles(tracked, func(object string) ([]byte, error) {
 		cmd := process.CommandContext(context.Background(), "git", "cat-file", "blob", object)
 		data, err := cmd.Output()
 		if err != nil {
@@ -108,6 +108,15 @@ func run() error {
 	if e != nil {
 		return e
 	}
+	sourceRoot, e := os.MkdirTemp("", "smolpng-release-source-*")
+	if e != nil {
+		return e
+	}
+	defer os.RemoveAll(sourceRoot)
+	if e = materializeCommittedTree(sourceRoot, committed); e != nil {
+		return e
+	}
+	common := releaseInputs(committed)
 	artifacts := []packaging.Artifact{}
 	manifest := updates.Manifest{Schema: 1, Product: "smolpng", Version: *version, Commit: sha, Channel: "stable", Issued: time.Now().UTC(), Expires: time.Now().UTC().Add(90 * 24 * time.Hour), Assets: map[string]updates.Asset{}}
 	allHashes := map[string]string{}
@@ -138,6 +147,7 @@ func run() error {
 		build := func(pkg, name, extra string) error {
 			flags := "-X github.com/Wolfsblvt/smolpng/internal/cli.Version=" + *version + " -X github.com/Wolfsblvt/smolpng/internal/cli.Commit=" + sha + " -X github.com/Wolfsblvt/smolpng/internal/cli.Distribution=standalone -X main.Commit=" + sha + " " + extra
 			cmd := process.CommandContext(context.Background(), "go", "build", "-trimpath", "-buildvcs=false", "-ldflags", flags, "-o", filepath.Join(stage, name), pkg)
+			cmd.Dir = sourceRoot
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 			cmd.Env = releaseBuildEnvironment(os.Environ(), goos, arch)

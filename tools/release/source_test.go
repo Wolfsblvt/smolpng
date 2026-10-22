@@ -4,6 +4,9 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -18,8 +21,8 @@ func treeRecord(mode, kind, object, path string) []byte {
 	return []byte(mode + " " + kind + " " + object + "\t" + path + "\x00")
 }
 
-func TestReleaseInputsCollectExactAdmittedBlobs(t *testing.T) {
-	blobs := map[string][]byte{objectA: []byte("readme\n\x00bytes"), objectB: []byte("docs"), objectC: []byte("ignored")}
+func TestCommittedFilesCollectExactBlobs(t *testing.T) {
+	blobs := map[string][]byte{objectA: []byte("readme\n\x00bytes"), objectB: []byte("package main\n"), objectC: []byte("ignored")}
 	reads := []string{}
 	read := func(object string) ([]byte, error) {
 		reads = append(reads, object)
@@ -31,65 +34,89 @@ func TestReleaseInputsCollectExactAdmittedBlobs(t *testing.T) {
 	}
 	tree := bytes.Join([][]byte{
 		treeRecord("100644", "blob", objectA, "README.md"),
-		treeRecord("100755", "blob", objectB, "docs/a name.md"),
-		treeRecord("100644", "blob", objectC, "cmd/ignored.go"),
+		treeRecord("100755", "blob", objectB, "cmd/tool/main.go"),
+		treeRecord("100644", "blob", objectC, "ignored.txt"),
 	}, nil)
-	got, err := releaseInputs(tree, read)
+	got, err := committedFiles(tree, read)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !bytes.Equal(got["README.md"].Data, blobs[objectA]) || !bytes.Equal(got["docs/a name.md"].Data, blobs[objectB]) {
-		t.Fatal("admitted release input bytes differ from committed blobs")
+	if !bytes.Equal(got["README.md"].Data, blobs[objectA]) || !bytes.Equal(got["cmd/tool/main.go"].Data, blobs[objectB]) {
+		t.Fatal("committed source bytes differ from selected blobs")
 	}
-	if _, ok := got["cmd/ignored.go"]; ok || len(got) != 2 {
-		t.Fatalf("unexpected release inputs: %#v", got)
+	if !got["cmd/tool/main.go"].Executable || len(got) != 3 {
+		t.Fatalf("unexpected committed source: %#v", got)
 	}
-	if strings.Join(reads, ",") != objectA+","+objectB {
+	if strings.Join(reads, ",") != objectA+","+objectB+","+objectC {
 		t.Fatalf("unexpected blob reads: %v", reads)
 	}
-}
-
-func TestReleaseInputsRejectTrackedSymlinkOrGitlink(t *testing.T) {
-	for _, tc := range []struct{ mode, kind string }{{"120000", "blob"}, {"160000", "commit"}} {
-		t.Run(tc.mode, func(t *testing.T) {
-			called := false
-			_, err := releaseInputs(treeRecord(tc.mode, tc.kind, objectA, "docs/"+tc.mode), func(string) ([]byte, error) {
-				called = true
-				return nil, nil
-			})
-			if err == nil || !strings.Contains(err.Error(), "unsupported tracked mode/type") {
-				t.Fatalf("expected tracked-mode refusal, got %v", err)
-			}
-			if called {
-				t.Fatal("unsupported tracked mode reached blob reader")
-			}
-		})
+	selected := releaseInputs(got)
+	if len(selected) != 1 || !bytes.Equal(selected["README.md"].Data, blobs[objectA]) {
+		t.Fatalf("unexpected package inputs: %#v", selected)
 	}
 }
 
-func TestReleaseInputsRejectInvalidDuplicateOrUnreadableRecords(t *testing.T) {
-	cases := map[string]struct {
-		tree []byte
-		read func(string) ([]byte, error)
-	}{
-		"parent path": {tree: treeRecord("100644", "blob", objectA, "../README.md")},
-		"backslash": {tree: treeRecord("100644", "blob", objectA, `docs\..\outside`)},
-		"drive-like": {tree: treeRecord("100644", "blob", objectA, "docs/C:outside")},
-		"line control": {tree: treeRecord("100644", "blob", objectA, "docs/line\nbreak.md")},
-		"invalid object": {tree: treeRecord("100644", "blob", "not-an-object", "README.md")},
-		"duplicate": {tree: bytes.Repeat(treeRecord("100644", "blob", objectA, "README.md"), 2)},
-		"malformed": {tree: []byte("100644 no-tab\x00")},
-		"unreadable": {tree: treeRecord("100644", "blob", objectA, "README.md"), read: func(string) ([]byte, error) { return nil, fmt.Errorf("missing blob") }},
+func TestCommittedFilesRejectSpecialOrCollidingPaths(t *testing.T) {
+	cases := map[string][]byte{
+		"symlink": treeRecord("120000", "blob", objectA, "docs/link"),
+		"gitlink": treeRecord("160000", "commit", objectA, "nested"),
+		"parent path": treeRecord("100644", "blob", objectA, "../README.md"),
+		"backslash": treeRecord("100644", "blob", objectA, `docs\..\outside`),
+		"drive-like": treeRecord("100644", "blob", objectA, "docs/C:outside"),
+		"line control": treeRecord("100644", "blob", objectA, "docs/line\nbreak.md"),
+		"invalid object": treeRecord("100644", "blob", "not-an-object", "README.md"),
+		"case collision": bytes.Join([][]byte{treeRecord("100644", "blob", objectA, "README.md"), treeRecord("100644", "blob", objectB, "readme.md")}, nil),
+		"duplicate": bytes.Repeat(treeRecord("100644", "blob", objectA, "README.md"), 2),
+		"malformed": []byte("100644 no-tab\x00"),
 	}
-	for name, tc := range cases {
+	for name, tree := range cases {
 		t.Run(name, func(t *testing.T) {
-			read := tc.read
-			if read == nil {
-				read = func(string) ([]byte, error) { return []byte("data"), nil }
+			called := false
+			_, err := committedFiles(tree, func(string) ([]byte, error) {
+				called = true
+				return []byte("data"), nil
+			})
+			if err == nil {
+				t.Fatal("expected committed source refusal")
 			}
-			if _, err := releaseInputs(tc.tree, read); err == nil {
-				t.Fatal("expected release input refusal")
+			if name != "case collision" && name != "duplicate" && called {
+				t.Fatal("invalid source reached blob reader")
 			}
 		})
+	}
+}
+
+func TestCommittedFilesRejectUnreadableBlob(t *testing.T) {
+	_, err := committedFiles(treeRecord("100644", "blob", objectA, "README.md"), func(string) ([]byte, error) {
+		return nil, fmt.Errorf("missing blob")
+	})
+	if err == nil || !strings.Contains(err.Error(), "missing blob") {
+		t.Fatalf("expected blob-read refusal, got %v", err)
+	}
+}
+
+func TestMaterializeCommittedTree(t *testing.T) {
+	root := t.TempDir()
+	files := map[string]packaging.Content{
+		"README.md": {Data: []byte("readme")},
+		"cmd/tool": {Data: []byte("tool"), Executable: true},
+	}
+	if err := materializeCommittedTree(root, files); err != nil {
+		t.Fatal(err)
+	}
+	for name, want := range map[string]string{"README.md": "readme", "cmd/tool": "tool"} {
+		data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(name)))
+		if err != nil || string(data) != want {
+			t.Fatalf("materialized %s = %q, %v", name, data, err)
+		}
+	}
+	if runtime.GOOS != "windows" {
+		info, err := os.Stat(filepath.Join(root, "cmd", "tool"))
+		if err != nil || info.Mode().Perm() != 0755 {
+			t.Fatalf("executable mode = %v, %v", info, err)
+		}
+	}
+	if err := materializeCommittedTree(root, files); err == nil {
+		t.Fatal("expected existing materialized paths to refuse overwrite")
 	}
 }
