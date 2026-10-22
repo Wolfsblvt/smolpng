@@ -5,8 +5,10 @@ set -euo pipefail
 : "${KEYRING_EVIDENCE:?KEYRING_EVIDENCE is required}"
 
 # dbus-run-session owns this bus; this foreground process owns its fixture store.
-gnome-keyring-daemon --foreground --unlock --components=secrets \
-  < /dev/null > "$KEYRING_EVIDENCE/secret-service-start.txt" 2>&1 &
+# A newline supplies an empty fixture password; EOF alone creates only the
+# session collection, leaving go-keyring's login collection unavailable.
+printf '\n' | gnome-keyring-daemon --foreground --unlock --components=secrets \
+  > "$KEYRING_EVIDENCE/secret-service-start.txt" 2>&1 &
 keyring_pid=$!
 trap 'kill "$keyring_pid" 2>/dev/null || true; wait "$keyring_pid" 2>/dev/null || true' EXIT
 gdbus wait --session --timeout 15 org.freedesktop.secrets
