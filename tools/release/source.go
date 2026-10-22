@@ -4,6 +4,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -113,7 +114,10 @@ func materializeCommittedTree(root string, committed map[string]packaging.Conten
 		if err != nil {
 			return err
 		}
-		_, writeErr := file.Write(content.Data)
+		written, writeErr := file.Write(content.Data)
+		if writeErr == nil && written != len(content.Data) {
+			writeErr = io.ErrShortWrite
+		}
 		if writeErr == nil {
 			writeErr = file.Sync()
 		}

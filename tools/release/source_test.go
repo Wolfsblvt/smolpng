@@ -9,6 +9,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/Wolfsblvt/smolpng/internal/packaging"
 )
 
 const (
