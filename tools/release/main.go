@@ -92,20 +92,14 @@ func run() error {
 	if e = os.MkdirAll(out, 0755); e != nil {
 		return e
 	}
-	names, e := git("ls-files")
+	index := process.CommandContext(context.Background(), "git", "ls-files", "--stage", "-z")
+	indexed, e := index.Output()
 	if e != nil {
 		return e
 	}
-	common := map[string]packaging.Content{}
-	for _, name := range strings.Split(names, "\n") {
-		include := name == "LICENSE" || name == "README.md" || name == "license-map.md" || name == "third-party-notices.md" || strings.HasPrefix(name, "LICENSES/") || strings.HasPrefix(name, "docs/") || strings.HasPrefix(name, "schemas/") || strings.HasPrefix(name, "presets/examples/") || strings.HasPrefix(name, "testdata/corpus/") || strings.HasPrefix(name, "skills/smolpng/")
-		if include {
-			b, e := os.ReadFile(name)
-			if e != nil {
-				return e
-			}
-			common[name] = packaging.Content{Data: b}
-		}
+	common, e := releaseInputs(root, indexed)
+	if e != nil {
+		return e
 	}
 	artifacts := []packaging.Artifact{}
 	manifest := updates.Manifest{Schema: 1, Product: "smolpng", Version: *version, Commit: sha, Channel: "stable", Issued: time.Now().UTC(), Expires: time.Now().UTC().Add(90 * 24 * time.Hour), Assets: map[string]updates.Asset{}}

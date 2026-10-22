@@ -18,6 +18,8 @@ Candidate compilation isolates the Go command from ambient workspaces, per-user 
 
 The archive receipt binds individual member hashes. `SHA256SUMS` binds every archive. `build-index.json` is written incrementally and marks complete only after the entire selected build succeeds. Failure leaves inspectable local output and returns nonzero, not a nominal release.
 
+Release inputs are selected from NUL-delimited Git index records rather than newline-parsed filenames. Only ordinary tracked file modes (`100644` and `100755`) are admitted, and the checked-out path must still be a regular non-symlink file before its bytes are read. A symlink, gitlink, non-regular replacement, malformed index record or path traversal refuses the build. This keeps a clean checkout from importing bytes outside the repository into a package through an admitted `docs/`, Skill, preset, schema or corpus path.
+
 ## Windows executable identity
 
 The local builder adds VERSIONINFO to `smolpng.exe`, `smolpngw.exe` and `smolpng-qualify.exe` on both Windows architectures, before member/archive hashes are calculated. ProductName is `smolpng`; CompanyName is the descriptive maker label `Wolfsblvt Works`. Each file has its own description, original filename and internal name. FileVersion and ProductVersion strings retain the complete explicit semantic version, including its prerelease suffix; Comments retains the exact source commit and standalone distribution.
