@@ -2,7 +2,7 @@
 
 ## Meaning
 
-Private `0.3.0-dev.14` carries the Windows Explorer startup repair at `825270987bfee3eb2064b23d5398162c24871ffa` into six inspected archives. Both source-history carriers restored successfully, all 79 native Windows PNG/JPEG checks passed, and desktop, TinyPNG and primary-menu preparation passed through the extracted candidate. This dated record preserves the exact reports and their limits. Physical drag/Send To, smart clipboard consumers and rendered notifications remain open in [Issue #36](https://github.com/Wolfsblvt/smolpng/issues/36); this is neither complete candidate acceptance nor a public release.
+Private `0.3.0-dev.14` carries the Windows Explorer startup repair at `825270987bfee3eb2064b23d5398162c24871ffa` into six inspected archives. Both source-history carriers restored successfully, all 79 native Windows PNG/JPEG checks passed, and desktop, TinyPNG and primary-menu preparation passed through the extracted candidate. Its isolated dependency/Skill and local signed-fixture update/rollback journeys also passed, restoring all 201 package files and preserving user edits. This dated record preserves the exact reports and their limits. Physical drag/Send To, smart clipboard consumers and rendered notifications remain open in [Issue #36](https://github.com/Wolfsblvt/smolpng/issues/36); this is neither complete candidate acceptance nor a public release.
 
 ## Explorer repair and source boundary
 
@@ -50,9 +50,17 @@ The existing preparation helpers were rebound to dev.14's actual app/launcher ha
 
 The actual live-helper `check` entry also passed: its synthetic-marker preflight did not open/read the clipboard, and cleanup preview found no installed entries. These observations do not install a shortcut, register a native package, arm desktop capture or authorize another physical test window. Local reports remain under `artifacts/validation/desktop-dev14-20261022/`, `remote-preparation-dev14-8252709/` and `windows-menu-preparation-dev14-8252709/`.
 
+## Dependency, Skill and update lifecycle
+
+The extracted candidate passed **28 actual dependency/Skill calls** in a separate disposable profile: managed OxiPNG/jpegoptim preview, install, repeat install, selection, PNG/JPEG compression and owned removal; Agents, Claude and custom Skill installation; sync and removal protection for edited bytes; explicit forgetting, unmodified removal, instruction-ZIP packaging and final empty ownership status. Every installed dependency/resource hash was checked. The intentionally edited Claude Skill remained byte-identical after refusal and forgetting. Independent inspection of the instruction ZIP matched all four members to candidate-manifest-bound resources, with no executable; upload acceptance was not tested.
+
+The same archive was separately extracted for **12 actual update/recovery calls**. Untrusted-key and tampered-archive refusals left it unchanged. An existing local signed `0.3.0` test fixture at source `b0ed6391c4d8c80fcb9d78c611aa42d8debb798f` applied successfully, then guarded rollback restored dev.14. Scheduled acknowledgement, journal completion, helper exit and installed version/source were observed separately. All **201 original package files**, including the manifest, matched their prior hashes after rollback; config and an edited project Skill were preserved. No production key/feed, new signing operation, lock injection or forced interruption was used. Earlier interruption/lock observations retain their own candidate boundaries.
+
+Original reports remain under `artifacts/validation/candidate-lifecycle-dev14-8252709/` and `candidate-update-dev14-8252709/` and are included in the evidence payload. Both helpers exited 0 after terminal readback. These are native filesystem/application lifecycle observations without desktop, clipboard or image-upload effects.
+
 ## Retained evidence and continuing consequence
 
-The [evidence payload](2026-10-22-private-candidate-dev14/report.json) joins **19 original UTF-8 inputs** with their original SHA-256 values and two explicitly derived preflight observations. Its size is **311,197 bytes**, SHA-256 `50d90b0fe21fe533a8f67dd09618425854b7fb549d557b983cdf704a5a7cc335`. Original preflight receipts also name private helper paths and remain local; their hashes and selected non-secret results are preserved without calling the derived fields unchanged captures. The wrapper is an authored join, not an original capture.
+The [evidence payload](2026-10-22-private-candidate-dev14/report.json) joins **22 original UTF-8 inputs** with their original SHA-256 values and two explicitly derived preflight observations. Its size is **682,261 bytes**, SHA-256 `e5b71f63a600862e861e7b7ecf1f46326479c2f033f4c3b4cb6746494d9c647d`. Original preflight receipts also name private helper paths and remain local; their hashes and selected non-secret results are preserved without calling the derived fields unchanged captures. The wrapper is an authored join, not an original capture.
 
 The immutable [dev.13 composition](2026-10-22-private-candidate-dev13.md) and [lifecycle](2026-10-22-windows-dev13-lifecycle.md) retain their own observations. They have not been relabelled as dev.14 execution. No foreign archive runtime, production signing/feed, package submission, public distribution or complete joined Windows journey is established here.
 
