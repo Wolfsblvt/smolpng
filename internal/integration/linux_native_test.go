@@ -282,6 +282,11 @@ func TestNativeLinuxDesktop(t *testing.T) {
 	j.cli("integrate", "shell", "install", "--mode", "single", "--apply", "--json")
 	j.cli("integrate", "shell", "status", "--json")
 	j.connectAccessibility()
+	t.Cleanup(func() {
+		if t.Failed() {
+			j.write("accessibility-before-close.json", j.tree())
+		}
+	})
 
 	corpus := testutil.Corpus()
 	inputDir := filepath.Join(root, "images ' ü $(touch injected)")
@@ -289,8 +294,11 @@ func TestNativeLinuxDesktop(t *testing.T) {
 		t.Fatal(e)
 	}
 	inputs := []string{filepath.Join(inputDir, "first ' ü $(touch injected).png"), filepath.Join(inputDir, "second \" & ü.jpg")}
-	originals := [][]byte{corpus["flat-icon.png"], corpus["jpeg-baseline.jpg"]}
+	originals := [][]byte{corpus["flat-icon.png"], testutil.JPEGCorpus()["jpeg-baseline.jpg"]}
 	for i, p := range inputs {
+		if _, _, e = image.Decode(bytes.NewReader(originals[i])); e != nil {
+			t.Fatalf("invalid generated fixture %s: %v", p, e)
+		}
 		if e = os.WriteFile(p, originals[i], 0600); e != nil {
 			t.Fatal(e)
 		}
