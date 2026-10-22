@@ -35,7 +35,7 @@ Outputs use a synced temporary sibling and atomic rename/MoveFileEx, or exclusiv
 
 `internal/state` bounds human-result retention. Ordinary `compress`, `doctor` and `skill status` neither create a first-run wizard nor silently write human history. User setting edits use the pinned TOML AST's value ranges under an advisory lock with a byte-snapshot recheck, preserving comments and unrelated fields. Preset storage remains a separate owned file.
 
-Linux Auto launchers normally start without a terminal. If current drop configuration selects interactive operation, `internal/cli` reuses the integration desktop-entry encoder and GLib `gio launch` to hand the original invocation to a private temporary `Terminal=true` entry. The desktop selects the terminal; the child uses the same engine/config/history. The temporary entry is removed after the native launch request, whose success is not a completed compression claim.
+Linux Auto launchers normally start without a terminal. If current drop configuration selects interactive operation, `internal/cli` reuses the integration desktop-entry encoder and GLib `gio launch` to hand the original invocation to a private temporary `Terminal=true` entry. The desktop selects the terminal; the child uses the same engine/config/history. The temporary entry is removed after the native launch request, whose success is not a completed compression claim. A failed handoff retains the original failure through the shared drop-result and configured notification path, replacing stale history without claiming child completion; dry runs retain their no-history/no-notification boundary.
 
 ## Managed optimizer delivery
 

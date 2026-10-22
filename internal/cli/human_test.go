@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"unicode/utf16"
@@ -354,6 +355,108 @@ func TestDropFailureAndDesktopWarningRemainRecoverable(t *testing.T) {
 	}
 	if len(state.Outputs(last.Report)) != 0 {
 		t.Fatal("target miss output invented")
+	}
+}
+
+func TestLinuxInteractiveDropHandoffKeepsResultsRecoverable(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("the configured non-terminal foreground route is Linux-specific")
+	}
+	for _, tc := range []struct {
+		name       string
+		gio        string
+		notify     bool
+		notifyFail bool
+		dryRun     bool
+		wantCode   int
+		wantError  string
+	}{
+		{name: "missing gio", notify: true, wantCode: 5, wantError: "interactive Linux drop needs GLib's gio"},
+		{name: "rejected launch", gio: "exit 23", notify: true, wantCode: 5, wantError: "cannot open interactive Linux drop"},
+		{name: "notifications disabled", gio: "exit 23", wantCode: 5, wantError: "cannot open interactive Linux drop"},
+		{name: "notification failure retained", gio: "exit 23", notify: true, notifyFail: true, wantCode: 5, wantError: "cannot open interactive Linux drop"},
+		{name: "dry run retains prior state", gio: "exit 23", notify: true, dryRun: true, wantCode: 5, wantError: "cannot open interactive Linux drop"},
+		{name: "launch acknowledgement leaves success to child", gio: "exit 0", notify: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			h, _, copy, actions := humanSetup(t)
+			// Seed a real successful drop through the existing fake-optimizer boundary.
+			if code := h.run("drop", h.source, "--json"); code != 0 {
+				t.Fatal(code, h.out, h.err)
+			}
+			lastPath := filepath.Join(h.Paths.State, "last-result.json")
+			previous, err := os.ReadFile(lastPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			original, err := os.ReadFile(h.source)
+			if err != nil {
+				t.Fatal(err)
+			}
+			priorCalls := len(h.runner.Calls())
+			copy.files, copy.modes = nil, nil
+			actions.notifications, actions.notificationBodies = 0, nil
+			actions.fail = tc.notifyFail
+			h.Prompt = nil
+			configBytes := fmt.Appendf(nil, "[drop]\nmode = 'interactive'\nnotify = %t\n", tc.notify)
+			if err := os.WriteFile(h.Paths.Config, configBytes, 0600); err != nil {
+				t.Fatal(err)
+			}
+			bin, temporary := t.TempDir(), t.TempDir()
+			if tc.gio != "" {
+				if err := os.WriteFile(filepath.Join(bin, "gio"), []byte("#!/bin/sh\n"+tc.gio+"\n"), 0700); err != nil {
+					t.Fatal(err)
+				}
+			}
+			t.Setenv("PATH", bin)
+			t.Setenv("TMPDIR", temporary)
+			args := []string{"drop", h.source}
+			if tc.dryRun {
+				args = append(args, "--dry-run")
+			}
+			if code := h.run(args...); code != tc.wantCode {
+				t.Fatalf("exit %d, want %d: %s", code, tc.wantCode, h.err)
+			}
+			if tc.wantError != "" && !strings.Contains(h.err.String(), tc.wantError) {
+				t.Fatalf("original launch failure was lost: %s", h.err)
+			}
+			current, err := os.ReadFile(lastPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if tc.dryRun || tc.wantCode == 0 {
+				if !bytes.Equal(previous, current) || actions.notifications != 0 {
+					t.Fatal("parent claimed completion or dry-run changed history/notifications")
+				}
+			} else {
+				last, err := state.ReadLast(lastPath)
+				if err != nil || last.Report.ExitCode != tc.wantCode || last.Report.Summary.Failed != 1 || len(last.Report.Results) != 1 {
+					t.Fatal("handoff did not replace stale success with failure", last, err)
+				}
+				failed := last.Report.Results[0]
+				if failed.Status != "failed" || failed.Output != "" || !strings.Contains(failed.Error, tc.wantError) {
+					t.Fatal("failure result lost the original handoff error", failed)
+				}
+				wantNotifications := 0
+				if tc.notify {
+					wantNotifications = 1
+				}
+				if actions.notifications != wantNotifications {
+					t.Fatalf("notifications %d, want %d", actions.notifications, wantNotifications)
+				}
+				if tc.notifyFail && (len(last.Warnings) == 0 || !strings.Contains(last.Warnings[0], "Desktop notification unavailable")) {
+					t.Fatal("notification failure was not retained", last.Warnings)
+				}
+			}
+			after, err := os.ReadFile(h.source)
+			if err != nil || !bytes.Equal(original, after) || len(copy.files) != 0 || len(h.runner.Calls()) != priorCalls {
+				t.Fatal("handoff parent changed images, clipboard or compression", err)
+			}
+			entries, err := os.ReadDir(temporary)
+			if err != nil || len(entries) != 0 {
+				t.Fatal("temporary desktop entry was not cleaned up", entries, err)
+			}
+		})
 	}
 }
 
