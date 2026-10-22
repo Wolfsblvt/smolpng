@@ -60,20 +60,20 @@ func TestCommittedFilesCollectExactBlobs(t *testing.T) {
 
 func TestCommittedFilesRejectSpecialOrCollidingPaths(t *testing.T) {
 	cases := map[string][]byte{
-		"symlink": treeRecord("120000", "blob", objectA, "docs/link"),
-		"gitlink": treeRecord("160000", "commit", objectA, "nested"),
-		"parent path": treeRecord("100644", "blob", objectA, "../README.md"),
-		"backslash": treeRecord("100644", "blob", objectA, `docs\..\outside`),
-		"drive-like": treeRecord("100644", "blob", objectA, "docs/C:outside"),
+		"symlink":            treeRecord("120000", "blob", objectA, "docs/link"),
+		"gitlink":            treeRecord("160000", "commit", objectA, "nested"),
+		"parent path":        treeRecord("100644", "blob", objectA, "../README.md"),
+		"backslash":          treeRecord("100644", "blob", objectA, `docs\..\outside`),
+		"drive-like":         treeRecord("100644", "blob", objectA, "docs/C:outside"),
 		"forbidden wildcard": treeRecord("100644", "blob", objectA, "docs/a?.md"),
-		"trailing dot": treeRecord("100644", "blob", objectA, "docs/name."),
-		"trailing space": treeRecord("100644", "blob", objectA, "docs/name "),
-		"reserved device": treeRecord("100644", "blob", objectA, "docs/con.txt"),
-		"line control": treeRecord("100644", "blob", objectA, "docs/line\nbreak.md"),
-		"invalid object": treeRecord("100644", "blob", "not-an-object", "README.md"),
-		"case collision": bytes.Join([][]byte{treeRecord("100644", "blob", objectA, "README.md"), treeRecord("100644", "blob", objectB, "readme.md")}, nil),
-		"duplicate": bytes.Repeat(treeRecord("100644", "blob", objectA, "README.md"), 2),
-		"malformed": []byte("100644 no-tab\x00"),
+		"trailing dot":       treeRecord("100644", "blob", objectA, "docs/name."),
+		"trailing space":     treeRecord("100644", "blob", objectA, "docs/name "),
+		"reserved device":    treeRecord("100644", "blob", objectA, "docs/con.txt"),
+		"line control":       treeRecord("100644", "blob", objectA, "docs/line\nbreak.md"),
+		"invalid object":     treeRecord("100644", "blob", "not-an-object", "README.md"),
+		"case collision":     bytes.Join([][]byte{treeRecord("100644", "blob", objectA, "README.md"), treeRecord("100644", "blob", objectB, "readme.md")}, nil),
+		"duplicate":          bytes.Repeat(treeRecord("100644", "blob", objectA, "README.md"), 2),
+		"malformed":          []byte("100644 no-tab\x00"),
 	}
 	for name, tree := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -105,7 +105,7 @@ func TestMaterializeCommittedTree(t *testing.T) {
 	root := t.TempDir()
 	files := map[string]packaging.Content{
 		"README.md": {Data: []byte("readme")},
-		"cmd/tool": {Data: []byte("tool"), Executable: true},
+		"cmd/tool":  {Data: []byte("tool"), Executable: true},
 	}
 	if err := materializeCommittedTree(root, files); err != nil {
 		t.Fatal(err)
