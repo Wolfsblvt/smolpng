@@ -67,14 +67,19 @@ func TestNativeFinder(t *testing.T) {
 		out, err = exec.CommandContext(ctx, "/usr/sbin/screencapture", "-x", filepath.Join(evidence, "diagnostic-screen.png")).CombinedOutput()
 		_ = os.WriteFile(filepath.Join(evidence, "diagnostic-screen.txt"), []byte(fmt.Sprintf("%v\n%s", err, out)), 0600)
 	})
-	user := filepath.Join(root, "user ' ä")
+	// The host account is already disposable. Keep native OS services in that
+	// account; application data/configuration uses an explicit portable fixture
+	// home, and installation refuses any pre-existing native destination below.
+	user, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatal(err)
+	}
 	home := filepath.Join(root, "data ' ä")
-	for _, dir := range []string{user, filepath.Join(home, "state")} {
+	for _, dir := range []string{filepath.Join(home, "state")} {
 		if err := os.MkdirAll(dir, 0700); err != nil {
 			t.Fatal(err)
 		}
 	}
-	t.Setenv("HOME", user)
 	t.Setenv("TINIFY_API_KEY", "")
 	t.Setenv("SMOLPNG_HOME", "")
 	t.Setenv("SMOLPNG_CONFIG", "")
@@ -119,6 +124,15 @@ func TestNativeFinder(t *testing.T) {
 		return out
 	}
 	cli("config", "validate", "--json")
+	loc, err := NativeLocations()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range []string{filepath.Join(loc.Menu, "smolpng-auto.app"), filepath.Join(loc.Menu, "smolpng-interactive.app"), filepath.Join(loc.Desktop, "smolpng-desktop-auto.app"), filepath.Join(loc.Desktop, "smolpng-desktop-interactive.app"), filepath.Join(user, "injected")} {
+		if _, err := os.Lstat(path); !os.IsNotExist(err) {
+			t.Fatalf("disposable fixture destination already exists: %s %v", path, err)
+		}
+	}
 	var installed struct {
 		Entries []Entry `json:"entries"`
 	}
@@ -215,6 +229,9 @@ func TestNativeFinder(t *testing.T) {
 		}
 		if _, err := os.Stat(filepath.Join(root, "injected")); !os.IsNotExist(err) {
 			t.Fatal("filename shell fragment executed")
+		}
+		if _, err := os.Stat(filepath.Join(user, "injected")); !os.IsNotExist(err) {
+			t.Fatal("filename shell fragment executed in the native working directory")
 		}
 		var public struct {
 			Last state.Last `json:"last"`
@@ -336,7 +353,8 @@ const nativeTerminalDriver = `on run argv
 		set fixtureTab to missing value
 		repeat 80 times
 			repeat with w in windows
-				repeat with tb in tabs of w
+				repeat with tabValue in tabs of w
+					set tb to contents of tabValue
 					if (contents of tb) contains sourcePrefix then set fixtureTab to tb
 				end repeat
 			end repeat
