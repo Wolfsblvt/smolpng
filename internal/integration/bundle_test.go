@@ -8,6 +8,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/Wolfsblvt/smolpng/internal/fsutil"
 )
 
 type appRenderer struct {
@@ -225,5 +227,243 @@ func TestBundleJournalCannotNameOutsideWorkspace(t *testing.T) {
 	}
 	if err = m.Repair(context.Background()); err == nil || !strings.Contains(err.Error(), "workspace") {
 		t.Fatal("outside workspace accepted", err)
+	}
+}
+
+func TestAppLateChangesSurviveRemovalAndReplacement(t *testing.T) {
+	for _, removing := range []bool{false, true} {
+		for _, replacement := range []bool{false, true} {
+			name := map[bool]string{false: "install", true: "remove"}[removing] + "/" + map[bool]string{false: "edit", true: "replacement"}[replacement]
+			t.Run(name, func(t *testing.T) {
+				m, entries := appFixture(t)
+				ctx := context.Background()
+				if err := m.Install(ctx, entries[:1]); err != nil {
+					t.Fatal(err)
+				}
+				destination := entries[0].Path
+				changed := false
+				m.moveBundle = func(from, to string) error {
+					if from == destination && !changed {
+						changed = true
+						if replacement {
+							if err := os.Rename(destination, filepath.Join(t.TempDir(), "prior.app")); err != nil {
+								t.Fatal(err)
+							}
+							if err := os.Mkdir(destination, 0755); err != nil {
+								t.Fatal(err)
+							}
+						}
+						if err := os.WriteFile(filepath.Join(destination, "late-user-file"), []byte("late user bytes"), 0600); err != nil {
+							t.Fatal(err)
+						}
+					}
+					return fsutil.MoveNoReplace(from, to)
+				}
+				m.Renderer = appRenderer{content: "new version"}
+				var err error
+				if removing {
+					err = m.Remove(ctx, entries[0].ID)
+				} else {
+					err = m.Install(ctx, entries[:1])
+				}
+				if err == nil || !changed {
+					t.Fatal("late change did not refuse the operation", err)
+				}
+				data, err := os.ReadFile(filepath.Join(destination, "late-user-file"))
+				if err != nil || string(data) != "late user bytes" {
+					t.Fatal("late bytes were not restored", err)
+				}
+				status, pending, err := m.Status()
+				if err != nil || pending || len(status) != 1 || status[0].State != "modified" {
+					t.Fatal("refused transaction did not settle safely", status, pending, err)
+				}
+			})
+		}
+	}
+}
+
+func TestAppNewDestinationAfterQuarantinePreservesBothObjects(t *testing.T) {
+	for _, removing := range []bool{false, true} {
+		t.Run(map[bool]string{false: "install", true: "remove"}[removing], func(t *testing.T) {
+			m, entries := appFixture(t)
+			ctx := context.Background()
+			if err := m.Install(ctx, entries[:1]); err != nil {
+				t.Fatal(err)
+			}
+			destination := entries[0].Path
+			m.moveBundle = func(from, to string) error {
+				if err := fsutil.MoveNoReplace(from, to); err != nil {
+					return err
+				}
+				if from == destination {
+					if err := os.Mkdir(destination, 0755); err != nil {
+						t.Fatal(err)
+					}
+					if err := os.WriteFile(filepath.Join(destination, "new-user-file"), []byte("new occupant"), 0600); err != nil {
+						t.Fatal(err)
+					}
+				}
+				return nil
+			}
+			m.Renderer = appRenderer{content: "new version"}
+			var err error
+			if removing {
+				err = m.Remove(ctx, entries[0].ID)
+			} else {
+				err = m.Install(ctx, entries[:1])
+			}
+			if err == nil || m.Repair(ctx) == nil {
+				t.Fatal("new occupant was accepted for overwrite or cleanup")
+			}
+			data, err := os.ReadFile(filepath.Join(destination, "new-user-file"))
+			if err != nil || string(data) != "new occupant" {
+				t.Fatal("new occupant lost", err)
+			}
+			registry, err := m.load()
+			if err != nil || registry.Pending == nil {
+				t.Fatal("recovery workspace not retained", err)
+			}
+			backup, err := hashRecord(atPath(*registry.Pending.Previous, registry.Pending.Backup))
+			if err != nil || backup != registry.Pending.Previous.SHA256 {
+				t.Fatal("prior bundle not preserved", backup, err)
+			}
+		})
+	}
+}
+
+func TestAppRepairWithAlreadyCleanedWorkspace(t *testing.T) {
+	for _, destination := range []string{"previous", "published", "missing", "changed"} {
+		t.Run(destination, func(t *testing.T) {
+			m, entries := appFixture(t)
+			ctx := context.Background()
+			if err := m.Install(ctx, entries[:1]); err != nil {
+				t.Fatal(err)
+			}
+			registry, err := m.load()
+			if err != nil {
+				t.Fatal(err)
+			}
+			old := registry.Records[0]
+			workspace, err := os.MkdirTemp(m.Allowed.Menu, ".smolpng-launcher-")
+			if err != nil {
+				t.Fatal(err)
+			}
+			stage := filepath.Join(workspace, filepath.Base(old.Entry.Path))
+			if err = (appRenderer{content: "next version"}).RenderBundle(ctx, old.Entry, stage); err != nil {
+				t.Fatal(err)
+			}
+			next := old
+			next.SHA256, err = hashRecord(atPath(next, stage))
+			if err != nil {
+				t.Fatal(err)
+			}
+			registry.Pending = &Pending{Next: next, Previous: &old, Before: old.SHA256, Stage: stage, Backup: filepath.Join(workspace, "previous.app")}
+			if err = m.save(ctx, registry); err != nil {
+				t.Fatal(err)
+			}
+			if destination != "previous" {
+				if err = os.Rename(old.Entry.Path, registry.Pending.Backup); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if destination == "published" || destination == "changed" {
+				if err = os.Rename(stage, next.Entry.Path); err != nil {
+					t.Fatal(err)
+				}
+				if destination == "changed" {
+					if err = os.WriteFile(filepath.Join(next.Entry.Path, "user-file"), []byte("preserve"), 0600); err != nil {
+						t.Fatal(err)
+					}
+				}
+			}
+			if err = os.RemoveAll(workspace); err != nil {
+				t.Fatal(err)
+			}
+			err = m.Repair(ctx)
+			if destination == "missing" || destination == "changed" {
+				if err == nil {
+					t.Fatal("missing workspace excused a contradictory destination")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			status, pending, err := m.Status()
+			want := old.SHA256
+			if destination == "published" {
+				want = next.SHA256
+			}
+			if err != nil || pending || len(status) != 1 || status[0].SHA256 != want || status[0].State != "current" {
+				t.Fatal("wrong settled record", status, pending, err)
+			}
+			if err = m.Repair(ctx); err != nil {
+				t.Fatal("repair not idempotent", err)
+			}
+			if err = m.Remove(ctx, ""); err != nil {
+				t.Fatal("next mutation remained blocked", err)
+			}
+		})
+	}
+}
+
+func TestAppInterruptedRemovalReconcilesBeforeCleanup(t *testing.T) {
+	for _, phase := range []string{"journaled", "quarantined", "deleted", "workspace-gone"} {
+		t.Run(phase, func(t *testing.T) {
+			m, entries := appFixture(t)
+			ctx := context.Background()
+			if err := m.Install(ctx, entries[:1]); err != nil {
+				t.Fatal(err)
+			}
+			registry, err := m.load()
+			if err != nil {
+				t.Fatal(err)
+			}
+			old := registry.Records[0]
+			workspace, err := os.MkdirTemp(m.Allowed.Menu, ".smolpng-launcher-")
+			if err != nil {
+				t.Fatal(err)
+			}
+			backup := filepath.Join(workspace, "previous.app")
+			registry.Pending = &Pending{Next: old, Previous: &old, Before: old.SHA256, Removing: true,
+				Stage: filepath.Join(workspace, filepath.Base(old.Entry.Path)), Backup: backup}
+			if err = m.save(ctx, registry); err != nil {
+				t.Fatal(err)
+			}
+			if phase != "journaled" {
+				if err = os.Rename(old.Entry.Path, backup); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if phase == "deleted" || phase == "workspace-gone" {
+				if err = os.RemoveAll(backup); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if phase == "workspace-gone" {
+				if err = os.Remove(workspace); err != nil {
+					t.Fatal(err)
+				}
+			}
+			for range 2 {
+				if err = m.Repair(ctx); err != nil {
+					t.Fatal(err)
+				}
+			}
+			status, pending, err := m.Status()
+			want := 0
+			if phase == "journaled" {
+				want = 1
+			}
+			if err != nil || pending || len(status) != want || (want == 1 && status[0].State != "current") {
+				t.Fatal("wrong removal recovery state", status, pending, err)
+			}
+			if err = m.Install(ctx, entries[:1]); err != nil {
+				t.Fatal("next mutation blocked", err)
+			}
+			if err = m.Remove(ctx, ""); err != nil {
+				t.Fatal(err)
+			}
+		})
 	}
 }

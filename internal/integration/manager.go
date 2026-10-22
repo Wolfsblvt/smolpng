@@ -25,6 +25,7 @@ type Pending struct {
 	Previous *Record `json:"previous,omitempty"`
 	Stage    string  `json:"stage,omitempty"`
 	Backup   string  `json:"backup,omitempty"`
+	Removing bool    `json:"removing,omitempty"`
 }
 type Registry struct {
 	Schema  int      `json:"schema"`
@@ -39,6 +40,8 @@ type Manager struct {
 	StatePath, Version string
 	Allowed            Locations
 	Renderer           Renderer
+	// Keep the atomic directory transfer at one boundary, including fault qualification.
+	moveBundle func(string, string) error
 }
 
 func digest(b []byte) string { return fmt.Sprintf("%x", sha256.Sum256(b)) }
@@ -301,15 +304,17 @@ func (m Manager) Remove(ctx context.Context, id string) error {
 				return fmt.Errorf("preserving modified shortcut: %s", rec.Entry.Path)
 			}
 		}
-		for _, rec := range s.Records {
+		for _, rec := range slices.Clone(s.Records) {
 			if id != "" && rec.Entry.ID != id {
 				continue
 			}
-			remove := os.Remove
 			if filepath.Ext(rec.Entry.Path) == ".app" {
-				remove = os.RemoveAll
+				if e := m.removeBundle(ctx, s, rec); e != nil {
+					return e
+				}
+				continue
 			}
-			if e := remove(rec.Entry.Path); e != nil && !errors.Is(e, os.ErrNotExist) {
+			if e := os.Remove(rec.Entry.Path); e != nil && !errors.Is(e, os.ErrNotExist) {
 				return e
 			}
 		}

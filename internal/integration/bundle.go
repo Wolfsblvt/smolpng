@@ -4,6 +4,7 @@ package integration
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -130,7 +131,7 @@ func hashRecord(r Record) (string, error) {
 
 func validateBundlePending(p *Pending) error {
 	if p.Stage == "" {
-		if p.Backup != "" || p.Previous != nil {
+		if p.Backup != "" || p.Previous != nil || p.Removing {
 			return fmt.Errorf("invalid pending launcher workspace")
 		}
 		return nil
@@ -146,6 +147,9 @@ func validateBundlePending(p *Pending) error {
 	if p.Previous != nil && (p.Previous.Entry.Path != p.Next.Entry.Path || p.Previous.SHA256 != p.Before || validateMembers(*p.Previous) != nil) {
 		return fmt.Errorf("invalid previous app bundle")
 	}
+	if p.Removing && (p.Previous == nil || p.Previous.SHA256 != p.Next.SHA256) {
+		return fmt.Errorf("invalid pending app removal")
+	}
 	for _, path := range []string{p.Stage, p.Backup} {
 		if err := noLinks(path); err != nil {
 			return err
@@ -157,6 +161,64 @@ func validateBundlePending(p *Pending) error {
 func atPath(r Record, path string) Record {
 	r.Entry.Path = path
 	return r
+}
+
+func (m Manager) moveApp(from, to string) error {
+	if m.moveBundle != nil {
+		return m.moveBundle(from, to)
+	}
+	return fsutil.MoveNoReplace(from, to)
+}
+
+// quarantineBundle transfers the named object before proving ownership. A prior
+// live-path hash is only a preflight; it cannot authorize deleting a later object.
+func (m Manager) quarantineBundle(ctx context.Context, s *Registry) error {
+	p := s.Pending
+	if err := m.moveApp(p.Next.Entry.Path, p.Backup); err != nil {
+		return err
+	}
+	hash, err := hashRecord(atPath(*p.Previous, p.Backup))
+	if err == nil && hash == p.Previous.SHA256 {
+		return nil
+	}
+	return m.restoreChangedBundle(ctx, s)
+}
+
+func (m Manager) restoreChangedBundle(ctx context.Context, s *Registry) error {
+	p := s.Pending
+	// No-replace also preserves an object that appeared at the visible path after
+	// quarantine. In that case both it and the workspace remain for recovery.
+	if err := m.moveApp(p.Backup, p.Next.Entry.Path); err != nil {
+		return fmt.Errorf("changed app bundle; preserving destination and workspace: %w", err)
+	}
+	if err := m.finishBundle(ctx, s); err != nil {
+		return err
+	}
+	return fmt.Errorf("app bundle changed; restored and preserved it")
+}
+
+func (m Manager) removeBundle(ctx context.Context, s *Registry, old Record) error {
+	if _, err := os.Lstat(old.Entry.Path); errors.Is(err, os.ErrNotExist) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	workspace, err := os.MkdirTemp(filepath.Dir(old.Entry.Path), ".smolpng-launcher-")
+	if err != nil {
+		return err
+	}
+	p := &Pending{Next: old, Previous: &old, Before: old.SHA256, Removing: true,
+		Stage: filepath.Join(workspace, filepath.Base(old.Entry.Path)), Backup: filepath.Join(workspace, "previous.app")}
+	s.Pending = p
+	if err = m.save(ctx, *s); err != nil {
+		s.Pending = nil
+		_ = os.Remove(workspace)
+		return err
+	}
+	if err = m.quarantineBundle(ctx, s); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	return m.recoverBundle(ctx, s)
 }
 
 func (m Manager) installBundle(ctx context.Context, s *Registry, x Entry) error {
@@ -210,16 +272,12 @@ func (m Manager) installBundle(ctx context.Context, s *Registry, x Entry) error 
 		return err
 	}
 	journaled = true
-	current, err := hashRecord(old)
-	if err != nil || current != before {
-		return fmt.Errorf("app bundle changed during installation; preserving it")
-	}
 	if before != "" {
-		if err = fsutil.MoveNoReplace(x.Path, pending.Backup); err != nil {
+		if err = m.quarantineBundle(ctx, s); err != nil {
 			return err
 		}
 	}
-	if err = fsutil.MoveNoReplace(stage, x.Path); err != nil {
+	if err = m.moveApp(stage, x.Path); err != nil {
 		return err
 	}
 	return m.recoverBundle(ctx, s)
@@ -234,6 +292,22 @@ func (m Manager) recoverBundle(ctx context.Context, s *Registry) error {
 	if err != nil {
 		return err
 	}
+	if p.Removing {
+		backup, err := hashRecord(atPath(*p.Previous, p.Backup))
+		if err != nil {
+			return err
+		}
+		if current != "" {
+			if current != p.Before || backup != "" {
+				return fmt.Errorf("app removal found an occupied destination; preserving both objects")
+			}
+		} else if backup != "" && backup != p.Before {
+			return m.restoreChangedBundle(ctx, s)
+		} else {
+			s.Records = slices.DeleteFunc(s.Records, func(r Record) bool { return r.Entry.Path == p.Next.Entry.Path })
+		}
+		return m.finishBundle(ctx, s)
+	}
 	if current == p.Next.SHA256 {
 		replace(s, p.Next)
 	} else if p.Previous != nil {
@@ -245,8 +319,11 @@ func (m Manager) recoverBundle(ctx context.Context, s *Registry) error {
 		if err != nil {
 			return err
 		}
+		if current == "" && backup != "" && backup != p.Previous.SHA256 {
+			return m.restoreChangedBundle(ctx, s)
+		}
 		if current == "" && backup == p.Previous.SHA256 {
-			if err = fsutil.MoveNoReplace(p.Backup, p.Next.Entry.Path); err != nil {
+			if err = m.moveApp(p.Backup, p.Next.Entry.Path); err != nil {
 				return err
 			}
 		} else if old != p.Previous.SHA256 || backup != "" {
@@ -255,6 +332,11 @@ func (m Manager) recoverBundle(ctx context.Context, s *Registry) error {
 	} else if current != "" {
 		return fmt.Errorf("app destination changed during installation; preserving it")
 	}
+	return m.finishBundle(ctx, s)
+}
+
+func (m Manager) finishBundle(ctx context.Context, s *Registry) error {
+	p := s.Pending
 	for _, r := range []*Record{&p.Next, p.Previous} {
 		if r == nil {
 			continue
@@ -277,7 +359,7 @@ func (m Manager) recoverBundle(ctx context.Context, s *Registry) error {
 			return err
 		}
 	}
-	if err = os.Remove(filepath.Dir(p.Stage)); err != nil {
+	if err := os.Remove(filepath.Dir(p.Stage)); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
 	s.Pending = nil
