@@ -198,8 +198,111 @@ func (j *linuxJourney) action(label string) {
 	}
 }
 
-func (j *linuxJourney) last(inputs []string) {
+func (j *linuxJourney) terminalText() string {
+	var out strings.Builder
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	for _, n := range j.tree() {
+		if !strings.Contains(n.Role, "terminal") {
+			continue
+		}
+		var text string
+		if j.a11y.Object(n.Ref.Bus, n.Ref.Path).CallWithContext(ctx, "org.a11y.atspi.Text.GetText", 0, int32(0), int32(-1)).Store(&text) == nil {
+			out.WriteString(text)
+		}
+	}
+	return out.String()
+}
+
+func (j *linuxJourney) interactive(name string, inputs []string, launch func()) {
 	j.t.Helper()
+	launch()
+	var text string
+	j.wait("native recipe picker", func() bool { text = j.terminalText(); return strings.Contains(text, "Choose a recipe") })
+	terminalIDs := strings.Fields(string(j.command("xdotool", "search", "--onlyvisible", "--class", "konsole")))
+	if len(terminalIDs) != 1 {
+		j.t.Fatalf("expected one owned native terminal, got %v", terminalIDs)
+	}
+	j.command("xdotool", "windowactivate", "--sync", terminalIDs[0])
+	j.write(name+"-recipe.json", map[string]string{"terminalText": text})
+	j.screen(name + "-recipe")
+	j.command("xdotool", "key", "--clearmodifiers", "Return")
+	j.last(inputs)
+	j.wait("native result menu", func() bool {
+		text = j.terminalText()
+		return strings.Contains(text, "Done") && strings.Contains(text, "Result")
+	})
+	j.write(name+"-result.json", map[string]string{"terminalText": text})
+	j.screen(name + "-result")
+	j.command("xdotool", "key", "--clearmodifiers", "Return")
+	j.wait("completed native terminal closed", func() bool {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		return exec.CommandContext(ctx, "xdotool", "search", "--onlyvisible", "--class", "konsole").Run() != nil
+	})
+}
+
+func (j *linuxJourney) dolphin(inputs []string, actions ...string) {
+	j.t.Helper()
+	previous := map[string]bool{}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	before, _ := exec.CommandContext(ctx, "xdotool", "search", "--onlyvisible", "--class", "dolphin").Output()
+	cancel()
+	for _, id := range strings.Fields(string(before)) {
+		previous[id] = true
+	}
+	j.start("dolphin", append([]string{"--new-window", "--select"}, inputs...)...)
+	var window string
+	j.wait("visible Dolphin", func() bool {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		out, e := exec.CommandContext(ctx, "xdotool", "search", "--onlyvisible", "--class", "dolphin").Output()
+		ids := strings.Fields(string(out))
+		if e != nil || len(ids) == 0 {
+			return false
+		}
+		for _, id := range ids {
+			if !previous[id] {
+				window = id
+				return true
+			}
+		}
+		return false
+	})
+	j.command("xdotool", "windowactivate", "--sync", window)
+	// Allow the native file view to finish selecting the supplied URLs before its
+	// context menu is opened. Presence of the menu/action is then observed below.
+	time.Sleep(500 * time.Millisecond)
+	j.command("xdotool", "key", "--clearmodifiers", "Shift+F10")
+	for i, action := range actions {
+		j.screen(fmt.Sprintf("dolphin-%02d-menu-%d", j.sequence, i))
+		j.action(action)
+	}
+}
+
+func (j *linuxJourney) refusal(args ...string) {
+	j.t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	full := append([]string{"--home", j.home, "--no-project"}, args...)
+	out, e := exec.CommandContext(ctx, j.app, full...).CombinedOutput()
+	j.sequence++
+	j.write(fmt.Sprintf("refusal-%02d.json", j.sequence), map[string]any{"args": full, "output": string(out), "error": fmt.Sprint(e)})
+	exit, ok := e.(*exec.ExitError)
+	if !ok || exit.ExitCode() != 5 {
+		j.t.Fatalf("expected protected-content refusal exit 5: %v\n%s", e, out)
+	}
+}
+
+func (j *linuxJourney) last(inputs []string) state.Last {
+	j.t.Helper()
+	defer func() {
+		if b, e := os.ReadFile(filepath.Join(j.home, "state", "last-result.json")); e == nil {
+			if e = os.WriteFile(filepath.Join(j.evidence, "last-current.json"), b, 0600); e != nil {
+				j.t.Error(e)
+			}
+		}
+	}()
 	var last state.Last
 	j.wait("last result for selected original files", func() bool {
 		b, e := os.ReadFile(filepath.Join(j.home, "state", "last-result.json"))
@@ -225,6 +328,7 @@ func (j *linuxJourney) last(inputs []string) {
 	}
 	j.write(fmt.Sprintf("last-%02d.json", j.sequence), last)
 	j.cli("last", "--json")
+	return last
 }
 
 func TestNativeLinuxDesktop(t *testing.T) {
@@ -262,6 +366,8 @@ func TestNativeLinuxDesktop(t *testing.T) {
 		t.Fatal(e)
 	}
 	j.cli("version", "--json")
+	j.cli("deps", "install", "oxipng", "--apply", "--json")
+	j.cli("deps", "status", "--json")
 	for _, setting := range [][2]string{{"clipboard.single", "none"}, {"clipboard.batch", "none"}, {"drop.notify", "false"}} {
 		j.cli("config", "set", setting[0], setting[1])
 	}
@@ -309,34 +415,72 @@ func TestNativeLinuxDesktop(t *testing.T) {
 	j.last(inputs[:1])
 	j.command("gio", "launch", filepath.Join(installed.Locations.Desktop, "smolpng-desktop-auto.desktop"), inputs[0], inputs[1])
 	j.last(inputs)
-	j.start("dolphin", "--new-window", "--select", inputs[0])
-	var window string
-	j.wait("visible Dolphin", func() bool {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-		out, e := exec.CommandContext(ctx, "xdotool", "search", "--onlyvisible", "--class", "dolphin").Output()
-		if e != nil {
-			return false
-		}
-		window = strings.Fields(string(out))[0]
-		return true
-	})
-	j.command("xdotool", "windowactivate", "--sync", window)
-	j.command("xdotool", "key", "--clearmodifiers", "Shift+F10")
-	j.screen("dolphin-single-menu")
-	j.action("Make smol")
+	j.dolphin(inputs[:1], "Make smol")
 	j.last(inputs[:1])
 	j.screen("dolphin-single-result")
+	j.dolphin(inputs, "Make smol")
+	j.last(inputs)
+	j.interactive("desktop-interactive", inputs[:1], func() {
+		j.start("gio", "launch", filepath.Join(installed.Locations.Menu, "smolpng-interactive.desktop"), inputs[0])
+	})
+	j.cli("integrate", "shell", "install", "--mode", "submenu", "--apply", "--json")
+	j.dolphin(inputs, "smolpng", "Make smol (keep original)")
+	j.last(inputs)
+	j.dolphin(inputs, "smolpng", "Lossless (keep original)")
+	j.last(inputs)
+	j.interactive("dolphin-interactive", inputs, func() { j.dolphin(inputs, "smolpng", "Choose recipe...") })
+	j.cli("config", "set", "drop.mode", "interactive")
+	j.interactive("configured-interactive", inputs[:1], func() {
+		j.start("gio", "launch", filepath.Join(installed.Locations.Menu, "smolpng-auto.desktop"), inputs[0])
+	})
+	j.cli("config", "set", "drop.mode", "background")
 	for i, p := range inputs {
 		b, e := os.ReadFile(p)
 		if e != nil || !bytes.Equal(b, originals[i]) {
 			t.Fatalf("original changed: %s, %v", p, e)
 		}
 	}
+	replaceDir := filepath.Join(root, "explicit replacement fixtures")
+	if e = os.Mkdir(replaceDir, 0700); e != nil {
+		t.Fatal(e)
+	}
+	replacements := []string{filepath.Join(replaceDir, filepath.Base(inputs[0])), filepath.Join(replaceDir, filepath.Base(inputs[1]))}
+	for i, p := range replacements {
+		if e = os.WriteFile(p, originals[i], 0600); e != nil {
+			t.Fatal(e)
+		}
+	}
+	j.dolphin(replacements, "smolpng", "Make smol (replace original)")
+	replaced := j.last(replacements)
+	for i, result := range replaced.Report.Results {
+		if result.Output != replacements[i] {
+			t.Fatalf("explicit replacement output moved: %s", result.Output)
+		}
+	}
 	if _, e = os.Stat(filepath.Join(os.Getenv("HOME"), "injected")); !os.IsNotExist(e) {
 		t.Fatal("argument text executed as a command")
 	}
+	// Native command consumers must still preserve modified installed files.
+	managed := filepath.Join(installed.Locations.Menu, "smolpng-auto.desktop")
+	installedBytes, e := os.ReadFile(managed)
+	if e != nil {
+		t.Fatal(e)
+	}
+	modified := append(bytes.Clone(installedBytes), []byte("# generated fixture local modification\n")...)
+	if e = os.WriteFile(managed, modified, 0755); e != nil {
+		t.Fatal(e)
+	}
+	j.refusal("integrate", "install", "--desktop", "--apply", "--json")
+	j.refusal("integrate", "remove", "--apply", "--json")
+	if b, e = os.ReadFile(managed); e != nil || !bytes.Equal(b, modified) {
+		t.Fatal("modified installed entry was changed")
+	}
+	if e = os.WriteFile(managed, installedBytes, 0755); e != nil {
+		t.Fatal(e)
+	}
 	j.cli("integrate", "shell", "remove", "--apply", "--json")
 	j.cli("integrate", "remove", "--apply", "--json")
-	j.write("report.json", map[string]any{"complete": true, "passed": true, "meaning": "Native X11 GLib desktop-entry and Dolphin single-action consumer; remaining interactive/submenu/multiple-selection journeys are not yet included."})
+	j.cli("integrate", "shell", "status", "--json")
+	j.cli("integrate", "status", "--json")
+	j.write("report.json", map[string]any{"complete": true, "passed": true, "meaning": "Native X11 GLib desktop entries and Dolphin single/submenu actions, one/many files, explicit/configured interactive completion, originals, decoded outputs, recovery and protected ownership. No physical desktop or Wayland claim."})
 }

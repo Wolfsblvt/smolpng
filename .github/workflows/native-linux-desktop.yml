@@ -9,6 +9,7 @@ on:
       - internal/cli/integrate.go
       - internal/cli/shell.go
       - internal/cli/results.go
+      - internal/workflow/jpeg.go
 permissions:
   contents: read
 concurrency:
@@ -56,6 +57,11 @@ jobs:
           QT_QPA_PLATFORM=offscreen dolphin --version > "$EVIDENCE/dolphin-version.txt"
           QT_QPA_PLATFORM=offscreen dolphin --help > "$EVIDENCE/dolphin-help.txt"
           sha256sum /usr/bin/dolphin /usr/bin/konsole /usr/bin/pngquant /usr/bin/jpegoptim > "$EVIDENCE/native-tools.sha256"
+          set +e
+          jpegoptim --keep-all --version > "$EVIDENCE/jpegoptim-new-alias.txt" 2>&1
+          printf '%s\n' "$?" > "$EVIDENCE/jpegoptim-new-alias-exit.txt"
+          set -e
+          jpegoptim --strip-none --version > "$EVIDENCE/jpegoptim-compatible-flag.txt" 2>&1
       - name: Build source-bound application and native journey
         run: |
           set -euo pipefail

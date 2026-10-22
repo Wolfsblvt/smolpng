@@ -19,9 +19,17 @@ import (
 type jpegRunner struct {
 	sources   [][]byte
 	qualities []int
+	legacy14  bool
 }
 
 func (r *jpegRunner) Run(ctx context.Context, i process.Invocation) (process.Result, error) {
+	if r.legacy14 {
+		for _, argument := range i.Args {
+			if argument == "--keep-all" {
+				return process.Result{ExitCode: 1, Stderr: "unrecognized option '--keep-all'"}, nil
+			}
+		}
+	}
 	b, e := os.ReadFile(i.Args[len(i.Args)-1])
 	if e != nil {
 		return process.Result{}, e
@@ -53,6 +61,16 @@ func jpegData() []byte {
 	var b bytes.Buffer
 	_ = jpeg.Encode(&b, testutil.Pattern(64, 64, "noise"), &jpeg.Options{Quality: 98})
 	return b.Bytes()
+}
+
+func TestJPEGMetadataPreservationSupportsAdmitted14Backend(t *testing.T) {
+	runner := &jpegRunner{legacy14: true}
+	engine := Engine{Runner: runner, Tools: toolchain.Set{JPEGOptim: toolchain.Tool{Name: "jpegoptim", Path: "jpegoptim", Version: "1.4.7", Available: true}}, Limits: domain.DefaultLimits()}
+	recipe, _ := domain.Builtin("auto")
+	result, err := engine.Optimize(context.Background(), jpegData(), recipe)
+	if err != nil || result.Candidate.Info.Format != "jpeg" || len(runner.qualities) != 2 {
+		t.Fatalf("admitted jpegoptim 1.4 must support both original-derived attempts: %v; qualities %v", err, runner.qualities)
+	}
 }
 
 func TestJPEGBuiltinsUseSelectedFormatSpecificQuality(t *testing.T) {
