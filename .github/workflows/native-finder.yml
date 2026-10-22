@@ -12,15 +12,20 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   finder:
-    name: Finder (${{ matrix.arch }})
+    name: Finder (${{ matrix.platform }})
     strategy:
       fail-fast: false
       matrix:
         include:
           - runner: macos-26-intel
             arch: amd64
+            platform: macos26-amd64
           - runner: macos-26
             arch: arm64
+            platform: macos26-arm64
+          - runner: macos-15-intel
+            arch: amd64
+            platform: macos15-amd64
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 20
     defaults:
@@ -55,6 +60,13 @@ jobs:
           sw_vers > "$evidence/os-release.txt"
           uname -srm > "$evidence/kernel.txt"
           go env -json GOVERSION GOOS GOARCH CGO_ENABLED > "$evidence/go-env.json"
+          /usr/bin/sdef /System/Applications/Utilities/Terminal.app > "$evidence/terminal-dictionary.xml"
+          for plist in /System/Library/LaunchAgents/*[Ii]con[Ss]ervices*.plist; do
+            test -f "$plist" || continue
+            label=$(/usr/libexec/PlistBuddy -c 'Print :Label' "$plist")
+            printf '%s\n' "$label" >> "$evidence/iconservices.txt"
+            launchctl print "gui/$(id -u)/$label" >> "$evidence/iconservices.txt" 2>&1 || true
+          done
           printf '%s\n%s\n' "${ImageOS:-unknown}" "${ImageVersion:-unknown}" > "$evidence/runner-image.txt"
       - name: Prepare native application and explicitly separate tools
         run: |
@@ -86,12 +98,13 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: finder-${{ matrix.arch }}-${{ env.SOURCE_COMMIT }}-${{ github.run_id }}
+          name: finder-${{ matrix.platform }}-${{ env.SOURCE_COMMIT }}-${{ github.run_id }}
           path: |
             artifacts/validation/native-finder/*.txt
             artifacts/validation/native-finder/*.json
             artifacts/validation/native-finder/*.sha256
             artifacts/validation/native-finder/*.log
+            artifacts/validation/native-finder/*.xml
             artifacts/validation/native-finder/diagnostic-screen.png
             artifacts/validation/native-finder/journey/command-*.json
             artifacts/validation/native-finder/journey/terminal-driver-*.txt

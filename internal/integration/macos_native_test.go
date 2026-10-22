@@ -43,6 +43,7 @@ func TestNativeFinder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	ownedBundles := []string{}
 	t.Cleanup(func() {
 		if !t.Failed() {
 			return
@@ -54,10 +55,14 @@ func TestNativeFinder(t *testing.T) {
 		out, err := exec.CommandContext(ctx, "/bin/ps", "-axo", "pid=,ppid=,tty=,command=").CombinedOutput()
 		owned := []string{fmt.Sprint(err)}
 		for _, line := range strings.Split(string(out), "\n") {
-			if strings.Contains(line, root) || strings.Contains(line, "/Terminal.app/Contents/MacOS/Terminal") {
+			bundleProcess := false
+			for _, path := range ownedBundles {
+				bundleProcess = bundleProcess || strings.Contains(line, path+"/Contents/MacOS/droplet")
+			}
+			if strings.Contains(line, root) || bundleProcess || strings.Contains(line, "/Terminal.app/Contents/MacOS/Terminal") {
 				owned = append(owned, line)
 			}
-			if strings.Contains(line, root) && strings.Contains(line, ".app/Contents/MacOS/droplet") {
+			if bundleProcess {
 				pid := strings.Fields(line)[0]
 				sample, err := exec.CommandContext(ctx, "/usr/bin/sample", pid, "1", "1").CombinedOutput()
 				_ = os.WriteFile(filepath.Join(evidence, "diagnostic-sample-"+pid+".txt"), []byte(fmt.Sprintf("%v\n%s", err, sample)), 0600)
@@ -138,6 +143,9 @@ func TestNativeFinder(t *testing.T) {
 	}
 	if err := json.Unmarshal(cli("integrate", "install", "--desktop", "--apply", "--json"), &installed); err != nil || len(installed.Entries) != 4 {
 		t.Fatalf("four native launchers: %v %+v", err, installed)
+	}
+	for _, entry := range installed.Entries {
+		ownedBundles = append(ownedBundles, entry.Path)
 	}
 	cli("integrate", "install", "--desktop", "--apply", "--json")
 	status := func(want string) {
@@ -355,7 +363,7 @@ const nativeTerminalDriver = `on run argv
 			repeat with w in windows
 				repeat with tabValue in tabs of w
 					set tb to contents of tabValue
-					if (contents of tb) contains sourcePrefix then set fixtureTab to tb
+					if (history of tb) contains sourcePrefix then set fixtureTab to tb
 				end repeat
 			end repeat
 			if fixtureTab is not missing value then exit repeat
@@ -363,11 +371,11 @@ const nativeTerminalDriver = `on run argv
 		end repeat
 		if fixtureTab is missing value then error "fixture source tab missing"
 		set fixtureTTY to tty of fixtureTab
-		set beforeText to contents of fixtureTab
+		set beforeText to history of fixtureTab
 		if beforeText does not contain "Choose a recipe" then error "recipe screen missing"
 		do script "" in fixtureTab
 		repeat 240 times
-			set resultText to contents of fixtureTab
+			set resultText to history of fixtureTab
 			if resultText contains "Enter: done" then exit repeat
 			delay 0.25
 		end repeat
@@ -381,8 +389,9 @@ const nativeTerminalDriver = `on run argv
 					set finished to true
 					exit repeat
 				end if
-			on error
+			on error messageText number errorNumber
 				-- Terminal may close a successfully exited .command automatically.
+				if errorNumber is not -1728 then error messageText number errorNumber
 				set finished to true
 				exit repeat
 			end try
