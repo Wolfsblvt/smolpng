@@ -3,7 +3,7 @@ version: 1
 presets: [size@1]
 defaults:
   paths:
-    exclude: ['**/go.sum', 'LICENSES/**']
+    exclude: ['**/go.sum', 'LICENSES/**', 'docs/reference/2026-10-22-private-candidate-dev13/report.json']
 size:
   labels:
     xs: '📏 Size: XS'
