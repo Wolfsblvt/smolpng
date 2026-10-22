@@ -30,7 +30,10 @@ func TestNativeCredentialsLifecycle(t *testing.T) {
 	c := newCredentialCLI(t)
 	native := secret.Native{}
 	if _, err := native.Get(); !errors.Is(err, secret.ErrMissing) {
-		t.Fatal("native store is unavailable or already contains a credential; refusing mutation")
+		if errors.Is(err, secret.ErrUnavailable) {
+			t.Fatal("native store is unavailable; no credential mutation attempted")
+		}
+		t.Fatal("native store already contains a credential; refusing mutation")
 	}
 	t.Cleanup(func() {
 		value, err := native.Get()
