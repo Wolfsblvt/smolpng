@@ -72,11 +72,14 @@ func TestReleaseInputsRejectInvalidDuplicateOrUnreadableRecords(t *testing.T) {
 		tree []byte
 		read func(string) ([]byte, error)
 	}{
-		"invalid path":   {tree: treeRecord("100644", "blob", objectA, "../README.md")},
+		"parent path": {tree: treeRecord("100644", "blob", objectA, "../README.md")},
+		"backslash": {tree: treeRecord("100644", "blob", objectA, `docs\..\outside`)},
+		"drive-like": {tree: treeRecord("100644", "blob", objectA, "docs/C:outside")},
+		"line control": {tree: treeRecord("100644", "blob", objectA, "docs/line\nbreak.md")},
 		"invalid object": {tree: treeRecord("100644", "blob", "not-an-object", "README.md")},
-		"duplicate":      {tree: bytes.Repeat(treeRecord("100644", "blob", objectA, "README.md"), 2)},
-		"malformed":      {tree: []byte("100644 no-tab\x00")},
-		"unreadable":     {tree: treeRecord("100644", "blob", objectA, "README.md"), read: func(string) ([]byte, error) { return nil, fmt.Errorf("missing blob") }},
+		"duplicate": {tree: bytes.Repeat(treeRecord("100644", "blob", objectA, "README.md"), 2)},
+		"malformed": {tree: []byte("100644 no-tab\x00")},
+		"unreadable": {tree: treeRecord("100644", "blob", objectA, "README.md"), read: func(string) ([]byte, error) { return nil, fmt.Errorf("missing blob") }},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {

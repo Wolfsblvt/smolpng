@@ -35,10 +35,15 @@ func validObjectID(value string) bool {
 	return true
 }
 
+func portableReleasePath(name string) bool {
+	return fs.ValidPath(name) && !strings.ContainsAny(name, "\\:\x00\r\n")
+}
+
 // releaseInputs reads exact ordinary-file blobs from the selected Git commit.
 // NUL-delimited tree records preserve every valid Git path byte except NUL.
-// Rejecting symlink/gitlink modes and never following working-tree paths binds
-// common package content to the same commit named by the release receipt.
+// Rejecting symlink/gitlink modes and non-portable paths before staging, then
+// reading committed blobs instead of working-tree paths, binds common package
+// content to the same commit named by the release receipt.
 func releaseInputs(tree []byte, readBlob func(string) ([]byte, error)) (map[string]packaging.Content, error) {
 	result := map[string]packaging.Content{}
 	for _, record := range bytes.Split(tree, []byte{0}) {
@@ -54,7 +59,7 @@ func releaseInputs(tree []byte, readBlob func(string) ([]byte, error)) (map[stri
 			return nil, fmt.Errorf("invalid git tree metadata")
 		}
 		name := string(parts[1])
-		if !fs.ValidPath(name) {
+		if !portableReleasePath(name) {
 			return nil, fmt.Errorf("invalid tracked release path %q", name)
 		}
 		if !releaseInputPath(name) {
