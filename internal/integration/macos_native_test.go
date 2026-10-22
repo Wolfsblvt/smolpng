@@ -236,6 +236,63 @@ func TestNativeFinder(t *testing.T) {
 	// A real Terminal consumer supplies a TTY. Accessible input keeps this
 	// functional journey independent of terminal size or visual presentation.
 	foreground := findEntry("interactive")
+	for _, entry := range []Entry{foreground, background} {
+		if entry.ID == background.ID {
+			cli("config", "set", "drop.mode", "interactive", "--json")
+		}
+		// Select the accessible picker through its existing persistent CLI flag.
+		// Reinstall records the exact resulting launcher; no installed bytes are patched.
+		entry.Arguments = append([]string{"--accessible"}, entry.Arguments...)
+		if entry.ID == background.ID {
+			entry.Arguments = append([]string{"drop", "--accessible"}, entry.Arguments[2:]...)
+		}
+		loc, err := NativeLocations()
+		if err != nil {
+			t.Fatal(err)
+		}
+		manager := Manager{StatePath: RegistryName(filepath.Join(home, "state")), Version: "native-test", Allowed: loc, Renderer: Native{}}
+		if err := manager.Install(context.Background(), []Entry{entry}); err != nil {
+			t.Fatal(err)
+		}
+		_ = os.Remove(lastPath)
+		out, err := run("/usr/bin/open", append([]string{"-W", "-n", "-a", entry.Path}, inputs...)...)
+		if err != nil {
+			t.Fatalf("foreground open: %v\n%s", err, out)
+		}
+		// The hosted runner itself needs macOS Automation consent to control
+		// Terminal. Run this independent driver inside its own Terminal session;
+		// it controls only that application's fixture tab, without changing TCC.
+		stem := filepath.Join(root, "terminal-driver-"+entry.ID)
+		if err := os.WriteFile(stem+".applescript", []byte(nativeTerminalDriver), 0600); err != nil {
+			t.Fatal(err)
+		}
+		quoteShell := func(s string) string { return "'" + strings.ReplaceAll(s, "'", "'\"'\"'") + "'" }
+		command := "#!/bin/sh\n/bin/rm -f -- \"$0\"\n/usr/bin/osascript " + quoteShell(stem+".applescript") + " " + quoteShell(root+"/one ' ; $(touch injected)") + " > " + quoteShell(stem+".txt") + " 2>&1\nstatus=$?\nprintf '%s\\n' \"$status\" > " + quoteShell(stem+".exit") + "\nexit \"$status\"\n"
+		if err := os.WriteFile(stem+".command", []byte(command), 0700); err != nil {
+			t.Fatal(err)
+		}
+		if out, err := run("/usr/bin/open", "-g", "-b", "com.apple.Terminal", stem+".command"); err != nil {
+			t.Fatalf("native Terminal driver: %v %s", err, out)
+		}
+		deadline := time.Now().Add(90 * time.Second)
+		var completion []byte
+		for time.Now().Before(deadline) {
+			completion, err = os.ReadFile(stem + ".exit")
+			if err == nil {
+				break
+			}
+			time.Sleep(250 * time.Millisecond)
+		}
+		transcript, _ := os.ReadFile(stem + ".txt")
+		if strings.TrimSpace(string(completion)) != "0" {
+			t.Fatalf("native Terminal consumer incomplete: %q\n%s", completion, transcript)
+		}
+		if !bytes.Contains(transcript, []byte("Choose a recipe")) || !bytes.Contains(transcript, []byte("Enter: done")) {
+			t.Fatalf("Terminal screens not observed: %s", transcript)
+		}
+		verifyLast(inputs)
+		t.Logf("actual Terminal completed %s; complete TTY and screen transcript retained", entry.ID)
+	}
 	status("current")
 	// Preserve a user's extra file, refusing whole-plan replacement and removal.
 	extra := filepath.Join(background.Path, "keep-user.txt")
