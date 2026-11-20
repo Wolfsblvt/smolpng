@@ -29,7 +29,7 @@ jobs:
   reconcile:
     # Fork PRs use this trusted base workflow and its enable flag; never execute PR-head code.
     if: vars.FORGEHAND_ENABLED == 'true'
-    uses: Wolfsblvt/forgehand/.github/workflows/automation.yml@5bdbacfa6009589cbaeb699c0cfbacacc1b84dff
+    uses: Wolfsblvt/forgehand/.github/workflows/automation.yml@7959d9958a89a2f78b3f9f2dc6bddf7e76cfc592
     with:
       runtime-repository: Wolfsblvt/forgehand
       runtime-ref: 5bdbacfa6009589cbaeb699c0cfbacacc1b84dff
